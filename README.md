@@ -1,2 +1,1 @@
-# neas-shop
-"Магазин на React + TypeScript"
+console.log("Моя версия кода");
