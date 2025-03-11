@@ -29,13 +29,13 @@ const Header = () => {
         {/* Иконки профиля, избранного и корзины */}
         <div className="flex items-center gap-4">
           <button className="p-2 hover:text-blue-500 transition">
-            <User size={24} />
-          </button>
-          <button className="p-2 hover:text-blue-500 transition">
             <Heart size={24} />
           </button>
           <button className="p-2 hover:text-blue-500 transition">
             <ShoppingCart size={24} />
+          </button>
+          <button className="p-2 hover:text-blue-500 transition">
+            <User size={24} />
           </button>
         </div>
       </div>
