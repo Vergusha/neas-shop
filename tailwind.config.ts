@@ -1,23 +1,14 @@
-import type { Config } from 'tailwindcss';
+// tailwind.config.ts
+import { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
-    './index.html', 
-    './src/**/*.{js,ts,jsx,tsx}'
+    "./src/**/*.{html,js,jsx,ts,tsx}", // Убедитесь, что этот путь соответствует вашему проекту
   ],
   theme: {
-    extend: {
-      colors: {
-        primary: '#2563eb', // синий цвет для акцентов
-        secondary: '#1e293b', // серый цвет для текста
-        background: '#f8fafc', // светло-серый для фона
-      },
-      fontFamily: {
-        sans: ['Inter', 'sans-serif'], // используем шрифт Inter (по желанию)
-      },
-    },
+    extend: {},
   },
   plugins: [],
-};
+}
 
-export default config;
+export default config
