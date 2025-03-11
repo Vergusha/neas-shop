@@ -12,7 +12,6 @@ const Header = () => {
             alt="Logo"
             className="h-8 w-auto md:h-10" // Используем классы Tailwind для размера
           />
-          <span className="ml-2 text-xl font-semibold">Neas Shop</span>
         </div>
 
         {/* Поиск */}
