@@ -8,12 +8,12 @@ interface Category {
 }
 
 const categories: Category[] = [
-  { name: 'Mobil', icon: <FaMobileAlt />, link: '/mobil-og-foto' },
-  { name: 'Data og tilbehør', icon: <FaLaptopCode />, link: '/data-og-tilbehor' },
-  { name: 'Gaming', icon: <FaGamepad />, link: '/gaming' },
-  { name: 'TV и lyd', icon: <FaTv />, link: '/tv-og-lyd' },
-  { name: 'Smarte hjem', icon: <FaHome />, link: '/smarte-hjem' },
-  { name: 'POWER Support', icon: <FaWrench />, link: '/power-support' },
+  { name: 'Mobil', icon: <FaMobileAlt />, link: '/products/mobil' },
+  { name: 'Data og tilbehør', icon: <FaLaptopCode />, link: '/products/data-og-tilbehor' },
+  { name: 'Gaming', icon: <FaGamepad />, link: '/products/gaming' },
+  { name: 'TV и lyd', icon: <FaTv />, link: '/products/tv-og-lyd' },
+  { name: 'Smarte hjem', icon: <FaHome />, link: '/products/smarte-hjem' },
+  { name: 'POWER Support', icon: <FaWrench />, link: '/products/power-support' },
 ];
 
 const logoColor = '#F0E965'; // Цвет логотипа
@@ -25,7 +25,7 @@ const CategoryList: React.FC = () => {
         <a
           key={category.name}
           href={category.link}
-          className="flex flex-col items-center p-4 border rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+          className="flex flex-col items-center p-4 border rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 category-animation"
           style={{ color: 'inherit', transition: 'color 0.3s' }}
           onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
           onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}

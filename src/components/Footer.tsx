@@ -2,7 +2,7 @@ import React from 'react';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-green-900 text-white py-8">
+    <footer className="bg-[#003D2D] text-white py-8">
       <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
         <div>
           <h3 className="font-bold">NEAS AS</h3>
@@ -18,10 +18,24 @@ const Footer: React.FC = () => {
         </div>
         <div>
           <h3 className="font-bold">Følg oss</h3>
-          <p>Facebook</p>
-          <p>Instagram</p>
-          <p>LinkedIn</p>
-          <p>YouTube</p>
+          <p>
+            <a href="https://www.facebook.com/neas.i.nabolaget/" target="_blank" rel="noopener noreferrer">
+              Facebook
+            </a>
+          </p>
+          <p> 
+            <a href="https://www.instagram.com/neas_i_nabolaget/" target="_blank" rel="noopener noreferrer">
+            Instagram
+            </a>
+        </p>
+          <p>
+          <a href="https://www.linkedin.com/company/neas-as/" target="_blank" rel="noopener noreferrer">
+          LinkedIn</a>
+          </p>
+          <p>
+          <a href="https://www.youtube.com/user/neaskanalen" target="_blank" rel="noopener noreferrer">
+            YouTube</a>
+            </p>
         </div>
         <div>
           <h3 className="font-bold">Om oss</h3>
