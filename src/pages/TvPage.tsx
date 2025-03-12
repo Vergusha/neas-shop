@@ -3,9 +3,17 @@ import { useParams } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
+interface ProductCardProps {
+  id: string;
+  image: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
 const TvPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductCardProps[]>([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -33,7 +41,7 @@ const TvPage: React.FC = () => {
         <main className="w-3/4">
           <div className="grid grid-cols-1 gap-4">
             {products.map((product, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg shadow-md flex">
+              <div key={product.id || index} className="bg-white p-4 rounded-lg shadow-md flex">
                 <img src={product.image} alt={product.name} className="w-1/4" />
                 <div className="ml-4">
                   <h3 className="font-bold">{product.name}</h3>

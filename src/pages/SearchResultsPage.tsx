@@ -4,8 +4,16 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 
+interface ProductCardProps {
+  id: string;
+  image: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
 const SearchResultsPage: React.FC = () => {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductCardProps[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const location = useLocation();
@@ -96,7 +104,7 @@ const SearchResultsPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {products.map((product) => (
             <ProductCard
-              key={product.id}
+              key={product.id || product.name}
               id={product.id}
               image={product.image}
               name={product.name}

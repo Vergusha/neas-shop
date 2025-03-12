@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
 const logoColor = '#F0E965'; // Цвет логотипа
 
@@ -11,7 +12,11 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [favorites, setFavorites] = useState<any[]>([]);
   const navigate = useNavigate();
+  const auth = getAuth();
 
   useEffect(() => {
     const fetchSearchResults = async () => {
@@ -44,10 +49,35 @@ const Header = () => {
     fetchSearchResults();
   }, [searchQuery]);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, [auth]);
+
+  useEffect(() => {
+    const storedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    setFavorites(storedFavorites);
+  }, []);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(`/search?query=${searchQuery}`);
     setShowResults(false);
+  };
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    setShowProfileMenu(false);
+  };
+
+  const handleProfile = () => {
+    navigate('/profile');
+  };
+
+  const handleFavoriteClick = () => {
+    navigate('/favorites');
   };
 
   return (
@@ -98,25 +128,63 @@ const Header = () => {
             style={{ transition: 'color 0.3s' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'white')}
+            onClick={handleFavoriteClick}
           >
             <Heart size={24} />
           </button>
           <button
             className="p-2 transition text-white icon-animation"
             style={{ transition: 'color 0.3s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'white')}
           >
             <ShoppingCart size={24} />
           </button>
-          <button
-            className="p-2 transition text-white icon-animation"
-            style={{ transition: 'color 0.3s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'white')}
-          >
-            <User size={24} />
-          </button>
+          <div className="relative">
+            <button
+              className="p-2 transition text-white icon-animation"
+              style={{ transition: 'color 0.3s' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'white')}
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+            >
+              <User size={24} />
+            </button>
+            {showProfileMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                {user ? (
+                  <div className="p-4">
+                    <p className="mb-2">Hello, {user.email}</p>
+                    <button
+                      className="btn btn-primary w-full mb-2"
+                      onClick={handleProfile}
+                    >
+                      Profile
+                    </button>
+                    <button
+                      className="btn btn-primary w-full"
+                      onClick={handleSignOut}
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-4">
+                    <button
+                      className="btn btn-primary w-full mb-2"
+                      onClick={() => navigate('/login')}
+                    >
+                      Login
+                    </button>
+                    <button
+                      className="btn btn-secondary w-full"
+                      onClick={() => navigate('/register')}
+                    >
+                      Register
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

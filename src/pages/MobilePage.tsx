@@ -6,9 +6,20 @@ import { Range, getTrackBackground } from 'react-range';
 
 const STEP = 100;
 
+interface ProductCardProps {
+  id: string;
+  image: string;
+  name: string;
+  description: string;
+  price: number;
+  brand?: string;
+  memory?: string;
+  color?: string;
+}
+
 const MobilePage: React.FC = () => {
-  const [products, setProducts] = useState<any[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductCardProps[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<ProductCardProps[]>([]);
   const [loading, setLoading] = useState(true);
   const [values, setValues] = useState([0, 99999]);
   const [minPrice, setMinPrice] = useState(0);
@@ -25,7 +36,19 @@ const MobilePage: React.FC = () => {
       try {
         const q = collection(db, 'mobile');
         const querySnapshot = await getDocs(q);
-        const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const productsData = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            image: data.image || 'default-image-url', // Provide default values
+            name: data.name || 'No Name',
+            description: data.description || 'No Description',
+            price: data.price || 0,
+            brand: data.brand || 'Unknown',
+            memory: data.memory || 'Unknown',
+            color: data.color || 'Unknown'
+          };
+        });
         console.log("Fetched products:", productsData); // Логирование данных
         setProducts(productsData);
         setFilteredProducts(productsData);
@@ -227,7 +250,7 @@ const MobilePage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredProducts.map((product) => (
                 <ProductCard
-                  key={product.id}
+                  key={product.id || product.name}
                   id={product.id}
                   image={product.image}
                   name={product.name}

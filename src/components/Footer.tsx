@@ -52,7 +52,7 @@ const Footer: React.FC = () => {
         </div>
       </div>
       <div className="container mx-auto mt-8 text-center">
-        <img src="/src/assets/logo.svg" alt="NEAS Logo" className="mx-auto h-8" />
+        <img src="/assets/logo.svg" alt="NEAS Logo" className="mx-auto h-8" />
         <p className="mt-4">Vi er en del av NEAS GRUPPEN</p>
       </div>
     </footer>

@@ -3,9 +3,17 @@ import { useParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
+interface ProductCardProps {
+  id: string;
+  image: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
 const ProductPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<ProductCardProps | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
@@ -51,9 +59,9 @@ const ProductPage: React.FC = () => {
       <div className="bg-white p-4 rounded-lg shadow-md">
         <div className="flex flex-col md:flex-row">
           <div className="w-full md:w-1/2 mb-4 md:mb-0">
-            <img src={product.image} alt={product.name} className="w-full h-auto mb-4" />
+            <img src={product?.image} alt={product?.name} className="w-full h-auto mb-4" />
             <div className="flex justify-center space-x-2">
-              {product.color && (
+              {product?.color && (
                 <button
                   key={product.color}
                   className={`w-8 h-8 rounded-full border-2 ${selectedColor === product.color ? 'border-black' : 'border-gray-300'}`}
@@ -64,9 +72,9 @@ const ProductPage: React.FC = () => {
             </div>
           </div>
           <div className="w-full md:w-1/2 md:pl-8">
-            <h1 className="text-2xl font-bold mb-4">{product.name}</h1>
-            <p className="text-gray-500 mb-4">{product.description}</p>
-            <p className="text-xl font-bold text-gray-900 mb-4">{Number(product.price).toFixed(2)} NOK</p>
+            <h1 className="text-2xl font-bold mb-4">{product?.name}</h1>
+            <p className="text-gray-500 mb-4">{product?.description}</p>
+            <p className="text-xl font-bold text-gray-900 mb-4">{Number(product?.price).toFixed(2)} NOK</p>
             <button className="btn btn-primary">Add to Cart</button>
           </div>
         </div>

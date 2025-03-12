@@ -65,3 +65,8 @@ input:focus {
   outline: none;
   box-shadow: 0 0 0 2px #F0E965; /* Added custom focus ring color */
 }
+
+/* Custom shadow for product cards */
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 6px 20px rgba(0, 0, 0, 0.1);
+}
