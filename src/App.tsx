@@ -2,8 +2,8 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
 import CategoryList from './components/CategoryList';
 import Footer from './components/Footer';
-import ProductsPage from './pages/ProductsPage';
-import ProductPage from './pages/ProductPage'; // Импортируем файл ProductPage из папки pages
+import MobilePage from './pages/MobilePage'; // Импортируем новый компонент MobilePage
+import ProductPage from './pages/ProductPage';
 import DataPage from './pages/DataPage';
 import GamingPage from './pages/GamingPage';
 import TvPage from './pages/TvPage';
@@ -18,8 +18,8 @@ const App = () => {
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<CategoryList />} />
-            <Route path="/products/:category" element={<ProductsPage />} />
-            <Route path="/product/:id" element={<ProductPage />} /> {/* Новый маршрут */}
+            <Route path="/products/mobil" element={<MobilePage />} /> {/* Обновленный маршрут */}
+            <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/products/data-og-tilbehor" element={<DataPage />} />
             <Route path="/products/gaming" element={<GamingPage />} />
             <Route path="/products/tv-og-lyd" element={<TvPage />} />
