@@ -9,6 +9,7 @@ import GamingPage from './pages/GamingPage';
 import TvPage from './pages/TvPage';
 import SmartHomePage from './pages/SmartHomePage';
 import SupportPage from './pages/SupportPage';
+import SearchResultsPage from './pages/SearchResultsPage'; // Импортируем новый компонент SearchResultsPage
 
 const App = () => {
   return (
@@ -25,6 +26,7 @@ const App = () => {
             <Route path="/products/tv-og-lyd" element={<TvPage />} />
             <Route path="/products/smarte-hjem" element={<SmartHomePage />} />
             <Route path="/products/power-support" element={<SupportPage />} />
+            <Route path="/search" element={<SearchResultsPage />} /> {/* Новый маршрут для страницы результатов поиска */}
           </Routes>
         </main>
         <Footer />

@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-
 html, body, #root {
   height: 100%;
 }
@@ -46,4 +45,23 @@ body {
 .category-animation:hover .text-3xl {
   transform: scale(1.1);
   transition: transform 0.3s;
+}
+
+.icon-animation {
+  transition: transform 0.3s;
+}
+
+.icon-animation:hover {
+  transform: scale(1.1);
+}
+
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #F0E965; /* Added custom focus ring color */
 }
