@@ -91,13 +91,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, image, name, description,
           <h2 className="card-title">{name}</h2>
           <p>{description}</p>
           <div className="card-actions justify-between items-center">
-            <span className="text-xl font-bold">{Number(price).toFixed(2)} NOK</span>
-            <button
-              className="btn btn-sm btn-circle btn-primary"
-              onClick={handleAddToCart}
-            >
-              <ShoppingCart size={16} />
-            </button>
+            <span className="text-xl font-bold">{Math.round(price)} NOK</span>
           </div>
           
           {/* Success message */}
@@ -107,6 +101,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, image, name, description,
             </div>
           )}
         </div>
+        {/* Moved shopping cart button to top-left corner */}
+        <button
+          className="absolute top-2 left-2 p-1 rounded-full bg-white text-primary hover:bg-primary hover:text-white transition-colors"
+          onClick={handleAddToCart}
+        >
+          <ShoppingCart size={24} />
+        </button>
+        {/* Favorite button remains at top-right corner */}
         <button
           className={`absolute top-2 right-2 p-1 rounded-full ${isFavorite ? 'text-red-500' : 'text-gray-500'}`}
           onClick={handleFavoriteClick}
