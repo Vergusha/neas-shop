@@ -1,125 +1,157 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { FaHeart, FaShoppingCart } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { getAuth } from 'firebase/auth';
+import { ref, get, set } from 'firebase/database';
+import { database } from '../firebaseConfig';
 
-interface ProductCardProps {
+interface Product {
   id: string;
-  image: string;
   name: string;
   description: string;
   price: number;
-  onFavoriteChange?: () => void;
+  image: string;
+  brand?: string;
+  category?: string;
+  memory?: string;
+  color?: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ id, image, name, description, price, onFavoriteChange }) => {
-  const [isFavorite, setIsFavorite] = useState<boolean>(false);
-  const [addedToCart, setAddedToCart] = useState(false);
-  
-  // Check if product is in favorites on component mount
-  useEffect(() => {
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    setIsFavorite(favorites.includes(id));
-  }, [id]);
+interface ProductCardProps {
+  product: Product;
+}
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Stop event propagation to parent link
-    e.stopPropagation();
-    
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    
-    let updatedFavorites;
-    if (favorites.includes(id)) {
-      // Remove from favorites
-      updatedFavorites = favorites.filter((favId: string) => favId !== id);
-    } else {
-      // Add to favorites
-      updatedFavorites = [...favorites, id];
-    }
-    
-    // Save updated favorites to localStorage
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-    
-    // Update local state
-    setIsFavorite(!isFavorite);
-    
-    // Call the callback function if provided
-    if (onFavoriteChange) {
-      onFavoriteChange();
-    }
-  };
+const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
   
+  const navigate = useNavigate();
+  const [isInCart, setIsInCart] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  // Check if product is in favorites when component mounts
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (user) {
+        const favRef = ref(database, `users/${user.uid}/favorites/${product.id}`);
+        const snapshot = await get(favRef);
+        setIsFavorite(snapshot.exists());
+      } else {
+        // Fallback to localStorage for non-logged in users
+        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        setIsFavorite(favorites.includes(product.id));
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [user, product.id]);
+
+  const handleClick = () => {
+    navigate(`/product/${product.id}`);
+  };
+
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
     e.stopPropagation();
-    
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
-    // Check if the product is already in the cart
-    const existingItemIndex = cart.findIndex((item: any) => item.id === id);
-    
+    const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
+
     if (existingItemIndex >= 0) {
-      // Increment quantity if the product is already in cart
       cart[existingItemIndex].quantity += 1;
     } else {
-      // Add new item to cart
-      cart.push({
-        id,
-        quantity: 1,
-        name,
-        price,
-        image
-      });
+      cart.push({ ...product, quantity: 1 });
     }
-    
+
     localStorage.setItem('cart', JSON.stringify(cart));
+    setIsInCart(true);
+    window.dispatchEvent(new Event('cartUpdated'));
+  };
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     
-    // Dispatch custom event to update cart count in header with product name
-    const event = new CustomEvent('cartUpdated', { 
-      detail: { item: name }
-    });
-    window.dispatchEvent(event);
-    
-    // Show success message
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 1500);
+    if (user) {
+      try {
+        const favRef = ref(database, `users/${user.uid}/favorites/${product.id}`);
+        if (isFavorite) {
+          // Remove from favorites
+          await set(favRef, null);
+        } else {
+          // Add to favorites
+          await set(favRef, {
+            addedAt: new Date().toISOString(),
+            productId: product.id,
+            category: product.category
+          });
+        }
+        setIsFavorite(!isFavorite);
+        // Dispatch event for updating other components
+        window.dispatchEvent(new Event('favoritesUpdated'));
+      } catch (error) {
+        console.error('Error updating favorites:', error);
+      }
+    } else {
+      // Fallback to localStorage for non-logged in users
+      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+      let updatedFavorites;
+      
+      if (isFavorite) {
+        updatedFavorites = favorites.filter((id: string) => id !== product.id);
+      } else {
+        updatedFavorites = [...favorites, product.id];
+      }
+      
+      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      setIsFavorite(!isFavorite);
+      window.dispatchEvent(new Event('favoritesUpdated'));
+    }
   };
 
   return (
-    <Link to={`/product/${id}`} className="block">
-      <div className="relative card card-compact bg-base-100 shadow-2xl transform transition-transform duration-300 hover:scale-105">
-        <figure className="overflow-hidden">
-          <img src={image} alt={name} className="w-full h-48 object-contain transition-transform duration-300 hover:scale-110" />
-        </figure>
-        <div className="card-body">
-          <h2 className="card-title">{name}</h2>
-          <p>{description}</p>
-          <div className="card-actions justify-between items-center">
-            <span className="text-xl font-bold">{Math.round(price)} NOK</span>
-          </div>
-          
-          {/* Success message */}
-          {addedToCart && (
-            <div className="absolute bottom-0 left-0 right-0 bg-green-500 text-white text-center py-1 text-sm">
-              Added to cart!
-            </div>
-          )}
+    <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
+      <figure className="relative pt-4 px-4 cursor-pointer" onClick={handleClick}>
+        <img 
+          src={product.image} 
+          alt={product.name} 
+          className="rounded-xl h-48 w-full object-contain"
+        />
+        <div className="absolute top-6 left-6 flex gap-2"> {/* Changed position to top-left */}
+          <button
+            onClick={handleAddToCart}
+            className={`btn btn-circle btn-primary ${isInCart ? 'btn-success' : ''}`}
+          >
+            <FaShoppingCart className="w-5 h-5" />
+          </button>
+          <button
+            onClick={handleFavoriteClick}
+            className="p-2 rounded-full bg-white shadow-md hover:bg-gray-100"
+          >
+            <FaHeart className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} />
+          </button>
         </div>
-        {/* Moved shopping cart button to top-left corner */}
-        <button
-          className="absolute top-2 left-2 p-1 rounded-full bg-white text-primary hover:bg-primary hover:text-white transition-colors"
-          onClick={handleAddToCart}
-        >
-          <ShoppingCart size={24} />
-        </button>
-        {/* Favorite button remains at top-right corner */}
-        <button
-          className={`absolute top-2 right-2 p-1 rounded-full ${isFavorite ? 'text-red-500' : 'text-gray-500'}`}
-          onClick={handleFavoriteClick}
-        >
-          <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
-        </button>
+      </figure>
+      
+      <div className="card-body">
+        <h2 className="card-title cursor-pointer" onClick={handleClick}>
+          {product.name}
+          {product.brand && <span className="text-sm text-gray-500">({product.brand})</span>}
+        </h2>
+        
+        {product.memory && (
+          <p className="text-sm text-gray-600">{product.memory}</p>
+        )}
+        
+        {product.color && (
+          <p className="text-sm text-gray-600">{product.color}</p>
+        )}
+        
+        <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+        
+        <div className="flex justify-between items-center mt-4">
+          <span className="text-xl font-bold">{product.price.toFixed(2)} NOK</span>
+        </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

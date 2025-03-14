@@ -1,78 +1,54 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { collection, getDocs, getFirestore } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
-import { Range, getTrackBackground } from 'react-range';
-import { Link } from 'react-router-dom';
+import { FaFilter } from 'react-icons/fa';
+import ProductFilters from '../components/ProductFilters';
 
-const STEP = 100;
-
-interface ProductCardProps {
+interface Product {
   id: string;
-  image: string;
   name: string;
   description: string;
   price: number;
+  image: string;
   brand?: string;
+  category?: string;
   memory?: string;
   color?: string;
 }
 
 const MobilePage: React.FC = () => {
-  const [products, setProducts] = useState<ProductCardProps[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<ProductCardProps[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [values, setValues] = useState([0, 99999]);
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(99999);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedMemories, setSelectedMemories] = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [brands, setBrands] = useState<string[]>([]);
-  const [memories, setMemories] = useState<string[]>([]);
-  const [colors, setColors] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
+  const [filters, setFilters] = useState<Array<{ id: string; name: string; values: string[] }>>([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const q = collection(db, 'mobile');
-        const querySnapshot = await getDocs(q);
-        const productsData = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            image: data.image || 'default-image-url', // Provide default values
-            name: data.name || 'No Name',
-            description: data.description || 'No Description',
-            price: data.price || 0,
-            brand: data.brand || 'Unknown',
-            memory: data.memory || 'Unknown',
-            color: data.color || 'Unknown'
-          };
-        });
-        console.log("Fetched products:", productsData); // Логирование данных
-        setProducts(productsData);
-        setFilteredProducts(productsData);
-
-        // Определение минимальной и максимальной цены
-        if (productsData.length > 0) {
-          const prices = productsData.map(product => product.price);
-          const minPrice = Math.min(...prices);
-          const maxPrice = Math.max(...prices);
-          setMinPrice(minPrice);
-          setMaxPrice(maxPrice);
-          setValues([minPrice, maxPrice]);
-
-          // Определение уникальных брендов, памяти и цветов
-          const uniqueBrands = Array.from(new Set(productsData.map(product => product.brand)));
-          setBrands(uniqueBrands);
-          const uniqueMemories = Array.from(new Set(productsData.map(product => product.memory)));
-          setMemories(uniqueMemories); // Set unique memory options from products
-          const uniqueColors = Array.from(new Set(productsData.map(product => product.color)));
-          setColors(uniqueColors); // Set unique color options from products
-        }
-      } catch (error) {
-        console.error("Error fetching products: ", error);
+        const mobileCollection = collection(db, 'mobile');
+        const mobileSnapshot = await getDocs(mobileCollection);
+        const mobileList = mobileSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          name: doc.data().name || 'Unnamed Product',
+          description: doc.data().description || 'No description available',
+          price: Number(doc.data().price) || 0,
+          image: doc.data().image || '',
+          brand: doc.data().brand || '',
+          memory: doc.data().memory || '',
+          color: doc.data().color || '',
+          category: 'mobile'
+        })) as Product[];
+        
+        setProducts(mobileList);
+        setFilteredProducts(mobileList);
+      } catch (err) {
+        console.error('Error fetching mobile products:', err);
+        setError('Failed to load products');
       } finally {
         setLoading(false);
       }
@@ -81,210 +57,109 @@ const MobilePage: React.FC = () => {
     fetchProducts();
   }, []);
 
-  // Memoize the renderTrack function to improve performance
-  const renderTrack = useCallback(
-    ({ props, children }) => {
-      return (
-        <div
-          {...props}
-          style={{
-            ...props.style,
-            height: '6px',
-            width: '100%',
-            background: getTrackBackground({
-              values,
-              colors: ['#ccc', '#F0E965', '#ccc'],
-              min: minPrice,
-              max: maxPrice
-            }),
-            alignSelf: 'center'
-          }}
-        >
-          {children}
-        </div>
-      );
-    },
-    [values, minPrice, maxPrice]
-  );
-  
-  // Memoize the renderThumb function to improve performance
-  const renderThumb = useCallback(
-    ({ props, isDragged }) => (
-      <div
-        {...props}
-        style={{
-          ...props.style,
-          height: '24px',
-          width: '24px',
-          borderRadius: '12px',
-          backgroundColor: '#FFF',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          boxShadow: '0px 2px 6px #AAA'
-        }}
-      >
-        <div
-          style={{
-            height: '16px',
-            width: '5px',
-            backgroundColor: isDragged ? '#F0E965' : '#CCC'
-          }}
-        />
-      </div>
-    ),
-    []
-  );
-
-  // Optimize the filtering process with useEffect dependencies
   useEffect(() => {
-    if (products.length > 0) {
-      const filtered = products.filter(product => 
-        product.price >= values[0] && 
-        product.price <= values[1] &&
-        (selectedBrands.length ? selectedBrands.includes(product.brand) : true) &&
-        (selectedMemories.length ? selectedMemories.includes(product.memory) : true) &&
-        (selectedColors.length ? selectedColors.includes(product.color) : true)
-      );
-      setFilteredProducts(filtered);
-    }
-  }, [values, selectedBrands, selectedMemories, selectedColors, products]);
+    const fetchFilters = async () => {
+      try {
+        const productsRef = collection(db, 'mobile');
+        const snapshot = await getDocs(productsRef);
+        
+        const uniqueFilters: Record<string, Set<string>> = {
+          brand: new Set(),
+          memory: new Set(),
+          color: new Set(),
+        };
 
-  // Create a more efficient handler for Range component
-  const handleRangeChange = useCallback((newValues: number[]) => {
-    setValues(newValues);
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.brand) uniqueFilters.brand.add(data.brand);
+          if (data.memory) uniqueFilters.memory.add(data.memory);
+          if (data.color) uniqueFilters.color.add(data.color);
+        });
+
+        setFilters([
+          { id: 'brand', name: 'Бренд', values: Array.from(uniqueFilters.brand).sort() },
+          { id: 'memory', name: 'Память', values: Array.from(uniqueFilters.memory).sort() },
+          { id: 'color', name: 'Цвет', values: Array.from(uniqueFilters.color).sort() },
+        ]);
+      } catch (error) {
+        console.error('Error fetching filters:', error);
+      }
+    };
+
+    fetchFilters();
   }, []);
 
-  const handleBrandChange = (brand: string) => {
-    setSelectedBrands(prev =>
-      prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]
-    );
-  };
+  useEffect(() => {
+    if (!products.length) return;
 
-  const handleMemoryChange = (memory: string) => {
-    setSelectedMemories(prev =>
-      prev.includes(memory) ? prev.filter(m => m !== memory) : [...prev, memory]
-    );
-  };
+    const filtered = products.filter(product => {
+      return Object.entries(selectedFilters).every(([filterId, values]) => {
+        if (!values.length) return true;
+        
+        const productValue = product[filterId as keyof Product]?.toLowerCase() || '';
+        return values.some(value => productValue === value.toLowerCase());
+      });
+    });
 
-  const handleColorChange = (color: string) => {
-    setSelectedColors(prev =>
-      prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]
-    );
+    console.log('Filtered products:', filtered.length); // Debug log
+    setFilteredProducts(filtered);
+  }, [products, selectedFilters]);
+
+  const handleFilterChange = (filterId: string, values: string[]) => {
+    console.log('Filter changed:', filterId, values); // Debug log
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: values
+    }));
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen"><span className="loading loading-spinner loading-lg"></span></div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center py-8">{error}</div>;
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-1/4 pr-4">
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <h2 className="font-bold mb-2">Filter</h2>
-            <div className="mb-4">
-              <label htmlFor="minPrice" className="block text-gray-700">Min Price</label>
-              <input
-                type="number"
-                id="minPrice"
-                value={values[0]}
-                onChange={(e) => setValues([Number(e.target.value), values[1]])}
-                className="w-full mb-2 input input-bordered"
-                min={minPrice}
-                max={values[1]}
-                placeholder={`Min: ${minPrice}`}
-              />
-              <label htmlFor="maxPrice" className="block text-gray-700">Max Price</label>
-              <input
-                type="number"
-                id="maxPrice"
-                value={values[1]}
-                onChange={(e) => setValues([values[0], Number(e.target.value)])}
-                className="w-full mb-4 input input-bordered"
-                min={values[0]}
-                max={maxPrice}
-                placeholder={`Max: ${maxPrice}`}
-              />
-              <Range
-                values={values}
-                step={STEP}
-                min={minPrice}
-                max={maxPrice}
-                onChange={handleRangeChange}
-                renderTrack={renderTrack}
-                renderThumb={renderThumb}
-              />
-              <label htmlFor="brand" className="block text-gray-700 mt-6">Brand</label> {/* Increased margin-top to 6 */}
-              <div className="mb-4">
-                {brands.map((brand) => (
-                  <div key={brand} className="flex items-center mb-2">
-                    <input
-                      type="checkbox"
-                      id={`brand-${brand}`}
-                      checked={selectedBrands.includes(brand)}
-                      onChange={() => handleBrandChange(brand)}
-                      className="mr-2 checkbox"
-                    />
-                    <label htmlFor={`brand-${brand}`} className="text-gray-700">{brand}</label>
-                  </div>
-                ))}
-              </div>
-              <label htmlFor="memory" className="block text-gray-700">Memory</label>
-              <div className="mb-4">
-                {memories.map((memory) => ( // Use unique memory options from products
-                  <div key={memory} className="flex items-center mb-2">
-                    <input
-                      type="checkbox"
-                      id={`memory-${memory}`}
-                      checked={selectedMemories.includes(memory)}
-                      onChange={() => handleMemoryChange(memory)}
-                      className="mr-2 checkbox"
-                    />
-                    <label htmlFor={`memory-${memory}`} className="text-gray-700">{memory}</label>
-                  </div>
-                ))}
-              </div>
-              <label htmlFor="color" className="block text-gray-700">Color</label>
-              <div className="mb-4">
-                {colors.map((color) => ( // Use unique color options from products
-                  <div key={color} className="flex items-center mb-2">
-                    <input
-                      type="checkbox"
-                      id={`color-${color}`}
-                      checked={selectedColors.includes(color)}
-                      onChange={() => handleColorChange(color)}
-                      className="mr-2 checkbox"
-                    />
-                    <label htmlFor={`color-${color}`} className="text-gray-700">{color}</label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </aside>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Mobil</h1>
+        <button 
+          onClick={() => setShowFilters(!showFilters)}
+          className="btn btn-primary flex items-center gap-2"
+        >
+          <FaFilter />
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
+        </button>
+      </div>
 
-        {/* Main Content */}
-        <main className="w-3/4">
-          {filteredProducts.length === 0 ? (
-            <div className="text-center">No products found</div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {showFilters && (
+          <div className="md:col-span-1">
+            <ProductFilters
+              filters={filters}
+              selectedFilters={selectedFilters}
+              onFilterChange={handleFilterChange}
+            />
+          </div>
+        )}
+
+        <div className={`${showFilters ? 'md:col-span-3' : 'md:col-span-4'} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`}>
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredProducts.map((product) => (
-                <div key={product.id || product.name} className="cursor-pointer">
-                  <ProductCard
-                    id={product.id}
-                    image={product.image}
-                    name={product.name}
-                    description={product.description}
-                    price={product.price}
-                  />
-                </div>
-              ))}
+            <div className="col-span-full text-center py-8">
+              No products found matching the selected filters.
             </div>
           )}
-        </main>
+        </div>
       </div>
     </div>
   );

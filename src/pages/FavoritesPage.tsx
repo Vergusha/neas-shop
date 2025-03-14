@@ -1,98 +1,113 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
-import { Link } from 'react-router-dom';
+import { getAuth } from 'firebase/auth';
+import { ref, get } from 'firebase/database';
+import { database } from '../firebaseConfig';
 
 interface Product {
   id: string;
-  image: string;
   name: string;
   description: string;
   price: number;
+  image: string;
+  brand?: string;
+  category?: string;
+  memory?: string;
+  color?: string;
 }
 
 const FavoritesPage: React.FC = () => {
-  const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
+  const [favorites, setFavorites] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  // Track changes to favorites with this state
-  const [favoritesChangeCount, setFavoritesChangeCount] = useState(0);
-
-  // Create a callback function to handle favorite changes
-  const handleFavoriteChange = useCallback(() => {
-    // Increment counter to trigger re-fetch
-    setFavoritesChangeCount(prev => prev + 1);
-  }, []);
+  const auth = getAuth();
+  const user = auth.currentUser;
 
   useEffect(() => {
-    const fetchFavoriteProducts = async () => {
+    const fetchFavorites = async () => {
       try {
         setLoading(true);
-        // Get favorite IDs from localStorage
-        const favoriteIds = JSON.parse(localStorage.getItem('favorites') || '[]');
-        
+        let favoriteIds: string[] = [];
+
+        if (user) {
+          // Get favorites from Realtime Database
+          const favRef = ref(database, `users/${user.uid}/favorites`);
+          const snapshot = await get(favRef);
+          if (snapshot.exists()) {
+            favoriteIds = Object.keys(snapshot.val());
+          }
+        } else {
+          // Fallback to localStorage for non-logged in users
+          favoriteIds = JSON.parse(localStorage.getItem('favorites') || '[]');
+        }
+
         if (favoriteIds.length === 0) {
-          setFavoriteProducts([]);
+          setFavorites([]);
           setLoading(false);
           return;
         }
 
-        // Fetch each product by ID from Firestore
-        const productPromises = favoriteIds.map(async (id: string) => {
-          try {
-            // Try to fetch from 'products' collection
-            const productDoc = await getDoc(doc(db, 'products', id));
-            if (productDoc.exists()) {
-              return { id, ...productDoc.data() } as Product;
-            }
-            
-            // If not found in 'products', try 'mobile' collection
-            const mobileDoc = await getDoc(doc(db, 'mobile', id));
-            if (mobileDoc.exists()) {
-              return { id, ...mobileDoc.data() } as Product;
-            }
-            
-            return null;
-          } catch (error) {
-            console.error(`Error fetching product ${id}:`, error);
-            return null;
-          }
-        });
+        // Fetch products from all collections
+        const collections = ['mobile', 'tv', 'gaming', 'smart-home', 'data'];
+        const favoriteProducts: Product[] = [];
 
-        const products = (await Promise.all(productPromises)).filter((p): p is Product => p !== null);
-        setFavoriteProducts(products);
+        for (const collectionName of collections) {
+          const collectionRef = collection(db, collectionName);
+          const querySnapshot = await getDocs(collectionRef);
+          
+          querySnapshot.docs.forEach(doc => {
+            if (favoriteIds.includes(doc.id)) {
+              favoriteProducts.push({
+                id: doc.id,
+                ...doc.data(),
+                name: doc.data().name || 'Unnamed Product',
+                description: doc.data().description || 'No description',
+                price: Number(doc.data().price) || 0,
+                image: doc.data().image || '',
+                brand: doc.data().brand || '',
+                category: collectionName
+              } as Product);
+            }
+          });
+        }
+
+        setFavorites(favoriteProducts);
       } catch (error) {
-        console.error("Error fetching favorite products:", error);
+        console.error('Error fetching favorites:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFavoriteProducts();
-  }, [favoritesChangeCount]); // Re-run effect when favoritesChangeCount changes
+    fetchFavorites();
+
+    // Listen for favorites updates
+    window.addEventListener('favoritesUpdated', fetchFavorites);
+    return () => window.removeEventListener('favoritesUpdated', fetchFavorites);
+  }, [user]);
 
   if (loading) {
-    return <div className="flex justify-center items-center py-8"><span className="loading loading-spinner loading-lg"></span></div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">Favorites</h1>
-      {favoriteProducts.length === 0 ? (
-        <div className="text-center py-8">No favorite products found</div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">My Favorites</h1>
+      
+      {favorites.length === 0 ? (
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <h2 className="text-xl font-semibold mb-4">No favorites yet</h2>
+          <p className="text-gray-600">Items you mark as favorite will appear here</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {favoriteProducts.map((product) => (
-            <div key={product.id} className="cursor-pointer">
-              <ProductCard
-                id={product.id}
-                image={product.image}
-                name={product.name}
-                description={product.description}
-                price={product.price}
-                onFavoriteChange={handleFavoriteChange}
-              />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {favorites.map((product) => (
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       )}

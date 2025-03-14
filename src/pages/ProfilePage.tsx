@@ -421,6 +421,8 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-4">Profile</h1>
+      
+      {/* Profile section */}
       <div className="bg-white p-4 rounded-lg shadow-md">
         <div className="flex items-center mb-4">
           <div className="relative">
@@ -517,6 +519,14 @@ const ProfilePage: React.FC = () => {
         )}
       </div>
       
+      {/* Admin Panel - now before order history */}
+      {user && isAdmin(user.email) && (
+        <div className="mt-8 mb-8">
+          <AdminPanel />
+        </div>
+      )}
+      
+      {/* Order History - now after admin panel */}
       <div className="bg-white p-4 rounded-lg shadow-md mt-8">
         <h2 className="text-xl font-bold mb-4">Order History</h2>
         {orderHistory.length > 0 ? (
@@ -573,13 +583,6 @@ const ProfilePage: React.FC = () => {
           <p>No order history available.</p>
         )}
       </div>
-      
-      {/* Admin Panel */}
-      {user && isAdmin(user.email) && (
-        <div className="mt-8">
-          <AdminPanel />
-        </div>
-      )}
       
       {/* Компонент AvatarEditor */}
       {showAvatarEditor && (

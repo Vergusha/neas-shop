@@ -2,12 +2,12 @@ import { Search, ShoppingCart, Heart, User, Bell } from 'lucide-react';
 import logo from '../assets/logo.svg';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, getFirestore } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getAuth, onAuthStateChanged, signOut, updateProfile } from 'firebase/auth';
 import Toast from './Toast';
-import { ref, onValue } from 'firebase/database';
-import { database } from '../firebaseConfig';
+import { getDatabase, ref, get, onValue } from 'firebase/database';
+import { app } from '../firebaseConfig'; // Make sure this import exists
 
 const defaultAvatarSVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UwZTBkMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzUiIHI9IjE1IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTUwIDUwYy0xNSAwLTMwIDE1LTMwIDMwczE1IDMwIDMwIDMwIDMwLTE1IDMwLTMwUzY1IDUwIDUwIDUwem0wIDUwYy0xMCAwLTE4IDgtMTggMThzOCAxOCAxOCAxOGMxMC4xIDAgMTgtOCAxOC0xOHMtOC0xOC0xOC0xOHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
 
@@ -64,18 +64,28 @@ const Header = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // При авторизации проверяем данные пользователя в базе
+        const database = getDatabase(app);
         const userRef = ref(database, `users/${user.uid}`);
         try {
           const snapshot = await get(userRef);
           if (snapshot.exists()) {
             const userData = snapshot.val();
             if (userData.avatarURL) {
-              // Обновляем photoURL в Auth профиле
-              await updateProfile(user, {
-                photoURL: userData.avatarURL
-              });
-              localStorage.setItem('avatarURL', userData.avatarURL);
+              try {
+                // Check URL length before updating profile
+                if (userData.avatarURL.length <= 1024) {
+                  await updateProfile(user, {
+                    photoURL: userData.avatarURL
+                  });
+                  localStorage.setItem('avatarURL', userData.avatarURL);
+                } else {
+                  console.warn('Avatar URL too long, using default avatar');
+                  localStorage.setItem('avatarURL', defaultAvatarSVG);
+                }
+              } catch (profileError) {
+                console.error('Error updating profile:', profileError);
+                localStorage.setItem('avatarURL', defaultAvatarSVG);
+              }
             }
           }
         } catch (error) {
@@ -91,11 +101,12 @@ const Header = () => {
   // Добавляем слушатель изменений в базе данных
   useEffect(() => {
     if (user) {
+      const database = getDatabase(app);
       const userRef = ref(database, `users/${user.uid}`);
       const unsubscribe = onValue(userRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
-          if (data.avatarURL) {
+          if (data.avatarURL && data.avatarURL.length <= 1024) {
             setUser(prev => ({
               ...prev,
               photoURL: data.avatarURL

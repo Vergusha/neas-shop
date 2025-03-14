@@ -1,57 +1,127 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import ProductCard from '../components/ProductCard';
+import { FaFilter } from 'react-icons/fa';
+import ProductFilters from '../components/ProductFilters';
+import { extractFilters, applyFilters } from '../utils/filterUtils';
 
-interface ProductCardProps {
+interface Product {
   id: string;
-  image: string;
   name: string;
   description: string;
   price: number;
+  image: string;
+  brand?: string;
+  category?: string;
+  memory?: string;
+  color?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  searchKeywords?: string[];
+  clickCount?: number;
 }
 
 const TvPage: React.FC = () => {
-  const { category } = useParams<{ category: string }>();
-  const [products, setProducts] = useState<ProductCardProps[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> }>({});
+  const [availableFilters, setAvailableFilters] = useState<FilterOption[]>([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const querySnapshot = await getDocs(collection(db, 'products'));
-      const productsData = querySnapshot.docs.map(doc => doc.data());
-      setProducts(productsData);
+      try {
+        const tvCollection = collection(db, 'tv');
+        const tvSnapshot = await getDocs(tvCollection);
+        const tvList = tvSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Product[];
+        
+        setProducts(tvList);
+        
+        // Extract available filters from products
+        const filters = extractFilters(tvList);
+        setAvailableFilters(filters);
+        
+        // Initialize filtered products
+        setFilteredProducts(tvList);
+      } catch (err) {
+        console.error('Error fetching TV products:', err);
+        setError('Failed to load products');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchProducts();
-  }, [category]);
+  }, []);
+
+  // Update filtered products when filters change
+  useEffect(() => {
+    const filtered = applyFilters(products, activeFilters);
+    setFilteredProducts(filtered);
+  }, [products, activeFilters]);
+
+  const handleFilterChange = (filterKey: string, values: Set<string | number>) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      [filterKey]: values
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center py-8">{error}</div>;
+  }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">{category}</h1>
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-1/4 pr-4">
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <h2 className="font-bold mb-2">Filter</h2>
-            {/* Add your filters here */}
-          </div>
-        </aside>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">TV og Lyd</h1>
+        <button 
+          onClick={() => setShowFilters(!showFilters)}
+          className="btn btn-primary flex items-center gap-2"
+        >
+          <FaFilter />
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
+        </button>
+      </div>
 
-        {/* Main Content */}
-        <main className="w-3/4">
-          <div className="grid grid-cols-1 gap-4">
-            {products.map((product, index) => (
-              <div key={product.id || index} className="bg-white p-4 rounded-lg shadow-md flex">
-                <img src={product.image} alt={product.name} className="w-1/4" />
-                <div className="ml-4">
-                  <h3 className="font-bold">{product.name}</h3>
-                  <p>{product.description}</p>
-                  <p className="text-gray-500">{product.price},-</p>
-                </div>
-              </div>
-            ))}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Filters sidebar */}
+        {showFilters && (
+          <div className="lg:col-span-1">
+            <ProductFilters
+              filters={availableFilters}
+              onFilterChange={handleFilterChange}
+              activeFilters={activeFilters}
+            />
           </div>
-        </main>
+        )}
+
+        {/* Products grid */}
+        <div className={`${showFilters ? 'lg:col-span-3' : 'lg:col-span-4'} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`}>
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8">
+              No products found matching the selected filters.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

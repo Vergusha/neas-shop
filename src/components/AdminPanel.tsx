@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getFirestore } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 interface ProductForm {
@@ -11,6 +11,11 @@ interface ProductForm {
   brand: string;
   memory: string;
   color: string;
+  filterCategories?: {
+    brand: string;
+    memory: string;
+    color: string;
+  };
 }
 
 const AdminPanel: React.FC = () => {
@@ -26,41 +31,53 @@ const AdminPanel: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageInputType, setImageInputType] = useState<'file' | 'url'>('file');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      // Проверка обязательных полей
-      if (!product.name || !product.description || !product.price) {
-        throw new Error('Пожалуйста, заполните все обязательные поля');
+      // Data validation
+      if (!product.name?.trim() || !product.description?.trim() || product.price <= 0) {
+        throw new Error('Please fill in all required fields with valid values');
       }
 
-      let imageUrl = product.image;
+      let finalImageUrl = product.image;
       
-      if (imageFile) {
+      if (imageInputType === 'file' && imageFile) {
         try {
-          imageUrl = await convertToBase64(imageFile);
+          finalImageUrl = await convertToBase64(imageFile);
         } catch (imageError) {
           console.error('Ошибка при конвертации изображения:', imageError);
           throw new Error('Ошибка при обработке изображения');
         }
+      } else if (imageInputType === 'url' && imageUrl) {
+        finalImageUrl = imageUrl;
       }
       
-      // Проверяем, что db определен
+      const db = getFirestore();
       if (!db) {
-        throw new Error('База данных не инициализирована');
+        throw new Error('Database not initialized');
       }
 
       const productData = {
         ...product,
-        image: imageUrl,
+        image: finalImageUrl,
         createdAt: new Date().toISOString(),
         searchKeywords: generateSearchKeywords(product.name),
         clickCount: 0,
-        price: Number(product.price), // Убедимся, что цена - число
-        updatedAt: new Date().toISOString()
+        price: Math.abs(Number(product.price)),
+        updatedAt: new Date().toISOString(),
+        filterCategories: {
+          brand: product.brand.toLowerCase(),
+          memory: product.memory.toLowerCase(),
+          color: product.color.toLowerCase(),
+        },
+        brandFilter: product.brand.toLowerCase(),
+        memoryFilter: product.memory.toLowerCase(),
+        colorFilter: product.color.toLowerCase()
       };
 
       console.log('Добавляем продукт:', productData); // Для отладки
@@ -82,12 +99,13 @@ const AdminPanel: React.FC = () => {
         color: ''
       });
       setImageFile(null);
+      setImageUrl('');
       
       alert('Товар успешно добавлен!');
       
     } catch (error) {
-      console.error('Подробная ошибка:', error);
-      alert(error instanceof Error ? error.message : 'Произошла ошибка при добавлении товара');
+      console.error('Detailed error:', error);
+      alert(error instanceof Error ? error.message : 'An error occurred while adding the product');
     } finally {
       setIsLoading(false);
     }
@@ -181,13 +199,41 @@ const AdminPanel: React.FC = () => {
           
           <div>
             <label className="block text-sm font-medium text-gray-700">Изображение</label>
-            <input
-              type="file"
-              onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)}
-              className="file-input file-input-bordered w-full"
-              accept="image/*"
-            />
-            {imageFile && (
+            <div className="flex gap-4 mb-2">
+              <button
+                type="button"
+                className={`btn ${imageInputType === 'file' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setImageInputType('file')}
+              >
+                Загрузить файл
+              </button>
+              <button
+                type="button"
+                className={`btn ${imageInputType === 'url' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setImageInputType('url')}
+              >
+                Вставить ссылку
+              </button>
+            </div>
+            
+            {imageInputType === 'file' ? (
+              <input
+                type="file"
+                onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)}
+                className="file-input file-input-bordered w-full"
+                accept="image/*"
+              />
+            ) : (
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="input input-bordered w-full"
+                placeholder="https://example.com/image.jpg"
+              />
+            )}
+            
+            {imageFile && imageInputType === 'file' && (
               <div className="mt-2">
                 <p>Выбран файл: {imageFile.name}</p>
               </div>
