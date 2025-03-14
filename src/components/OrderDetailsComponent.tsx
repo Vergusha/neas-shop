@@ -18,6 +18,7 @@ interface OrderDetails {
   shippingAddress?: string;
   customerName?: string;
   customerPhone?: string;
+  customUserId?: string;
 }
 
 interface OrderDetailsComponentProps {
@@ -84,6 +85,7 @@ const OrderDetailsComponent: React.FC<OrderDetailsComponentProps> = ({ order }) 
         <h4 className="font-semibold mb-2">Customer Information</h4>
         <p className="text-sm"><span className="font-medium">Name:</span> {customerName}</p>
         <p className="text-sm"><span className="font-medium">Phone:</span> {customerPhone}</p>
+        <p className="text-sm"><span className="font-medium">Customer ID:</span> {order.customUserId || 'Guest'}</p>
       </div>
       
       <div className="mb-4">

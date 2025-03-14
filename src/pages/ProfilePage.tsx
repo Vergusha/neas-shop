@@ -5,6 +5,7 @@ import { database } from '../firebaseConfig';
 import { FaPencilAlt, FaHeart, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import OrderDetailsComponent from '../components/OrderDetailsComponent';
 import AvatarEditor from '../components/AvatarEditor'; // Импортируем новый компонент
+import { createCustomUserId } from '../utils/generateUserId';
 
 const defaultAvatarSVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UwZTBkMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzUiIHI9IjE1IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTUwIDUwYy0xNSAwLTMwIDE1LTMwIDMwczE1IDMwIDMwIDMwIDMwLTE1IDMwLTMwUzY1IDUwIDUwIDUwem0wIDUwYy0xMCAwLTE4IDgtMTggMThzOCAxOCAxOCAxOGMxMC4xIDAgMTgtOCAxOC0xOHMtOC0xOC0xOC0xOHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
 
@@ -27,6 +28,7 @@ const ProfilePage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [showAvatarEditor, setShowAvatarEditor] = useState(false); // Новое состояние для отображения редактора
+  const [customUserId, setCustomUserId] = useState<string>('');
 
   useEffect(() => {
     if (user) {
@@ -105,6 +107,7 @@ const ProfilePage: React.FC = () => {
             });
           }
           setNickname(data.nickname || '');
+          setCustomUserId(data.customUserId || '');
           
           localStorage.setItem('userProfile', JSON.stringify({
             realName: data.realName || '',
@@ -164,30 +167,47 @@ const ProfilePage: React.FC = () => {
           setIsUploading(true);
           avatarBase64 = await convertToBase64(avatar);
         }
+
+        // Get existing user data first
+        const userRef = ref(database, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        const existingData = snapshot.exists() ? snapshot.val() : {};
+
+        // Create updated user data object
+        const updatedUserData = {
+          ...existingData, // Keep existing data
+          realName,
+          phoneNumber,
+          avatarURL: avatarBase64,
+          nickname,
+          lastUpdated: new Date().toISOString(),
+          customUserId: existingData.customUserId || createCustomUserId(user.email || ''), // Keep existing ID or create new if missing
+        };
+
+        // Update Firebase Auth profile
         await updateProfile(user, {
           displayName: nickname,
           photoURL: avatarBase64,
         });
-        await set(ref(database, `users/${user.uid}`), {
-          realName,
-          phoneNumber,
-          avatarURL: avatarBase64,
-          nickname, // Ensure nickname is stored in the database
-        });
+
+        // Update Realtime Database
+        await set(userRef, updatedUserData);
+
+        // Update local state
         setAvatarURL(avatarBase64);
+        setCustomUserId(updatedUserData.customUserId);
+
         alert('Profile updated successfully');
         setIsEditing(false);
         setIsUploading(false);
+
+        // Update localStorage
+        localStorage.setItem('userProfile', JSON.stringify(updatedUserData));
       } catch (error) {
         console.error('Error updating profile:', error);
         setIsUploading(false);
       }
     }
-    // Save data to localStorage
-    localStorage.setItem('nickname', nickname);
-    localStorage.setItem('realName', realName);
-    localStorage.setItem('phoneNumber', phoneNumber);
-    localStorage.setItem('avatarURL', avatarURL);
   };
 
   const convertToBase64 = (file: File): Promise<string> => {
@@ -212,34 +232,39 @@ const ProfilePage: React.FC = () => {
       setIsUploading(true);
       
       if (user) {
-        // Создаем объект с данными пользователя
+        // Get existing user data
+        const userRef = ref(database, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        const existingData = snapshot.exists() ? snapshot.val() : {};
+
+        // Create updated user data object
         const userData = {
+          ...existingData, // Keep existing data
           realName,
           phoneNumber,
           nickname,
           avatarURL: imageData,
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
         };
 
-        // Сохраняем в Realtime Database
-        const userRef = ref(database, `users/${user.uid}`);
+        // Save to Realtime Database
         await set(userRef, userData);
 
-        // Обновляем профиль в Firebase Auth
+        // Update Firebase Auth profile
         await updateProfile(user, {
           photoURL: imageData,
           displayName: nickname
         });
 
-        // Обновляем локальное состояние
+        // Update local state
         setPreviewAvatar(imageData);
         setAvatarURL(imageData);
         
-        // Сохраняем в localStorage
+        // Save to localStorage
         localStorage.setItem('avatarURL', imageData);
         localStorage.setItem('userProfile', JSON.stringify(userData));
         
-        // Отправляем событие об обновлении аватара
+        // Dispatch event
         window.dispatchEvent(new CustomEvent('avatarUpdated', { 
           detail: { avatarURL: imageData, userData } 
         }));
@@ -373,7 +398,7 @@ const ProfilePage: React.FC = () => {
           
           <div className="ml-4">
             <h2 className="text-xl font-bold">{nickname || realName}</h2>
-            <p>User ID: {userId}</p>
+            <p className="text-sm text-gray-500">ID: {customUserId}</p>
             <FaHeart
               className="w-5 h-5 ml-2 cursor-pointer"
               fill={favorites.includes('product-id') ? 'red' : 'none'}

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { createCustomUserId } from '../utils/generateUserId';
+import { ref, set } from 'firebase/database';
+import { database } from '../firebaseConfig';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -12,7 +15,20 @@ const Register: React.FC = () => {
     e.preventDefault();
     const auth = getAuth();
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Generate custom user ID
+      const customUserId = createCustomUserId(email);
+      
+      // Save user data to Realtime Database
+      const userRef = ref(database, `users/${user.uid}`);
+      await set(userRef, {
+        email: user.email,
+        customUserId,
+        createdAt: new Date().toISOString()
+      });
+
       navigate('/'); // Redirect to home page after successful registration
     } catch (error: any) {
       setError(error.message);

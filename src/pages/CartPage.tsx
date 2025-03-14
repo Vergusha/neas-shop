@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, database } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
-import { ref, push, set } from 'firebase/database';
+import { ref, push, set, get } from 'firebase/database';
 
 interface CartItem {
   id: string;
@@ -152,6 +152,17 @@ const CartPage: React.FC = () => {
     try {
       const total = calculateTotal();
       const currentUser = auth.currentUser;
+      
+      // Get user's custom ID if logged in
+      let customUserId = 'guest';
+      if (currentUser) {
+        const userRef = ref(database, `users/${currentUser.uid}`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          customUserId = snapshot.val().customUserId;
+        }
+      }
+      
       const orderDate = new Date();
       const orderNumber = `ORD-${Math.floor(Math.random() * 10000)}-${orderDate.getFullYear()}`;
       
@@ -177,6 +188,7 @@ const CartPage: React.FC = () => {
         shippingAddress: 'Default Address',
         userId: currentUser ? currentUser.uid : 'anonymous',
         userEmail: currentUser ? currentUser.email : 'guest',
+        customUserId,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim()
       };
