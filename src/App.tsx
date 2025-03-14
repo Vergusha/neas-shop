@@ -14,6 +14,7 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import ProfilePage from './pages/ProfilePage';
 import FavoritesPage from './pages/FavoritesPage';
+import Home from './pages/Home';
 
 const App = () => {
   return (
@@ -22,7 +23,7 @@ const App = () => {
         <Header />
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<CategoryList />} />
+            <Route path="/" element={<Home />} />
             <Route path="/products/mobil" element={<MobilePage />} />
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/products/data-og-tilbehor" element={<DataPage />} />
