@@ -1,6 +1,48 @@
-import CategoryList from '../components/CategoryList'
+import { useEffect, useState } from 'react';
+import CategoryList from '../components/CategoryList';
+import ProductCard from '../components/ProductCard';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
+
+interface Product {
+  id: string;
+  image: string;
+  name: string;
+  description: string;
+  price: number;
+  clickCount: number;
+}
 
 const Home = () => {
+  const [popularProducts, setPopularProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPopularProducts = async () => {
+      try {
+        // Query for products with highest clickCount
+        const q = query(
+          collection(db, 'products'), 
+          orderBy('clickCount', 'desc'), 
+          limit(4)
+        );
+        const querySnapshot = await getDocs(q);
+        const products = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Product));
+        
+        setPopularProducts(products);
+      } catch (error) {
+        console.error('Error fetching popular products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPopularProducts();
+  }, []);
+
   return (
     <div className="flex flex-col">
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,17 +63,34 @@ const Home = () => {
         <section className="py-6 md:py-8 mb-4">
           <h2 className="text-xl sm:text-2xl font-bold mb-3 md:mb-4">Popular Products</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {/* Placeholder products for demonstration */}
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white p-4 rounded-lg shadow-md h-48 flex items-center justify-center">
-                <p className="text-gray-400">Product {i}</p>
+            {loading ? (
+              <div className="col-span-4 flex justify-center">
+                <span className="loading loading-spinner loading-lg"></span>
               </div>
-            ))}
+            ) : popularProducts.length > 0 ? (
+              popularProducts.map(product => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  image={product.image}
+                  name={product.name}
+                  description={product.description}
+                  price={product.price}
+                />
+              ))
+            ) : (
+              // Fallback to placeholder if no popular products
+              [1, 2, 3, 4].map(i => (
+                <div key={i} className="bg-white p-4 rounded-lg shadow-md h-48 flex items-center justify-center">
+                  <p className="text-gray-400">No popular products found</p>
+                </div>
+              ))
+            )}
           </div>
         </section>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

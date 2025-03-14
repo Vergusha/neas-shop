@@ -3,6 +3,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import { Range, getTrackBackground } from 'react-range';
+import { Link } from 'react-router-dom';
 
 const STEP = 100;
 
@@ -249,14 +250,15 @@ const MobilePage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id || product.name}
-                  id={product.id}
-                  image={product.image}
-                  name={product.name}
-                  description={product.description}
-                  price={product.price}
-                />
+                <div key={product.id || product.name} className="cursor-pointer">
+                  <ProductCard
+                    id={product.id}
+                    image={product.image}
+                    name={product.name}
+                    description={product.description}
+                    price={product.price}
+                  />
+                </div>
               ))}
             </div>
           )}
