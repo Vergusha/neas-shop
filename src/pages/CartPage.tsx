@@ -269,156 +269,165 @@ const CartPage: React.FC = () => {
         </div>
       )}
 
-      {cartItems.length === 0 && !checkoutSuccess ? (
-        <div className="bg-white p-8 rounded-lg shadow-md text-center">
-          <h2 className="text-xl font-semibold mb-4">Your cart is empty</h2>
-          <p className="mb-4">Add some products to your cart to continue shopping.</p>
-          <button 
-            className="btn btn-primary" 
-            onClick={() => navigate('/')}
-          >
-            Continue Shopping
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quantity
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {cartItems.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-16 w-16">
-                          <img className="h-16 w-16 object-contain" src={item.image} alt={item.name} />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{Number(item.price).toFixed(2)} NOK</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <button 
-                          className="p-1 rounded-full hover:bg-gray-200"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        >
-                          <Minus size={16} />
-                        </button>
-                        <span className="mx-2 w-8 text-center">{item.quantity}</span>
-                        <button 
-                          className="p-1 rounded-full hover:bg-gray-200"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        >
-                          <Plus size={16} />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{Number(item.price * item.quantity).toFixed(2)} NOK</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button 
-                        className="text-red-600 hover:text-red-900"
-                        onClick={() => removeItem(item.id)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
+      <div className="flex flex-col md:flex-row justify-between gap-4">
+        {/* Left column with cart items and customer info */}
+        <div className="md:w-1/2 lg:w-2/3">
+          {cartItems.length === 0 && !checkoutSuccess ? (
+            <div className="bg-white p-8 rounded-lg shadow-md text-center mb-6">
+              <h2 className="text-xl font-semibold mb-4">Your cart is empty</h2>
+              <p className="mb-4">Add some products to your cart to continue shopping.</p>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => navigate('/')}
+              >
+                Continue Shopping
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Product
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Price
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Quantity
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Total
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {cartItems.map((item) => (
+                    <tr key={item.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-16 w-16">
+                            <img className="h-16 w-16 object-contain" src={item.image} alt={item.name} />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{Number(item.price).toFixed(2)} NOK</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <button 
+                            className="p-1 rounded-full hover:bg-gray-200"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <span className="mx-2 w-8 text-center">{item.quantity}</span>
+                          <button 
+                            className="p-1 rounded-full hover:bg-gray-200"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{Number(item.price * item.quantity).toFixed(2)} NOK</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button 
+                          className="text-red-600 hover:text-red-900"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-          <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="md:w-1/2 lg:w-2/3">
-              <button 
-                className="btn btn-outline btn-error"
-                onClick={clearCart}
-              >
-                Clear Cart
-              </button>
-              
-              {/* Customer information form */}
-              <div className="bg-white p-6 rounded-lg shadow-md mt-6">
-                <h2 className="text-lg font-bold mb-4">Customer Information</h2>
-                <div className="mb-4">
-                  <label htmlFor="customerName" className="block text-gray-700 mb-2">Full Name *</label>
-                  <input
-                    type="text"
-                    id="customerName"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    className={`w-full input input-bordered ${formErrors.name ? 'input-error' : ''}`}
-                    required
-                  />
-                  {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="customerPhone" className="block text-gray-700 mb-2">Phone Number *</label>
-                  <input
-                    type="tel"
-                    id="customerPhone"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    className={`w-full input input-bordered ${formErrors.phone ? 'input-error' : ''}`}
-                    placeholder="+47 123 45 678"
-                    required
-                  />
-                  {formErrors.phone && <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>}
-                </div>
-              </div>
+          {cartItems.length > 0 && (
+            <button 
+              className="btn btn-outline btn-error mb-6"
+              onClick={clearCart}
+            >
+              Clear Cart
+            </button>
+          )}
+          
+          {/* Customer information form - always displayed */}
+          <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 className="text-lg font-bold mb-4">Customer Information</h2>
+            <div className="mb-4">
+              <label htmlFor="customerName" className="block text-gray-700 mb-2">Full Name *</label>
+              <input
+                type="text"
+                id="customerName"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className={`w-full input input-bordered ${formErrors.name ? 'input-error' : ''}`}
+                required
+              />
+              {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
             </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-md md:w-1/2 lg:w-1/3">
-              <h2 className="text-lg font-bold mb-4">Order Summary</h2>
-              <div className="flex justify-between mb-2">
-                <span>Subtotal:</span>
-                <span>{Number(calculateTotal()).toFixed(2)} NOK</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span>Shipping:</span>
-                <span>Free</span>
-              </div>
-              <div className="border-t border-gray-200 my-4"></div>
-              <div className="flex justify-between font-bold">
-                <span>Total:</span>
-                <span>{Number(calculateTotal()).toFixed(2)} NOK</span>
-              </div>
-              <button 
-                className="btn btn-primary w-full mt-4"
-                onClick={handleCheckout}
-                disabled={cartItems.length === 0}
-              >
-                Checkout
-              </button>
+            <div className="mb-4">
+              <label htmlFor="customerPhone" className="block text-gray-700 mb-2">Phone Number *</label>
+              <input
+                type="tel"
+                id="customerPhone"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className={`w-full input input-bordered ${formErrors.phone ? 'input-error' : ''}`}
+                placeholder="+47 123 45 678"
+                required
+              />
+              {formErrors.phone && <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>}
             </div>
           </div>
-        </>
-      )}
+        </div>
+        
+        {/* Right column with order summary - always displayed */}
+        <div className="bg-white p-6 rounded-lg shadow-md md:w-1/2 lg:w-1/3 h-fit">
+          <h2 className="text-lg font-bold mb-4">Order Summary</h2>
+          <div className="flex justify-between mb-2">
+            <span>Subtotal:</span>
+            <span>{Number(calculateTotal()).toFixed(2)} NOK</span>
+          </div>
+          <div className="flex justify-between mb-2">
+            <span>Shipping:</span>
+            <span>Free</span>
+          </div>
+          <div className="border-t border-gray-200 my-4"></div>
+          <div className="flex justify-between font-bold">
+            <span>Total:</span>
+            <span>{Number(calculateTotal()).toFixed(2)} NOK</span>
+          </div>
+          
+          <button 
+            className="btn btn-primary w-full mt-4"
+            onClick={handleCheckout}
+            disabled={cartItems.length === 0}
+          >
+            Checkout
+          </button>
+          
+          {cartItems.length === 0 && (
+            <p className="text-red-500 text-sm text-center mt-2">
+              Please add items to your cart before checking out
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
