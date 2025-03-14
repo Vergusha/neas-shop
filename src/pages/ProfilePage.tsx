@@ -96,31 +96,62 @@ const ProfilePage: React.FC = () => {
         if (snapshot.exists()) {
           const data = snapshot.val();
           console.log('User profile data:', data);
-          setRealName(data.realName || '');
-          setPhoneNumber(data.phoneNumber || '');
-          if (data.avatarURL) {
-            setAvatarURL(data.avatarURL);
-            setPreviewAvatar(data.avatarURL);
-            // Обновляем photoURL в Firebase Auth
-            await updateProfile(user, {
-              photoURL: data.avatarURL
-            });
-          }
-          setNickname(data.nickname || '');
-          setCustomUserId(data.customUserId || '');
           
-          localStorage.setItem('userProfile', JSON.stringify({
+          // Update all user data at once
+          const userData = {
             realName: data.realName || '',
             phoneNumber: data.phoneNumber || '',
             nickname: data.nickname || '',
-            avatarURL: data.avatarURL || defaultAvatarSVG
-          }));
+            avatarURL: data.avatarURL || defaultAvatarSVG,
+            customUserId: data.customUserId || ''
+          };
+
+          // Update all states
+          setRealName(userData.realName);
+          setPhoneNumber(userData.phoneNumber);
+          setNickname(userData.nickname);
+          setCustomUserId(userData.customUserId);
+
+          if (userData.avatarURL) {
+            setAvatarURL(userData.avatarURL);
+            setPreviewAvatar(userData.avatarURL);
+            // Обновляем photoURL в Firebase Auth
+            await updateProfile(user, {
+              photoURL: userData.avatarURL
+            });
+          }
+          
+          // Save complete user data to localStorage
+          localStorage.setItem('userProfile', JSON.stringify(userData));
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
+        
+        // Try to restore from localStorage if fetch fails
+        const savedProfile = localStorage.getItem('userProfile');
+        if (savedProfile) {
+          const userData = JSON.parse(savedProfile);
+          setRealName(userData.realName || '');
+          setPhoneNumber(userData.phoneNumber || '');
+          setNickname(userData.nickname || '');
+          setCustomUserId(userData.customUserId || '');
+          setAvatarURL(userData.avatarURL || defaultAvatarSVG);
+          setPreviewAvatar(userData.avatarURL || defaultAvatarSVG);
+        }
       }
     }
   };
+
+  // Add new useEffect for localStorage sync
+  useEffect(() => {
+    // Try to restore from localStorage on mount
+    const savedProfile = localStorage.getItem('userProfile');
+    if (savedProfile) {
+      const userData = JSON.parse(savedProfile);
+      setCustomUserId(userData.customUserId || '');
+      // ...other state updates if needed
+    }
+  }, []);
 
   const fetchOrderHistory = async () => {
     console.log("Fetching order history for userId:", userId);
@@ -324,11 +355,15 @@ const ProfilePage: React.FC = () => {
       const unsubscribe = onValue(userRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
+          setCustomUserId(data.customUserId || '');
           if (data.avatarURL) {
             setPreviewAvatar(data.avatarURL);
             setAvatarURL(data.avatarURL);
             localStorage.setItem('avatarURL', data.avatarURL);
           }
+          
+          // Update localStorage with new data
+          localStorage.setItem('userProfile', JSON.stringify(data));
         }
       });
 
