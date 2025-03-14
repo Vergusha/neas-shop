@@ -70,3 +70,38 @@ input:focus {
 .card {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 6px 20px rgba(0, 0, 0, 0.1);
 }
+
+/* Custom breadcrumb styling */
+.breadcrumbs {
+  margin-bottom: 1rem;
+}
+
+.breadcrumbs ul {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.breadcrumbs ul li {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* Remove the default DaisyUI separator and use our chevron icon instead */
+.breadcrumbs ul li:not(:last-child)::after {
+  content: none;
+}
+
+.breadcrumbs a {
+  color: #003D2D;
+  font-weight: 500;
+}
+
+.breadcrumbs a:hover {
+  color: #F0E965;
+  text-decoration: underline;
+}

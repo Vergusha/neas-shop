@@ -16,12 +16,14 @@ import ProfilePage from './pages/ProfilePage';
 import FavoritesPage from './pages/FavoritesPage';
 import CartPage from './pages/CartPage';
 import Home from './pages/Home';
+import Breadcrumbs from './components/Breadcrumbs';
 
 const App = () => {
   return (
     <Router>
       <div className="min-h-screen flex flex-col">
         <Header />
+        <Breadcrumbs />
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />

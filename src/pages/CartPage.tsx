@@ -118,52 +118,83 @@ const CartPage: React.FC = () => {
       
       // Create order object
       const orderData = {
+        id: Date.now().toString(),
         items: normalizedItems,
         total: Number(total),
         date: orderDate.toISOString(),
         status: 'completed',
         orderNumber: orderNumber,
-        shippingAddress: 'Default Address', // In a real app, get this from a form
+        shippingAddress: 'Default Address',
         userId: currentUser ? currentUser.uid : 'anonymous',
         userEmail: currentUser ? currentUser.email : 'guest'
       };
       
       // Save to Firebase if user is logged in
       if (currentUser) {
-        // Use a more structured path for orders that includes the timestamp for better sorting
-        const ordersRef = ref(database, `orders/${currentUser.uid}/${Date.now()}`);
-        await set(ordersRef, orderData);
-        
-        // Also save to Firestore for better querying capabilities
-        const orderDocRef = doc(db, 'orders', orderNumber);
-        await setDoc(orderDocRef, {
-          ...orderData,
-          createdAt: orderDate.toISOString()
-        });
-        
-        console.log('Order saved successfully');
+        try {
+          // Use a more structured path for orders that includes the timestamp for better sorting
+          const ordersRef = ref(database, `orders/${currentUser.uid}/${orderData.id}`);
+          await set(ordersRef, orderData);
+          
+          // Also save to Firestore for better querying capabilities
+          const orderDocRef = doc(db, 'orders', orderNumber);
+          await setDoc(orderDocRef, {
+            ...orderData,
+            createdAt: orderDate.toISOString()
+          });
+          
+          console.log('Order saved successfully to Firebase');
+        } catch (firebaseError) {
+          console.error('Error saving order to Firebase:', firebaseError);
+          // Continue with local storage as fallback
+          saveOrderToLocalStorage(orderData);
+        }
       } else {
         // For non-logged-in users, save to localStorage
-        const anonymousOrders = JSON.parse(localStorage.getItem('anonymousOrders') || '[]');
-        const newOrder = {
-          ...orderData,
-          id: `local-${Date.now()}`,
-        };
-        anonymousOrders.push(newOrder);
-        localStorage.setItem('anonymousOrders', JSON.stringify(anonymousOrders));
+        saveOrderToLocalStorage(orderData);
       }
       
+      // Set checkout success state before clearing cart
       setCheckoutSuccess(true);
-      clearCart();
       
+      // Clear the cart immediately after successful order
+      setCartItems([]);
+      localStorage.removeItem('cart');
+      
+      // Dispatch custom event to update cart count in header
+      try {
+        window.dispatchEvent(new Event('cartUpdated'));
+      } catch (eventError) {
+        console.error('Error dispatching cartUpdated event:', eventError);
+      }
+      
+      console.log('Cart cleared successfully');
+      
+      // Navigate after a delay
       setTimeout(() => {
         setCheckoutSuccess(false);
-        navigate('/profile', { state: { newOrder: true } }); // Pass state to trigger order refresh
+        navigate('/profile', { state: { newOrder: true } });
       }, 3000);
       
     } catch (error) {
       console.error('Error processing order:', error);
       alert('There was an error processing your order. Please try again.');
+    }
+  };
+
+  // Helper function to save order to localStorage
+  const saveOrderToLocalStorage = (orderData: any) => {
+    try {
+      const anonymousOrders = JSON.parse(localStorage.getItem('anonymousOrders') || '[]');
+      const newOrder = {
+        ...orderData,
+        id: `local-${Date.now()}`,
+      };
+      anonymousOrders.push(newOrder);
+      localStorage.setItem('anonymousOrders', JSON.stringify(anonymousOrders));
+      console.log('Order saved successfully to localStorage');
+    } catch (storageError) {
+      console.error('Error saving to localStorage:', storageError);
     }
   };
 

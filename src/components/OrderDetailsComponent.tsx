@@ -44,7 +44,7 @@ const OrderDetailsComponent: React.FC<OrderDetailsComponentProps> = ({ order }) 
   // Use optional chaining and nullish coalescing for safer property access
   const orderNumber = order?.orderNumber || 'Unknown';
   const status = order?.status || 'Unknown';
-  const date = order?.date ? new Date(order.date).toLocaleDateString() : 'Unknown date';
+  const date = order?.date ? new Date(order.date).toLocaleString() : 'Unknown date'; // Changed to toLocaleString() to include time
   const shippingAddress = order?.shippingAddress || 'Default Address';
   const total = order?.total || 0;
 
