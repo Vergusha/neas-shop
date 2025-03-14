@@ -14,6 +14,7 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import ProfilePage from './pages/ProfilePage';
 import FavoritesPage from './pages/FavoritesPage';
+import CartPage from './pages/CartPage';
 import Home from './pages/Home';
 
 const App = () => {
@@ -36,6 +37,7 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
+            <Route path="/cart" element={<CartPage />} />
           </Routes>
         </main>
         <Footer />

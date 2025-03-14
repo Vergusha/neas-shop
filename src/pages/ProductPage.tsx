@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-import { Heart } from 'lucide-react'; // Import Heart icon
+import { Heart, Plus, Minus, ShoppingCart } from 'lucide-react'; // Import additional icons
 
 interface ProductCardProps {
   id: string;
@@ -17,7 +17,9 @@ const ProductPage: React.FC = () => {
   const [product, setProduct] = useState<ProductCardProps | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false); // Add state for favorite status
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -75,6 +77,48 @@ const ProductPage: React.FC = () => {
     localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
   };
 
+  const incrementQuantity = () => {
+    setQuantity(prev => prev + 1);
+  };
+
+  const decrementQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(prev => prev - 1);
+    }
+  };
+
+  const addToCart = () => {
+    if (!product || !id) return;
+
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    // Check if the product is already in the cart
+    const existingItemIndex = cart.findIndex((item: any) => item.id === id);
+    
+    if (existingItemIndex >= 0) {
+      // Update quantity if the product is already in cart
+      cart[existingItemIndex].quantity += quantity;
+    } else {
+      // Add new item to cart
+      cart.push({
+        id,
+        quantity,
+        name: product.name,
+        price: product.price,
+        image: product.image
+      });
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Dispatch custom event to update cart count in header
+    window.dispatchEvent(new Event('cartUpdated'));
+    
+    // Show success message
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 3000);
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-screen"><span className="loading loading-spinner loading-lg"></span></div>;
   }
@@ -112,7 +156,42 @@ const ProductPage: React.FC = () => {
             </div>
             <p className="text-gray-500 mb-4">{product?.description}</p>
             <p className="text-xl font-bold text-gray-900 mb-4">{Number(product?.price).toFixed(2)} NOK</p>
-            <button className="btn btn-primary">Add to Cart</button>
+            
+            {/* Quantity selector */}
+            <div className="flex items-center mb-6">
+              <span className="mr-4">Quantity:</span>
+              <div className="flex items-center border rounded-md">
+                <button 
+                  className="px-3 py-1 text-gray-600 hover:bg-gray-100"
+                  onClick={decrementQuantity}
+                >
+                  <Minus size={16} />
+                </button>
+                <span className="px-4 py-1 border-l border-r">{quantity}</span>
+                <button 
+                  className="px-3 py-1 text-gray-600 hover:bg-gray-100"
+                  onClick={incrementQuantity}
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+            </div>
+            
+            {/* Add to cart button */}
+            <button 
+              className="btn btn-primary flex items-center justify-center gap-2"
+              onClick={addToCart}
+            >
+              <ShoppingCart size={20} />
+              Add to Cart
+            </button>
+            
+            {/* Success message */}
+            {addedToCart && (
+              <div className="mt-4 p-2 bg-green-100 text-green-700 rounded-md">
+                Product added to cart!
+              </div>
+            )}
           </div>
         </div>
       </div>

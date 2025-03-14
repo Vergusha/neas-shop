@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
@@ -8,11 +8,12 @@ interface ProductCardProps {
   name: string;
   description: string;
   price: number;
-  onFavoriteChange?: () => void; // Add optional callback
+  onFavoriteChange?: () => void;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ id, image, name, description, price, onFavoriteChange }) => {
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
+  const [addedToCart, setAddedToCart] = useState(false);
   
   // Check if product is in favorites on component mount
   useEffect(() => {
@@ -46,6 +47,39 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, image, name, description,
       onFavoriteChange();
     }
   };
+  
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    // Check if the product is already in the cart
+    const existingItemIndex = cart.findIndex((item: any) => item.id === id);
+    
+    if (existingItemIndex >= 0) {
+      // Increment quantity if the product is already in cart
+      cart[existingItemIndex].quantity += 1;
+    } else {
+      // Add new item to cart
+      cart.push({
+        id,
+        quantity: 1,
+        name,
+        price,
+        image
+      });
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Dispatch custom event to update cart count in header
+    window.dispatchEvent(new Event('cartUpdated'));
+    
+    // Show success message
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 1500);
+  };
 
   return (
     <Link to={`/product/${id}`} className="block">
@@ -56,9 +90,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, image, name, description,
         <div className="card-body">
           <h2 className="card-title">{name}</h2>
           <p>{description}</p>
-          <div className="card-actions justify-end">
+          <div className="card-actions justify-between items-center">
             <span className="text-xl font-bold">{Number(price).toFixed(2)} NOK</span>
+            <button
+              className="btn btn-sm btn-circle btn-primary"
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart size={16} />
+            </button>
           </div>
+          
+          {/* Success message */}
+          {addedToCart && (
+            <div className="absolute bottom-0 left-0 right-0 bg-green-500 text-white text-center py-1 text-sm">
+              Added to cart!
+            </div>
+          )}
         </div>
         <button
           className={`absolute top-2 right-2 p-1 rounded-full ${isFavorite ? 'text-red-500' : 'text-gray-500'}`}

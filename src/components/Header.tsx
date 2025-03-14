@@ -15,6 +15,7 @@ const Header = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [favorites, setFavorites] = useState<any[]>([]);
+  const [cartItemCount, setCartItemCount] = useState(0);
   const navigate = useNavigate();
   const auth = getAuth();
 
@@ -59,6 +60,27 @@ const Header = () => {
   useEffect(() => {
     const storedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     setFavorites(storedFavorites);
+    
+    // Get cart items count
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const count = cart.reduce((total: number, item: any) => total + item.quantity, 0);
+      setCartItemCount(count);
+    };
+    
+    updateCartCount();
+    
+    // Add event listener to update cart count when storage changes
+    window.addEventListener('storage', updateCartCount);
+    
+    // Custom event for cart updates
+    const handleCartUpdate = () => updateCartCount();
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    
+    return () => {
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -78,6 +100,10 @@ const Header = () => {
 
   const handleFavoriteClick = () => {
     navigate('/favorites');
+  };
+
+  const handleCartClick = () => {
+    navigate('/cart');
   };
 
   return (
@@ -133,10 +159,18 @@ const Header = () => {
             <Heart size={24} />
           </button>
           <button
-            className="p-2 transition text-white icon-animation"
+            className="p-2 transition text-white icon-animation relative"
             style={{ transition: 'color 0.3s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'white')}
+            onClick={handleCartClick}
           >
             <ShoppingCart size={24} />
+            {cartItemCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            )}
           </button>
           <div className="relative">
             <button
