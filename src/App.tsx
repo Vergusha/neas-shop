@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import MobilePage from './pages/MobilePage';
@@ -16,6 +16,20 @@ import FavoritesPage from './pages/FavoritesPage';
 import CartPage from './pages/CartPage';
 import Home from './pages/Home';
 import Breadcrumbs from './components/Breadcrumbs';
+import AdminPanel from './components/AdminPanel'; // Fix import path
+import { isAdmin } from './utils/constants';
+import { getAuth } from 'firebase/auth';
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  
+  if (!user || !isAdmin(user.email)) {
+    return <Navigate to="/" />;
+  }
+  
+  return <>{children}</>;
+};
 
 const App = () => {
   return (
@@ -39,6 +53,11 @@ const App = () => {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/cart" element={<CartPage />} />
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminPanel />
+              </AdminRoute>
+            } />
           </Routes>
         </main>
         <Footer />

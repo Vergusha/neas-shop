@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { ref, get, set } from 'firebase/database';
+import { database } from '../firebaseConfig';
+import { createCustomUserId } from '../utils/generateUserId';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -12,8 +15,27 @@ const Login: React.FC = () => {
     e.preventDefault();
     const auth = getAuth();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/'); // Redirect to home page after successful login
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Check if user exists in database
+      const userRef = ref(database, `users/${user.uid}`);
+      const snapshot = await get(userRef);
+
+      if (!snapshot.exists()) {
+        // If user doesn't exist in database, create new entry
+        await set(userRef, {
+          email: user.email,
+          customUserId: createCustomUserId(email),
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      // Store user data in localStorage
+      const userData = snapshot.exists() ? snapshot.val() : {};
+      localStorage.setItem('userProfile', JSON.stringify(userData));
+
+      navigate('/');
     } catch (error: any) {
       setError(error.message);
     }

@@ -6,6 +6,8 @@ import { FaPencilAlt, FaHeart, FaChevronDown, FaChevronUp } from 'react-icons/fa
 import OrderDetailsComponent from '../components/OrderDetailsComponent';
 import AvatarEditor from '../components/AvatarEditor'; // Импортируем новый компонент
 import { createCustomUserId } from '../utils/generateUserId';
+import { isAdmin } from '../utils/constants';
+import AdminPanel from '../components/AdminPanel';
 
 const defaultAvatarSVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UwZTBkMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzUiIHI9IjE1IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTUwIDUwYy0xNSAwLTMwIDE1LTMwIDMwczE1IDMwIDMwIDMwIDMwLTE1IDMwLTMwUzY1IDUwIDUwIDUwem0wIDUwYy0xMCAwLTE4IDgtMTggMThzOCAxOCAxOCAxOGMxMC4xIDAgMTgtOCAxOC0xOHMtOC0xOC0xOC0xOHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
 
@@ -97,13 +99,23 @@ const ProfilePage: React.FC = () => {
           const data = snapshot.val();
           console.log('User profile data:', data);
           
+          // If customUserId is missing, create it
+          if (!data.customUserId) {
+            data.customUserId = createCustomUserId(user.email || '');
+            // Save the new customUserId
+            await set(userRef, {
+              ...data,
+              customUserId: data.customUserId
+            });
+          }
+          
           // Update all user data at once
           const userData = {
             realName: data.realName || '',
             phoneNumber: data.phoneNumber || '',
             nickname: data.nickname || '',
             avatarURL: data.avatarURL || defaultAvatarSVG,
-            customUserId: data.customUserId || ''
+            customUserId: data.customUserId
           };
 
           // Update all states
@@ -123,6 +135,15 @@ const ProfilePage: React.FC = () => {
           
           // Save complete user data to localStorage
           localStorage.setItem('userProfile', JSON.stringify(userData));
+        } else {
+          // If no user data exists, create it
+          const userData = {
+            email: user.email,
+            customUserId: createCustomUserId(user.email || ''),
+            createdAt: new Date().toISOString()
+          };
+          await set(userRef, userData);
+          setCustomUserId(userData.customUserId);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -552,6 +573,13 @@ const ProfilePage: React.FC = () => {
           <p>No order history available.</p>
         )}
       </div>
+      
+      {/* Admin Panel */}
+      {user && isAdmin(user.email) && (
+        <div className="mt-8">
+          <AdminPanel />
+        </div>
+      )}
       
       {/* Компонент AvatarEditor */}
       {showAvatarEditor && (

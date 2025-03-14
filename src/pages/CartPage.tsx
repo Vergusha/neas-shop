@@ -284,7 +284,8 @@ const CartPage: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between gap-4">
         {/* Left column with cart items and customer info */}
         <div className="md:w-1/2 lg:w-2/3">
-          {cartItems.length === 0 && !checkoutSuccess ? (
+          {/* Убираем проверку !checkoutSuccess, чтобы всегда показывать пустую корзину */}
+          {cartItems.length === 0 ? (
             <div className="bg-white p-8 rounded-lg shadow-md text-center mb-6">
               <h2 className="text-xl font-semibold mb-4">Your cart is empty</h2>
               <p className="mb-4">Add some products to your cart to continue shopping.</p>
