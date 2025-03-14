@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Trash2, Minus, Plus } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db, database } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
+import { getAuth } from 'firebase/auth';
+import { ref, push, set } from 'firebase/database';
 
 interface CartItem {
   id: string;
@@ -17,6 +19,7 @@ const CartPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const navigate = useNavigate();
+  const auth = getAuth();
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -93,15 +96,75 @@ const CartPage: React.FC = () => {
   const clearCart = () => {
     setCartItems([]);
     localStorage.removeItem('cart');
+    // Dispatch custom event to update cart count in header
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
-  const handleCheckout = () => {
-    setCheckoutSuccess(true);
-    clearCart();
-    setTimeout(() => {
-      setCheckoutSuccess(false);
-      navigate('/');
-    }, 3000);
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
+    
+    try {
+      const total = calculateTotal();
+      const currentUser = auth.currentUser;
+      const orderDate = new Date();
+      const orderNumber = `ORD-${Math.floor(Math.random() * 10000)}-${orderDate.getFullYear()}`;
+      
+      // Ensure items have numeric prices
+      const normalizedItems = cartItems.map(item => ({
+        ...item,
+        price: Number(item.price),
+        quantity: Number(item.quantity)
+      }));
+      
+      // Create order object
+      const orderData = {
+        items: normalizedItems,
+        total: Number(total),
+        date: orderDate.toISOString(),
+        status: 'completed',
+        orderNumber: orderNumber,
+        shippingAddress: 'Default Address', // In a real app, get this from a form
+        userId: currentUser ? currentUser.uid : 'anonymous',
+        userEmail: currentUser ? currentUser.email : 'guest'
+      };
+      
+      // Save to Firebase if user is logged in
+      if (currentUser) {
+        // Use a more structured path for orders that includes the timestamp for better sorting
+        const ordersRef = ref(database, `orders/${currentUser.uid}/${Date.now()}`);
+        await set(ordersRef, orderData);
+        
+        // Also save to Firestore for better querying capabilities
+        const orderDocRef = doc(db, 'orders', orderNumber);
+        await setDoc(orderDocRef, {
+          ...orderData,
+          createdAt: orderDate.toISOString()
+        });
+        
+        console.log('Order saved successfully');
+      } else {
+        // For non-logged-in users, save to localStorage
+        const anonymousOrders = JSON.parse(localStorage.getItem('anonymousOrders') || '[]');
+        const newOrder = {
+          ...orderData,
+          id: `local-${Date.now()}`,
+        };
+        anonymousOrders.push(newOrder);
+        localStorage.setItem('anonymousOrders', JSON.stringify(anonymousOrders));
+      }
+      
+      setCheckoutSuccess(true);
+      clearCart();
+      
+      setTimeout(() => {
+        setCheckoutSuccess(false);
+        navigate('/profile', { state: { newOrder: true } }); // Pass state to trigger order refresh
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error processing order:', error);
+      alert('There was an error processing your order. Please try again.');
+    }
   };
 
   const calculateTotal = (): number => {

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getAuth, updateProfile } from 'firebase/auth';
 import { ref, get, set } from 'firebase/database';
 import { database } from '../firebaseConfig';
-import { FaPencilAlt, FaHeart } from 'react-icons/fa';
+import { FaPencilAlt, FaHeart, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import OrderDetailsComponent from '../components/OrderDetailsComponent';
 
 const defaultAvatarSVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UwZTBkMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzUiIHI9IjE1IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTUwIDUwYy0xNSAwLTMwIDE1LTMwIDMwczE1IDMwIDMwIDMwIDMwLTE1IDMwLTMwUzY1IDUwIDUwIDUwem0wIDUwYy0xMCAwLTE4IDgtMTggMThzOCAxOCAxOCAxOGMxMC4xIDAgMTgtOCAxOC0xOHMtOC0xOC0xOC0xOHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
 
@@ -21,6 +22,9 @@ const ProfilePage: React.FC = () => {
     return savedFavorites ? JSON.parse(savedFavorites) : [];
   });
   const [userId, setUserId] = useState(user?.uid || '');
+  const [previewAvatar, setPreviewAvatar] = useState(user?.photoURL || defaultAvatarSVG);
+  const [isUploading, setIsUploading] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -92,12 +96,31 @@ const ProfilePage: React.FC = () => {
   const fetchOrderHistory = async () => {
     if (user) {
       const ordersRef = ref(database, `orders/${user.uid}`);
-      const snapshot = await get(ordersRef);
-      if (snapshot.exists()) {
-        console.log('Order history data:', snapshot.val());
-        setOrderHistory(Object.values(snapshot.val()));
+      try {
+        const snapshot = await get(ordersRef);
+        if (snapshot.exists()) {
+          const ordersData = snapshot.val();
+          // Convert the object to an array and sort by date (newest first)
+          const ordersArray = Object.values(ordersData).sort((a: any, b: any) => 
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
+          console.log('Order history data:', ordersArray);
+          setOrderHistory(ordersArray);
+        } else {
+          console.log('No order history data found');
+          setOrderHistory([]);
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        setOrderHistory([]);
+      }
+    } else {
+      // For non-logged-in users, try to get anonymous orders
+      const anonymousOrders = JSON.parse(localStorage.getItem('anonymousOrders') || '[]');
+      if (anonymousOrders.length > 0) {
+        setOrderHistory(anonymousOrders);
       } else {
-        console.log('No order history data found');
+        setOrderHistory([]);
       }
     }
   };
@@ -107,6 +130,7 @@ const ProfilePage: React.FC = () => {
       try {
         let avatarBase64 = avatarURL;
         if (avatar) {
+          setIsUploading(true);
           avatarBase64 = await convertToBase64(avatar);
         }
         await updateProfile(user, {
@@ -122,8 +146,10 @@ const ProfilePage: React.FC = () => {
         setAvatarURL(avatarBase64);
         alert('Profile updated successfully');
         setIsEditing(false);
+        setIsUploading(false);
       } catch (error) {
         console.error('Error updating profile:', error);
+        setIsUploading(false);
       }
     }
     // Save data to localStorage
@@ -146,6 +172,22 @@ const ProfilePage: React.FC = () => {
     document.getElementById('avatarInput')?.click();
   };
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setIsUploading(true);
+      const file = e.target.files[0];
+      setAvatar(file);
+      
+      // Create a preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreviewAvatar(reader.result as string);
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleFavoriteClick = (productId: string) => {
     let updatedFavorites;
     if (favorites.includes(productId)) {
@@ -157,6 +199,21 @@ const ProfilePage: React.FC = () => {
     localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
   };
 
+  const toggleOrderDetails = (orderId: string) => {
+    setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+    // Add debug logging when toggling order
+    if (expandedOrderId !== orderId) {
+      const order = orderHistory.find((o: any) => o.id === orderId);
+      console.log('Toggling order details for:', orderId);
+      console.log('Order data:', order);
+      
+      // Check if order has required properties
+      if (order && (!order.items || !Array.isArray(order.items))) {
+        console.error('Order is missing items array:', order);
+      }
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-4">Profile</h1>
@@ -165,20 +222,33 @@ const ProfilePage: React.FC = () => {
           <div className="relative">
             <div className="avatar">
               <div className="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                <img
-                  src={avatarURL}
-                  alt="Avatar"
-                  className="w-24 h-24 rounded-full cursor-pointer object-cover"
-                  onClick={handleAvatarClick}
-                />
+                {isUploading ? (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                    <span className="loading loading-spinner loading-md"></span>
+                  </div>
+                ) : (
+                  <img
+                    src={previewAvatar}
+                    alt="Avatar"
+                    className="cursor-pointer object-cover"
+                    onClick={handleAvatarClick}
+                  />
+                )}
               </div>
             </div>
             <input
               type="file"
               id="avatarInput"
               style={{ display: 'none' }}
-              onChange={(e) => setAvatar(e.target.files ? e.target.files[0] : null)}
+              accept="image/*"
+              onChange={handleAvatarChange}
             />
+            <button 
+              className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full"
+              onClick={handleAvatarClick}
+            >
+              <FaPencilAlt className="w-4 h-4" />
+            </button>
           </div>
           <div className="ml-4">
             <h2 className="text-xl font-bold">{nickname || realName}</h2>
@@ -243,15 +313,52 @@ const ProfilePage: React.FC = () => {
       <div className="bg-white p-4 rounded-lg shadow-md mt-8">
         <h2 className="text-xl font-bold mb-4">Order History</h2>
         {orderHistory.length > 0 ? (
-          <ul>
+          <ul className="space-y-4">
             {orderHistory.map((order, index) => (
-              <li key={order.id || index} className="mb-2">
-                <div className="p-4 border rounded-lg">
-                  <p><strong>Order ID:</strong> {order.id}</p>
-                  <p><strong>Date:</strong> {order.date}</p>
-                  <p><strong>Total:</strong> {order.total} NOK</p>
-                  <p><strong>Status:</strong> {order.status}</p>
+              <li key={order.id || index} className="border rounded-lg overflow-hidden">
+                {/* Order summary row (always visible) */}
+                <div 
+                  className="p-4 bg-gray-50 flex justify-between items-center cursor-pointer"
+                  onClick={() => toggleOrderDetails(order.id)}
+                >
+                  <div>
+                    <p className="font-semibold">Order #{order.orderNumber || `${index + 1}`}</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(order.date).toLocaleDateString()} | 
+                      {order.items?.length || 0} items | 
+                      Total: {order.total?.toFixed(2) || 0} NOK
+                    </p>
+                  </div>
+                  <div className="flex items-center">
+                    <span className={`mr-2 px-2 py-1 rounded-full text-xs ${
+                      order.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                      order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {order.status || 'N/A'}
+                    </span>
+                    {expandedOrderId === order.id ? <FaChevronUp /> : <FaChevronDown />}
+                  </div>
                 </div>
+                
+                {/* Expanded order details */}
+                {expandedOrderId === order.id && (
+                  <div className="border-t p-4">
+                    {/* Add a try-catch wrapper to catch render errors */}
+                    {(() => {
+                      try {
+                        return <OrderDetailsComponent order={order} />;
+                      } catch (error) {
+                        console.error('Error rendering order details:', error);
+                        return (
+                          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            <p>Error displaying order details. Please try again later.</p>
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
