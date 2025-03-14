@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
-import CategoryList from './components/CategoryList';
 import Footer from './components/Footer';
 import MobilePage from './pages/MobilePage';
 import ProductPage from './pages/ProductPage';

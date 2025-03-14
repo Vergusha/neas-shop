@@ -4,7 +4,6 @@ import { ChevronRight } from 'lucide-react';
 
 // Maps route segments to readable names
 const routeNameMap: Record<string, string> = {
-  'products': 'Products',
   'product': 'Product',
   'mobil': 'Mobile Phones',
   'data-og-tilbehor': 'Data & Accessories',
@@ -42,6 +41,11 @@ const Breadcrumbs: React.FC = () => {
     
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
+      
+      // Skip adding "products" segment to breadcrumbs
+      if (segment === 'products') {
+        return;
+      }
       
       // Special case for product detail page
       if (segment === 'product' && pathSegments[index + 1]) {
