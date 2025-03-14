@@ -1,10 +1,11 @@
-import { Search, ShoppingCart, Heart, User } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Bell } from 'lucide-react';
 import logo from '../assets/logo.svg';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import Toast from './Toast';
 
 const logoColor = '#F0E965'; // Цвет логотипа
 
@@ -12,10 +13,15 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [favorites, setFavorites] = useState<any[]>([]);
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [showCartNotification, setShowCartNotification] = useState(false);
+  const [notificationItem, setNotificationItem] = useState<string>('');
+  const [cartOpen, setCartOpen] = useState(false);
+  
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchResultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const auth = getAuth();
 
@@ -74,12 +80,45 @@ const Header = () => {
     window.addEventListener('storage', updateCartCount);
     
     // Custom event for cart updates
-    const handleCartUpdate = () => updateCartCount();
+    const handleCartUpdate = (e: Event) => {
+      updateCartCount();
+      
+      // Show notification when item is added to cart
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail.item) {
+        setNotificationItem(customEvent.detail.item);
+        setShowCartNotification(true);
+        setTimeout(() => setShowCartNotification(false), 3000);
+      }
+    };
+    
     window.addEventListener('cartUpdated', handleCartUpdate);
     
     return () => {
       window.removeEventListener('storage', updateCartCount);
       window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Function to handle clicks outside the search component
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchInputRef.current && 
+        !searchInputRef.current.contains(event.target as Node) &&
+        searchResultsRef.current && 
+        !searchResultsRef.current.contains(event.target as Node)
+      ) {
+        setShowResults(false);
+      }
+    };
+
+    // Add event listener when component mounts
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Cleanup event listener when component unmounts
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -91,11 +130,6 @@ const Header = () => {
 
   const handleSignOut = async () => {
     await signOut(auth);
-    setShowProfileMenu(false);
-  };
-
-  const handleProfile = () => {
-    navigate('/profile');
   };
 
   const handleFavoriteClick = () => {
@@ -106,11 +140,21 @@ const Header = () => {
     navigate('/cart');
   };
 
+  const toggleCartPreview = () => {
+    setCartOpen(!cartOpen);
+  };
+
+  // Function to get cart items for preview
+  const getCartItems = () => {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    return cart.slice(0, 3); // Get first 3 items for preview
+  };
+
   return (
-    <header className="bg-[#003D2D] shadow-md flex items-center">
-      <div className="container mx-auto flex items-center justify-between py-4 px-6">
-        {/* Логотип */}
-        <div className="flex items-center">
+    <header className="bg-[#003D2D] shadow-md relative">
+      <div className="container mx-auto py-2">
+        <div className="flex items-center justify-between">
+          {/* Logo - Left aligned */}
           <a href="/" className="logo-animation">
             <img
               src={logo}
@@ -118,109 +162,132 @@ const Header = () => {
               className="h-8 w-auto md:h-10"
             />
           </a>
-        </div>
-
-        {/* Поиск */}
-        <div className="flex-1 mx-4 relative">
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="text"
-              placeholder="Искать товары..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowResults(true);
-              }}
-              className="w-full border border-gray-300 rounded-full px-4 py-2 pl-10 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <Search className="absolute left-3 top-2.5 text-black" size={20} />
-          </form>
-          {showResults && searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg mt-2 z-10">
-              {searchResults.map((result) => (
-                <div key={result.id} className="p-2 hover:bg-gray-100 cursor-pointer" onClick={() => navigate(`/product/${result.id}`)}>
-                  <img src={result.image} alt={result.name} className="w-8 h-8 inline-block mr-2" />
-                  <span>{result.name}</span>
+          
+          {/* Right side with search and icons */}
+          <div className="flex items-center gap-3">
+            {/* Search bar */}
+            <div className="relative w-64 md:w-80">
+              <form onSubmit={handleSearch} className="relative w-full">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Искать товары..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (e.target.value) {
+                      setShowResults(true);
+                    }
+                  }}
+                  onFocus={() => {
+                    if (searchResults.length > 0) {
+                      setShowResults(true);
+                    }
+                  }}
+                  className="w-full border border-gray-300 rounded-full px-4 py-2 pl-10 bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <Search className="absolute left-3 top-2.5 text-gray-500" size={20} />
+              </form>
+              {showResults && searchResults.length > 0 && (
+                <div 
+                  ref={searchResultsRef}
+                  className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg mt-2 z-20"
+                >
+                  {searchResults.map((result) => (
+                    <div key={result.id} className="p-2 hover:bg-gray-100 cursor-pointer" onClick={() => navigate(`/product/${result.id}`)}>
+                      <img src={result.image} alt={result.name} className="w-8 h-8 inline-block mr-2" />
+                      <span>{result.name}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
-
-        {/* Иконки профиля, избранного и корзины */}
-        <div className="flex items-center gap-4">
-          <button
-            className="p-2 transition text-white icon-animation"
-            style={{ transition: 'color 0.3s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'white')}
-            onClick={handleFavoriteClick}
-          >
-            <Heart size={24} />
-          </button>
-          <button
-            className="p-2 transition text-white icon-animation relative"
-            style={{ transition: 'color 0.3s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'white')}
-            onClick={handleCartClick}
-          >
-            <ShoppingCart size={24} />
-            {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {cartItemCount}
-              </span>
-            )}
-          </button>
-          <div className="relative">
-            <button
-              className="p-2 transition text-white icon-animation"
-              style={{ transition: 'color 0.3s' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'white')}
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-            >
-              <User size={24} />
-            </button>
-            {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
-                {user ? (
-                  <div className="p-4">
-                    <p className="mb-2">Hello, {user.email}</p>
-                    <button
-                      className="btn btn-primary w-full mb-2"
-                      onClick={handleProfile}
-                    >
-                      Profile
-                    </button>
-                    <button
-                      className="btn btn-primary w-full"
-                      onClick={handleSignOut}
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-4">
-                    <button
-                      className="btn btn-primary w-full mb-2"
-                      onClick={() => navigate('/login')}
-                    >
-                      Login
-                    </button>
-                    <button
-                      className="btn btn-secondary w-full"
-                      onClick={() => navigate('/register')}
-                    >
-                      Register
-                    </button>
+            
+            {/* Icon buttons in a row - Adjusted for consistent alignment */}
+            <div className="flex items-center gap-2">
+              {/* Favorites button */}
+              <button onClick={handleFavoriteClick} className="btn btn-ghost btn-circle">
+                <Heart size={32} className="text-white" />
+              </button>
+              
+              {/* Cart button with dropdown */}
+              <div className="relative pt-2"> {/* Added padding-top here */}
+                <button 
+                  onClick={toggleCartPreview} 
+                  className="btn btn-ghost btn-circle relative"
+                >
+                  <ShoppingCart size={32} className="text-white" />
+                  {cartItemCount > 0 && (
+                    <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                      {cartItemCount}
+                    </div>
+                  )}
+                </button>
+                
+                {/* Cart preview dropdown */}
+                {cartOpen && cartItemCount > 0 && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-xl z-20">
+                    <div className="p-4 border-b">
+                      <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
+                    </div>
+                    <div className="p-2 max-h-60 overflow-y-auto">
+                      {getCartItems().map((item: any, index: number) => (
+                        <div key={index} className="flex items-center p-2 hover:bg-gray-100 border-b">
+                          <img src={item.image} alt={item.name} className="w-12 h-12 object-contain" />
+                          <div className="ml-2 flex-1">
+                            <p className="text-sm font-medium truncate">{item.name}</p>
+                            <p className="text-xs text-gray-500">{item.quantity} × {item.price} NOK</p>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {cartItemCount > 3 && (
+                        <p className="text-xs text-center text-gray-500 mt-2">
+                          and {cartItemCount - 3} more items...
+                        </p>
+                      )}
+                    </div>
+                    <div className="p-3 bg-gray-50">
+                      <button 
+                        onClick={() => {
+                          setCartOpen(false);
+                          handleCartClick();
+                        }}
+                        className="w-full btn btn-primary btn-sm"
+                      >
+                        View Cart
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
-            )}
+              
+              {/* User button */}
+              <button 
+                onClick={() => user ? navigate('/profile') : navigate('/login')} 
+                className="btn btn-ghost btn-circle"
+              >
+                <div className="w-10 h-10 rounded-full bg-neutral-content flex items-center justify-center">
+                  {user && user.photoURL ? (
+                    <img src={user.photoURL} alt="user avatar" className="rounded-full w-full h-full object-cover" />
+                  ) : (
+                    <User size={22} className="text-neutral" />
+                  )}
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>
+      
+      {/* Cart notification toast */}
+      {showCartNotification && (
+        <Toast 
+          message={`Added to cart: ${notificationItem}`}
+          type="success"
+          onClose={() => setShowCartNotification(false)}
+        />
+      )}
     </header>
   );
 };

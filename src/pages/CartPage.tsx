@@ -18,6 +18,9 @@ const CartPage: React.FC = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [formErrors, setFormErrors] = useState<{name?: string, phone?: string}>({});
   const navigate = useNavigate();
   const auth = getAuth();
 
@@ -75,7 +78,24 @@ const CartPage: React.FC = () => {
     };
 
     fetchCartItems();
-  }, []);
+    
+    // Pre-fill customer info if available
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      setCustomerName(currentUser.displayName || '');
+      // Try to get phone from localStorage
+      const savedProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      if (savedProfile.phoneNumber) {
+        setCustomerPhone(savedProfile.phoneNumber);
+      }
+    } else {
+      // Try to get saved info from localStorage
+      const savedName = localStorage.getItem('checkoutName') || '';
+      const savedPhone = localStorage.getItem('checkoutPhone') || '';
+      setCustomerName(savedName);
+      setCustomerPhone(savedPhone);
+    }
+  }, [auth]);
 
   const updateQuantity = (id: string, newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -100,14 +120,44 @@ const CartPage: React.FC = () => {
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
+  const validateForm = (): boolean => {
+    const errors: {name?: string, phone?: string} = {};
+    let isValid = true;
+
+    if (!customerName.trim()) {
+      errors.name = 'Name is required';
+      isValid = false;
+    }
+
+    if (!customerPhone.trim()) {
+      errors.phone = 'Phone number is required';
+      isValid = false;
+    } else if (!/^\+?[0-9\s-()]{8,}$/.test(customerPhone.trim())) {
+      errors.phone = 'Please enter a valid phone number';
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
+    
+    // Validate customer information
+    if (!validateForm()) {
+      return;
+    }
     
     try {
       const total = calculateTotal();
       const currentUser = auth.currentUser;
       const orderDate = new Date();
       const orderNumber = `ORD-${Math.floor(Math.random() * 10000)}-${orderDate.getFullYear()}`;
+      
+      // Save customer info to localStorage for future checkouts
+      localStorage.setItem('checkoutName', customerName);
+      localStorage.setItem('checkoutPhone', customerPhone);
       
       // Ensure items have numeric prices
       const normalizedItems = cartItems.map(item => ({
@@ -116,7 +166,7 @@ const CartPage: React.FC = () => {
         quantity: Number(item.quantity)
       }));
       
-      // Create order object
+      // Create order object with customer information
       const orderData = {
         id: Date.now().toString(),
         items: normalizedItems,
@@ -126,7 +176,9 @@ const CartPage: React.FC = () => {
         orderNumber: orderNumber,
         shippingAddress: 'Default Address',
         userId: currentUser ? currentUser.uid : 'anonymous',
-        userEmail: currentUser ? currentUser.email : 'guest'
+        userEmail: currentUser ? currentUser.email : 'guest',
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim()
       };
       
       // Save to Firebase if user is logged in
@@ -309,7 +361,38 @@ const CartPage: React.FC = () => {
               >
                 Clear Cart
               </button>
+              
+              {/* Customer information form */}
+              <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+                <h2 className="text-lg font-bold mb-4">Customer Information</h2>
+                <div className="mb-4">
+                  <label htmlFor="customerName" className="block text-gray-700 mb-2">Full Name *</label>
+                  <input
+                    type="text"
+                    id="customerName"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className={`w-full input input-bordered ${formErrors.name ? 'input-error' : ''}`}
+                    required
+                  />
+                  {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="customerPhone" className="block text-gray-700 mb-2">Phone Number *</label>
+                  <input
+                    type="tel"
+                    id="customerPhone"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    className={`w-full input input-bordered ${formErrors.phone ? 'input-error' : ''}`}
+                    placeholder="+47 123 45 678"
+                    required
+                  />
+                  {formErrors.phone && <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>}
+                </div>
+              </div>
             </div>
+            
             <div className="bg-white p-6 rounded-lg shadow-md md:w-1/2 lg:w-1/3">
               <h2 className="text-lg font-bold mb-4">Order Summary</h2>
               <div className="flex justify-between mb-2">

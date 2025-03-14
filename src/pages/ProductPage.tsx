@@ -111,8 +111,11 @@ const ProductPage: React.FC = () => {
     
     localStorage.setItem('cart', JSON.stringify(cart));
     
-    // Dispatch custom event to update cart count in header
-    window.dispatchEvent(new Event('cartUpdated'));
+    // Dispatch custom event to update cart count in header with product name
+    const event = new CustomEvent('cartUpdated', { 
+      detail: { item: product.name } 
+    });
+    window.dispatchEvent(event);
     
     // Show success message
     setAddedToCart(true);

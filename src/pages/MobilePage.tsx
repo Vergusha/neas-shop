@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
@@ -81,16 +81,79 @@ const MobilePage: React.FC = () => {
     fetchProducts();
   }, []);
 
+  // Memoize the renderTrack function to improve performance
+  const renderTrack = useCallback(
+    ({ props, children }) => {
+      return (
+        <div
+          {...props}
+          style={{
+            ...props.style,
+            height: '6px',
+            width: '100%',
+            background: getTrackBackground({
+              values,
+              colors: ['#ccc', '#F0E965', '#ccc'],
+              min: minPrice,
+              max: maxPrice
+            }),
+            alignSelf: 'center'
+          }}
+        >
+          {children}
+        </div>
+      );
+    },
+    [values, minPrice, maxPrice]
+  );
+  
+  // Memoize the renderThumb function to improve performance
+  const renderThumb = useCallback(
+    ({ props, isDragged }) => (
+      <div
+        {...props}
+        style={{
+          ...props.style,
+          height: '24px',
+          width: '24px',
+          borderRadius: '12px',
+          backgroundColor: '#FFF',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          boxShadow: '0px 2px 6px #AAA'
+        }}
+      >
+        <div
+          style={{
+            height: '16px',
+            width: '5px',
+            backgroundColor: isDragged ? '#F0E965' : '#CCC'
+          }}
+        />
+      </div>
+    ),
+    []
+  );
+
+  // Optimize the filtering process with useEffect dependencies
   useEffect(() => {
-    const filtered = products.filter(product => 
-      product.price >= values[0] && 
-      product.price <= values[1] &&
-      (selectedBrands.length ? selectedBrands.includes(product.brand) : true) &&
-      (selectedMemories.length ? selectedMemories.includes(product.memory) : true) &&
-      (selectedColors.length ? selectedColors.includes(product.color) : true)
-    );
-    setFilteredProducts(filtered);
-  }, [values, products, selectedBrands, selectedMemories, selectedColors]);
+    if (products.length > 0) {
+      const filtered = products.filter(product => 
+        product.price >= values[0] && 
+        product.price <= values[1] &&
+        (selectedBrands.length ? selectedBrands.includes(product.brand) : true) &&
+        (selectedMemories.length ? selectedMemories.includes(product.memory) : true) &&
+        (selectedColors.length ? selectedColors.includes(product.color) : true)
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [values, selectedBrands, selectedMemories, selectedColors, products]);
+
+  // Create a more efficient handler for Range component
+  const handleRangeChange = useCallback((newValues: number[]) => {
+    setValues(newValues);
+  }, []);
 
   const handleBrandChange = (brand: string) => {
     setSelectedBrands(prev =>
@@ -149,50 +212,9 @@ const MobilePage: React.FC = () => {
                 step={STEP}
                 min={minPrice}
                 max={maxPrice}
-                onChange={(values) => setValues(values)}
-                renderTrack={({ props, children }) => (
-                  <div
-                    {...props}
-                    style={{
-                      ...props.style,
-                      height: '6px',
-                      width: '100%',
-                      background: getTrackBackground({
-                        values,
-                        colors: ['#ccc', '#F0E965', '#ccc'],
-                        min: minPrice,
-                        max: maxPrice
-                      }),
-                      alignSelf: 'center'
-                    }}
-                  >
-                    {children}
-                  </div>
-                )}
-                renderThumb={({ props, isDragged }) => (
-                  <div
-                    {...props}
-                    style={{
-                      ...props.style,
-                      height: '24px',
-                      width: '24px',
-                      borderRadius: '12px',
-                      backgroundColor: '#FFF',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      boxShadow: '0px 2px 6px #AAA'
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: '16px',
-                        width: '5px',
-                        backgroundColor: isDragged ? '#F0E965' : '#CCC'
-                      }}
-                    />
-                  </div>
-                )}
+                onChange={handleRangeChange}
+                renderTrack={renderTrack}
+                renderThumb={renderThumb}
               />
               <label htmlFor="brand" className="block text-gray-700 mt-6">Brand</label> {/* Increased margin-top to 6 */}
               <div className="mb-4">

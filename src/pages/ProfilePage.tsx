@@ -52,6 +52,14 @@ const ProfilePage: React.FC = () => {
     }
   }, [user]);
 
+  // Separate useEffect for fetching order history even when user info is loaded from localStorage
+  useEffect(() => {
+    // If userId is available (either from user object or localStorage), fetch order history
+    if (userId) {
+      fetchOrderHistory();
+    }
+  }, [userId]);
+
   useEffect(() => {
     localStorage.setItem('nickname', nickname);
   }, [nickname]);
@@ -87,6 +95,14 @@ const ProfilePage: React.FC = () => {
         setPhoneNumber(data.phoneNumber || '');
         setAvatarURL(data.avatarURL || defaultAvatarSVG);
         setNickname(data.nickname || ''); // Ensure nickname is set from database
+        
+        // Also save to localStorage for checkout form prefill
+        const userProfile = {
+          realName: data.realName || '',
+          phoneNumber: data.phoneNumber || '',
+          nickname: data.nickname || ''
+        };
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
       } else {
         console.log('No user profile data found');
       }
@@ -94,8 +110,10 @@ const ProfilePage: React.FC = () => {
   };
 
   const fetchOrderHistory = async () => {
-    if (user) {
-      const ordersRef = ref(database, `orders/${user.uid}`);
+    console.log("Fetching order history for userId:", userId);
+    
+    if (userId) {
+      const ordersRef = ref(database, `orders/${userId}`);
       try {
         const snapshot = await get(ordersRef);
         if (snapshot.exists()) {
@@ -107,7 +125,7 @@ const ProfilePage: React.FC = () => {
           console.log('Order history data:', ordersArray);
           setOrderHistory(ordersArray);
         } else {
-          console.log('No order history data found');
+          console.log('No order history data found for user ID:', userId);
           setOrderHistory([]);
         }
       } catch (error) {
@@ -116,10 +134,13 @@ const ProfilePage: React.FC = () => {
       }
     } else {
       // For non-logged-in users, try to get anonymous orders
+      console.log("No userId available, checking for anonymous orders");
       const anonymousOrders = JSON.parse(localStorage.getItem('anonymousOrders') || '[]');
       if (anonymousOrders.length > 0) {
+        console.log("Found anonymous orders:", anonymousOrders);
         setOrderHistory(anonymousOrders);
       } else {
+        console.log("No anonymous orders found");
         setOrderHistory([]);
       }
     }

@@ -16,6 +16,8 @@ interface OrderDetails {
   status: string;
   orderNumber: string;
   shippingAddress?: string;
+  customerName?: string;
+  customerPhone?: string;
 }
 
 interface OrderDetailsComponentProps {
@@ -47,6 +49,8 @@ const OrderDetailsComponent: React.FC<OrderDetailsComponentProps> = ({ order }) 
   const date = order?.date ? new Date(order.date).toLocaleString() : 'Unknown date'; // Changed to toLocaleString() to include time
   const shippingAddress = order?.shippingAddress || 'Default Address';
   const total = order?.total || 0;
+  const customerName = order?.customerName || 'Not provided';
+  const customerPhone = order?.customerPhone || 'Not provided';
 
   const calculateTotal = (items: any[]) => {
     if (!Array.isArray(items)) return 0;
@@ -73,6 +77,13 @@ const OrderDetailsComponent: React.FC<OrderDetailsComponentProps> = ({ order }) 
         </div>
         <p className="text-sm text-gray-500">Placed on {date}</p>
         <p className="text-sm text-gray-500">Shipping to: {shippingAddress}</p>
+      </div>
+      
+      {/* Customer Information Section */}
+      <div className="mb-4 pb-4 border-b">
+        <h4 className="font-semibold mb-2">Customer Information</h4>
+        <p className="text-sm"><span className="font-medium">Name:</span> {customerName}</p>
+        <p className="text-sm"><span className="font-medium">Phone:</span> {customerPhone}</p>
       </div>
       
       <div className="mb-4">
