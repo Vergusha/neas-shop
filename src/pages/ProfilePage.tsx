@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth, updateProfile } from 'firebase/auth';
-import { ref, get, set } from 'firebase/database';
+import { ref, get, set, onValue } from 'firebase/database';
 import { database } from '../firebaseConfig';
 import { FaPencilAlt, FaHeart, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import OrderDetailsComponent from '../components/OrderDetailsComponent';
+import AvatarEditor from '../components/AvatarEditor'; // Импортируем новый компонент
 
 const defaultAvatarSVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UwZTBkMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzUiIHI9IjE1IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTUwIDUwYy0xNSAwLTMwIDE1LTMwIDMwczE1IDMwIDMwIDMwIDMwLTE1IDMwLTMwUzY1IDUwIDUwIDUwem0wIDUwYy0xMCAwLTE4IDgtMTggMThzOCAxOCAxOCAxOGMxMC4xIDAgMTgtOCAxOC0xOHMtOC0xOC0xOC0xOHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
 
@@ -25,6 +26,7 @@ const ProfilePage: React.FC = () => {
   const [previewAvatar, setPreviewAvatar] = useState(user?.photoURL || defaultAvatarSVG);
   const [isUploading, setIsUploading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [showAvatarEditor, setShowAvatarEditor] = useState(false); // Новое состояние для отображения редактора
 
   useEffect(() => {
     if (user) {
@@ -87,24 +89,32 @@ const ProfilePage: React.FC = () => {
   const fetchUserProfile = async () => {
     if (user) {
       const userRef = ref(database, `users/${user.uid}`);
-      const snapshot = await get(userRef);
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        console.log('User profile data:', data);
-        setRealName(data.realName || '');
-        setPhoneNumber(data.phoneNumber || '');
-        setAvatarURL(data.avatarURL || defaultAvatarSVG);
-        setNickname(data.nickname || ''); // Ensure nickname is set from database
-        
-        // Also save to localStorage for checkout form prefill
-        const userProfile = {
-          realName: data.realName || '',
-          phoneNumber: data.phoneNumber || '',
-          nickname: data.nickname || ''
-        };
-        localStorage.setItem('userProfile', JSON.stringify(userProfile));
-      } else {
-        console.log('No user profile data found');
+      try {
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          console.log('User profile data:', data);
+          setRealName(data.realName || '');
+          setPhoneNumber(data.phoneNumber || '');
+          if (data.avatarURL) {
+            setAvatarURL(data.avatarURL);
+            setPreviewAvatar(data.avatarURL);
+            // Обновляем photoURL в Firebase Auth
+            await updateProfile(user, {
+              photoURL: data.avatarURL
+            });
+          }
+          setNickname(data.nickname || '');
+          
+          localStorage.setItem('userProfile', JSON.stringify({
+            realName: data.realName || '',
+            phoneNumber: data.phoneNumber || '',
+            nickname: data.nickname || '',
+            avatarURL: data.avatarURL || defaultAvatarSVG
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
       }
     }
   };
@@ -190,24 +200,116 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleAvatarClick = () => {
-    document.getElementById('avatarInput')?.click();
+    setShowAvatarEditor(true);
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+  const handleAvatarEditorCancel = () => {
+    setShowAvatarEditor(false);
+  };
+
+  const handleAvatarEditorSave = async (imageData: string) => {
+    try {
       setIsUploading(true);
-      const file = e.target.files[0];
-      setAvatar(file);
       
-      // Create a preview
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreviewAvatar(reader.result as string);
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+      if (user) {
+        // Создаем объект с данными пользователя
+        const userData = {
+          realName,
+          phoneNumber,
+          nickname,
+          avatarURL: imageData,
+          lastUpdated: new Date().toISOString()
+        };
+
+        // Сохраняем в Realtime Database
+        const userRef = ref(database, `users/${user.uid}`);
+        await set(userRef, userData);
+
+        // Обновляем профиль в Firebase Auth
+        await updateProfile(user, {
+          photoURL: imageData,
+          displayName: nickname
+        });
+
+        // Обновляем локальное состояние
+        setPreviewAvatar(imageData);
+        setAvatarURL(imageData);
+        
+        // Сохраняем в localStorage
+        localStorage.setItem('avatarURL', imageData);
+        localStorage.setItem('userProfile', JSON.stringify(userData));
+        
+        // Отправляем событие об обновлении аватара
+        window.dispatchEvent(new CustomEvent('avatarUpdated', { 
+          detail: { avatarURL: imageData, userData } 
+        }));
+
+        console.log('Profile updated successfully');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setIsUploading(false);
+      setShowAvatarEditor(false);
     }
   };
+
+  // Обновляем useEffect для синхронизации аватара
+  useEffect(() => {
+    const syncAvatar = () => {
+      if (user?.photoURL) {
+        setPreviewAvatar(user.photoURL);
+        setAvatarURL(user.photoURL);
+      } else {
+        const savedAvatarURL = localStorage.getItem('avatarURL');
+        if (savedAvatarURL) {
+          setPreviewAvatar(savedAvatarURL);
+          setAvatarURL(savedAvatarURL);
+        } else {
+          setPreviewAvatar(defaultAvatarSVG);
+          setAvatarURL(defaultAvatarSVG);
+        }
+      }
+    };
+
+    syncAvatar();
+    
+    const handleAvatarUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.avatarURL) {
+        setPreviewAvatar(customEvent.detail.avatarURL);
+        setAvatarURL(customEvent.detail.avatarURL);
+      }
+    };
+
+    window.addEventListener('avatarUpdated', handleAvatarUpdate);
+    window.addEventListener('storage', syncAvatar);
+    
+    return () => {
+      window.removeEventListener('avatarUpdated', handleAvatarUpdate);
+      window.removeEventListener('storage', syncAvatar);
+    };
+  }, [user]);
+
+  // Добавляем слушатель изменений в базе данных
+  useEffect(() => {
+    if (user) {
+      const userRef = ref(database, `users/${user.uid}`);
+      const unsubscribe = onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          if (data.avatarURL) {
+            setPreviewAvatar(data.avatarURL);
+            setAvatarURL(data.avatarURL);
+            localStorage.setItem('avatarURL', data.avatarURL);
+          }
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   const handleFavoriteClick = (productId: string) => {
     let updatedFavorites;
@@ -242,7 +344,7 @@ const ProfilePage: React.FC = () => {
         <div className="flex items-center mb-4">
           <div className="relative">
             <div className="avatar">
-              <div className="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+              <div className="w-24 h-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden bg-neutral-content">
                 {isUploading ? (
                   <div className="w-full h-full flex items-center justify-center bg-gray-200">
                     <span className="loading loading-spinner loading-md"></span>
@@ -251,26 +353,24 @@ const ProfilePage: React.FC = () => {
                   <img
                     src={previewAvatar}
                     alt="Avatar"
-                    className="cursor-pointer object-cover"
+                    className="w-full h-full object-cover cursor-pointer"
                     onClick={handleAvatarClick}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = defaultAvatarSVG;
+                    }}
                   />
                 )}
               </div>
             </div>
-            <input
-              type="file"
-              id="avatarInput"
-              style={{ display: 'none' }}
-              accept="image/*"
-              onChange={handleAvatarChange}
-            />
             <button 
-              className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full"
+              className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:bg-primary-focus transition-colors"
               onClick={handleAvatarClick}
             >
               <FaPencilAlt className="w-4 h-4" />
             </button>
           </div>
+          
           <div className="ml-4">
             <h2 className="text-xl font-bold">{nickname || realName}</h2>
             <p>User ID: {userId}</p>
@@ -282,6 +382,7 @@ const ProfilePage: React.FC = () => {
             />
           </div>
         </div>
+        
         <div className="mb-4 flex items-center">
           <label htmlFor="nickname" className="block text-gray-700 w-1/3">Nickname</label>
           <input
@@ -297,6 +398,7 @@ const ProfilePage: React.FC = () => {
             onClick={() => setIsEditing(true)}
           />
         </div>
+        
         <div className="mb-4 flex items-center">
           <label htmlFor="realName" className="block text-gray-700 w-1/3">Real Name</label>
           <input
@@ -312,6 +414,7 @@ const ProfilePage: React.FC = () => {
             onClick={() => setIsEditing(true)}
           />
         </div>
+        
         <div className="mb-4 flex items-center">
           <label htmlFor="phoneNumber" className="block text-gray-700 w-1/3">Phone Number</label>
           <input
@@ -327,10 +430,12 @@ const ProfilePage: React.FC = () => {
             onClick={() => setIsEditing(true)}
           />
         </div>
+        
         {isEditing && (
           <button onClick={handleUpdateProfile} className="btn btn-primary w-full">Save Changes</button>
         )}
       </div>
+      
       <div className="bg-white p-4 rounded-lg shadow-md mt-8">
         <h2 className="text-xl font-bold mb-4">Order History</h2>
         {orderHistory.length > 0 ? (
@@ -387,6 +492,15 @@ const ProfilePage: React.FC = () => {
           <p>No order history available.</p>
         )}
       </div>
+      
+      {/* Компонент AvatarEditor */}
+      {showAvatarEditor && (
+        <AvatarEditor
+          initialImage={avatarURL}
+          onSave={handleAvatarEditorSave}
+          onCancel={handleAvatarEditorCancel}
+        />
+      )}
     </div>
   );
 };

@@ -4,8 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut, updateProfile } from 'firebase/auth';
 import Toast from './Toast';
+import { ref, onValue } from 'firebase/database';
+import { database } from '../firebaseConfig';
+
+const defaultAvatarSVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UwZTBkMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzUiIHI9IjE1IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTUwIDUwYy0xNSAwLTMwIDE1LTMwIDMwczE1IDMwIDMwIDMwIDMwLTE1IDMwLTMwUzY1IDUwIDUwIDUwem0wIDUwYy0xMCAwLTE4IDgtMTggMThzOCAxOCAxOCAxOGMxMC4xIDAgMTgtOCAxOC0xOHMtOC0xOC0xOC0xOHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
 
 const logoColor = '#F0E965'; // Цвет логотипа
 
@@ -19,6 +23,7 @@ const Header = () => {
   const [showCartNotification, setShowCartNotification] = useState(false);
   const [notificationItem, setNotificationItem] = useState<string>('');
   const [cartOpen, setCartOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -57,11 +62,51 @@ const Header = () => {
   }, [searchQuery]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // При авторизации проверяем данные пользователя в базе
+        const userRef = ref(database, `users/${user.uid}`);
+        try {
+          const snapshot = await get(userRef);
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            if (userData.avatarURL) {
+              // Обновляем photoURL в Auth профиле
+              await updateProfile(user, {
+                photoURL: userData.avatarURL
+              });
+              localStorage.setItem('avatarURL', userData.avatarURL);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
       setUser(user);
     });
+
     return () => unsubscribe();
   }, [auth]);
+
+  // Добавляем слушатель изменений в базе данных
+  useEffect(() => {
+    if (user) {
+      const userRef = ref(database, `users/${user.uid}`);
+      const unsubscribe = onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          if (data.avatarURL) {
+            setUser(prev => ({
+              ...prev,
+              photoURL: data.avatarURL
+            }));
+          }
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   useEffect(() => {
     const storedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
@@ -121,6 +166,17 @@ const Header = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuOpen && !(event.target as Element).closest('.relative')) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [userMenuOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,19 +318,95 @@ const Header = () => {
                 )}
               </div>
               
-              {/* User button */}
-              <button 
-                onClick={() => user ? navigate('/profile') : navigate('/login')} 
-                className="btn btn-ghost btn-circle"
-              >
-                <div className="w-10 h-10 rounded-full bg-neutral-content flex items-center justify-center">
-                  {user && user.photoURL ? (
-                    <img src={user.photoURL} alt="user avatar" className="rounded-full w-full h-full object-cover" />
-                  ) : (
-                    <User size={22} className="text-neutral" />
-                  )}
-                </div>
-              </button>
+              {/* User button with dropdown */}
+              <div className="relative">
+                <button 
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="btn btn-ghost btn-circle"
+                >
+                  <div className="w-10 h-10 rounded-full bg-neutral-content flex items-center justify-center overflow-hidden">
+                    {user ? (
+                      <img 
+                        src={user.photoURL || localStorage.getItem('avatarURL') || defaultAvatarSVG} 
+                        alt="user avatar" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = defaultAvatarSVG;
+                        }}
+                      />
+                    ) : (
+                      <User size={22} className="text-neutral" />
+                    )}
+                  </div>
+                </button>
+
+                {/* User menu dropdown */}
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl z-20">
+                    <div className="py-1">
+                      {user ? (
+                        <>
+                          <div className="px-4 py-3 border-b">
+                            <p className="text-sm font-medium text-gray-900">
+                              {user.displayName || 'User'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {user.email}
+                            </p>
+                          </div>
+                          <a
+                            href="/profile"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setUserMenuOpen(false);
+                              navigate('/profile');
+                            }}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Profile
+                          </a>
+                          <button
+                            onClick={async () => {
+                              await handleSignOut();
+                              setUserMenuOpen(false);
+                              navigate('/');
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                          >
+                            Sign Out
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <a
+                            href="/login"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setUserMenuOpen(false);
+                              navigate('/login');
+                            }}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Sign In
+                          </a>
+                          <a
+                            href="/register"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setUserMenuOpen(false);
+                              navigate('/register');
+                            }}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Register
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
