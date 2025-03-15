@@ -22,6 +22,17 @@ interface Product {
   clickCount?: number;
 }
 
+interface FilterValue {
+  value: string | number;
+  count: number;
+}
+
+interface FilterOption {
+  name: string;
+  key: string;
+  values: FilterValue[];
+}
+
 const TvPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);

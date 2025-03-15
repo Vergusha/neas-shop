@@ -9,13 +9,15 @@ interface ProductForm {
   image: string;
   category: string;
   brand: string;
-  memory: string;
-  color: string;
-  filterCategories?: {
-    brand: string;
-    memory: string;
-    color: string;
-  };
+  // Mobile specific
+  memory?: string;
+  color?: string;
+  camera?: string;
+  screenSize?: string;
+  resolution?: string;
+  // TV specific
+  screenDiagonal?: string;
+  screenFormat?: string;
 }
 
 const AdminPanel: React.FC = () => {
@@ -26,8 +28,6 @@ const AdminPanel: React.FC = () => {
     image: '',
     category: 'mobile',
     brand: '',
-    memory: '',
-    color: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -72,12 +72,12 @@ const AdminPanel: React.FC = () => {
         updatedAt: new Date().toISOString(),
         filterCategories: {
           brand: product.brand.toLowerCase(),
-          memory: product.memory.toLowerCase(),
-          color: product.color.toLowerCase(),
+          memory: product.memory?.toLowerCase() || '',
+          color: product.color?.toLowerCase() || '',
         },
         brandFilter: product.brand.toLowerCase(),
-        memoryFilter: product.memory.toLowerCase(),
-        colorFilter: product.color.toLowerCase()
+        memoryFilter: product.memory?.toLowerCase() || '',
+        colorFilter: product.color?.toLowerCase() || ''
       };
 
       console.log('Добавляем продукт:', productData); // Для отладки
@@ -95,8 +95,6 @@ const AdminPanel: React.FC = () => {
         image: '',
         category: 'mobile',
         brand: '',
-        memory: '',
-        color: ''
       });
       setImageFile(null);
       setImageUrl('');
@@ -143,6 +141,163 @@ const AdminPanel: React.FC = () => {
     return Array.from(new Set(keywords)); // удаляем дубликаты
   };
 
+  const renderFields = () => {
+    const commonFields = (
+      <>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Название товара</label>
+          <input
+            type="text"
+            value={product.name}
+            onChange={(e) => setProduct({...product, name: e.target.value})}
+            className="input input-bordered w-full"
+            required
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Описание</label>
+          <textarea
+            value={product.description}
+            onChange={(e) => setProduct({...product, description: e.target.value})}
+            className="textarea textarea-bordered w-full"
+            required
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Цена (NOK)</label>
+          <input
+            type="number"
+            value={product.price}
+            onChange={(e) => setProduct({...product, price: Number(e.target.value)})}
+            className="input input-bordered w-full"
+            required
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Бренд</label>
+          <input
+            type="text"
+            value={product.brand}
+            onChange={(e) => setProduct({...product, brand: e.target.value})}
+            className="input input-bordered w-full"
+            required
+          />
+        </div>
+      </>
+    );
+
+    if (product.category === 'mobile') {
+      return (
+        <>
+          {commonFields}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Память</label>
+            <input
+              type="text"
+              value={product.memory || ''}
+              onChange={(e) => setProduct({...product, memory: e.target.value})}
+              className="input input-bordered w-full"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Цвет</label>
+            <input
+              type="text"
+              value={product.color || ''}
+              onChange={(e) => setProduct({...product, color: e.target.value})}
+              className="input input-bordered w-full"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Камера</label>
+            <input
+              type="text"
+              value={product.camera || ''}
+              onChange={(e) => setProduct({...product, camera: e.target.value})}
+              className="input input-bordered w-full"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Размер дисплея</label>
+            <input
+              type="text"
+              value={product.screenSize || ''}
+              onChange={(e) => setProduct({...product, screenSize: e.target.value})}
+              className="input input-bordered w-full"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Разрешение экрана</label>
+            <input
+              type="text"
+              value={product.resolution || ''}
+              onChange={(e) => setProduct({...product, resolution: e.target.value})}
+              className="input input-bordered w-full"
+              required
+            />
+          </div>
+        </>
+      );
+    }
+
+    if (product.category === 'tv') {
+      return (
+        <>
+          {commonFields}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Диагональ экрана</label>
+            <input
+              type="text"
+              value={product.screenDiagonal || ''}
+              onChange={(e) => setProduct({...product, screenDiagonal: e.target.value})}
+              className="input input-bordered w-full"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Разрешение экрана</label>
+            <input
+              type="text"
+              value={product.resolution || ''}
+              onChange={(e) => setProduct({...product, resolution: e.target.value})}
+              className="input input-bordered w-full"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Формат экрана</label>
+            <input
+              type="text"
+              value={product.screenFormat || ''}
+              onChange={(e) => setProduct({...product, screenFormat: e.target.value})}
+              className="input input-bordered w-full"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Цвет</label>
+            <input
+              type="text"
+              value={product.color || ''}
+              onChange={(e) => setProduct({...product, color: e.target.value})}
+              className="input input-bordered w-full"
+              required
+            />
+          </div>
+        </>
+      );
+    }
+
+    return commonFields;
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4">Админ-панель</h2>
@@ -157,46 +312,15 @@ const AdminPanel: React.FC = () => {
               className="input input-bordered w-full"
               required
             >
-              <option value="mobile">Мобильные</option>
-              <option value="tv">ТВ</option>
-              <option value="gaming">Игры</option>
-              <option value="smart-home">Умный дом</option>
-              <option value="data">Аксессуары</option>
+              <option value="mobile">Мобильные телефоны</option>
+              <option value="tv">Телевизоры</option>
             </select>
           </div>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Название товара</label>
-            <input
-              type="text"
-              value={product.name}
-              onChange={(e) => setProduct({...product, name: e.target.value})}
-              className="input input-bordered w-full"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Описание</label>
-            <textarea
-              value={product.description}
-              onChange={(e) => setProduct({...product, description: e.target.value})}
-              className="textarea textarea-bordered w-full"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Цена (NOK)</label>
-            <input
-              type="number"
-              value={product.price}
-              onChange={(e) => setProduct({...product, price: Number(e.target.value)})}
-              className="input input-bordered w-full"
-              required
-            />
-          </div>
-          
+          {/* Render dynamic fields based on category */}
+          {renderFields()}
+
+          {/* Image upload section */}
           <div>
             <label className="block text-sm font-medium text-gray-700">Изображение</label>
             <div className="flex gap-4 mb-2">
@@ -232,42 +356,6 @@ const AdminPanel: React.FC = () => {
                 placeholder="https://example.com/image.jpg"
               />
             )}
-            
-            {imageFile && imageInputType === 'file' && (
-              <div className="mt-2">
-                <p>Выбран файл: {imageFile.name}</p>
-              </div>
-            )}
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Бренд</label>
-            <input
-              type="text"
-              value={product.brand}
-              onChange={(e) => setProduct({...product, brand: e.target.value})}
-              className="input input-bordered w-full"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Память</label>
-            <input
-              type="text"
-              value={product.memory}
-              onChange={(e) => setProduct({...product, memory: e.target.value})}
-              className="input input-bordered w-full"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Цвет</label>
-            <input
-              type="text"
-              value={product.color}
-              onChange={(e) => setProduct({...product, color: e.target.value})}
-              className="input input-bordered w-full"
-            />
           </div>
           
           <button 

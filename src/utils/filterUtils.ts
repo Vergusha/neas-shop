@@ -1,10 +1,11 @@
-interface FilterValue {
+export interface FilterValue {
   value: string | number;
   count: number;
 }
 
-interface FilterOption {
+export interface FilterOption {
   name: string;
+  key: string;
   values: FilterValue[];
 }
 
@@ -63,7 +64,7 @@ export const extractFilters = (products: any[]): FilterOption[] => {
         // Сортировка строковых значений
         return String(a.value).localeCompare(String(b.value));
       })
-    }));
+    })); 
 };
 
 const formatFilterName = (key: string): string => {
