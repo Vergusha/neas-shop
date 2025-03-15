@@ -18,12 +18,12 @@ const Rating: React.FC<RatingProps> = ({
   readonly = true,
   onChange
 }) => {
-  // Convert size prop to CSS class
-  const sizeClass = {
-    xs: 'rating-xs',
-    sm: 'rating-sm',
-    md: 'rating-md',
-    lg: 'rating-lg'
+  // Convert size prop to pixel values
+  const sizePx = {
+    xs: 12,
+    sm: 16,
+    md: 20,
+    lg: 24
   }[size];
 
   // Calculate how many full stars and half stars to render
@@ -38,7 +38,7 @@ const Rating: React.FC<RatingProps> = ({
   };
 
   return (
-    <div className={`rating ${sizeClass} ${readonly ? '' : 'rating-interactive'}`}>
+    <div className="flex items-center">
       {[...Array(maxValue)].map((_, i) => {
         const starValue = i + 1;
         const isFilled = starValue <= fullStars;
@@ -47,21 +47,23 @@ const Rating: React.FC<RatingProps> = ({
         return (
           <div 
             key={i}
-            className="rating-item"
             onClick={() => handleRatingClick(starValue)}
-            style={{ cursor: readonly ? 'default' : 'pointer' }}
+            style={{ 
+              cursor: readonly ? 'default' : 'pointer',
+              padding: '2px' // Add a small padding for better touch targets
+            }}
           >
             {isFilled ? (
-              <Star className={`fill-${color} text-${color}`} />
+              <Star size={sizePx} fill="#FFCA28" color="#FFCA28" />
             ) : isHalf ? (
               <div className="relative">
-                <Star className="text-gray-300" />
-                <div className="absolute inset-0 overflow-hidden w-1/2">
-                  <Star className={`fill-${color} text-${color}`} />
+                <Star size={sizePx} color="#e2e8f0" />
+                <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
+                  <Star size={sizePx} fill="#FFCA28" color="#FFCA28" />
                 </div>
               </div>
             ) : (
-              <Star className="text-gray-300" />
+              <Star size={sizePx} color="#e2e8f0" />
             )}
           </div>
         );

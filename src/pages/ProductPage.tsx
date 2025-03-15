@@ -210,6 +210,15 @@ const ProductPage: React.FC = () => {
             </div>
           </div>
           <div className="w-full md:w-1/2 md:pl-8">
+            {/* Rating display - moved above product name */}
+            <div className="flex items-center gap-2 mb-2">
+              <Rating value={product?.rating || 0} />
+              <span className="text-sm text-gray-600">
+                {product?.rating ? product.rating.toFixed(1) : "0"} 
+                ({product?.reviewCount || 0} reviews)
+              </span>
+            </div>
+            
             <div className="flex items-center justify-between mb-2">
               <h1 className="text-2xl font-bold">{product?.name}</h1>
               <button 
@@ -218,15 +227,6 @@ const ProductPage: React.FC = () => {
               >
                 <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
               </button>
-            </div>
-            
-            {/* Rating display */}
-            <div className="flex items-center gap-2 mb-4">
-              <Rating value={product?.rating || 0} />
-              <span className="text-sm text-gray-600">
-                {product?.rating ? product.rating.toFixed(1) : "0"} 
-                ({product?.reviewCount || 0} reviews)
-              </span>
             </div>
             
             <p className="text-gray-500 mb-4">{product?.description}</p>

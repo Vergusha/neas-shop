@@ -173,19 +173,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
       </figure>
       
       <div className="card-body">
-        <h2 className="card-title cursor-pointer" onClick={handleClick}>
-          {product.name}
-          {product.brand && <span className="text-sm text-gray-500">({product.brand})</span>}
-        </h2>
-        
-        {/* Rating display */}
-        <div className="flex items-center gap-2">
+        {/* Rating display - moved above product name */}
+        <div className="flex items-center gap-2 mb-1">
           <Rating value={product.rating || 0} size="sm" />
           <span className="text-xs text-gray-500">
             {product.rating ? product.rating.toFixed(1) : "0"} 
             ({product.reviewCount || 0})
           </span>
         </div>
+        
+        <h2 className="card-title cursor-pointer" onClick={handleClick}>
+          {product.name}
+          {product.brand && <span className="text-sm text-gray-500">({product.brand})</span>}
+        </h2>
         
         {product.memory && (
           <p className="text-sm text-gray-600">{product.memory}</p>
