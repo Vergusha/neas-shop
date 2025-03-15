@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { FaHeart, FaShoppingCart } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
-import { ref, get, set } from 'firebase/database';
+import { ref, get, set, onValue } from 'firebase/database';
 import { database } from '../firebaseConfig';
+import Rating from './Rating'; // Add this import
 
 interface Product {
   id: string;
@@ -16,13 +17,16 @@ interface Product {
   category?: string;
   memory?: string;
   color?: string;
+  rating?: number;
+  reviewCount?: number;
 }
 
 interface ProductCardProps {
   product: Product;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) => {
+  const [product, setProduct] = useState<Product>(initialProduct);
   const auth = getAuth();
   const user = auth.currentUser;
   
@@ -46,6 +50,43 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
     checkFavoriteStatus();
   }, [user, product.id]);
+
+  // Listen for rating updates from Realtime Database
+  useEffect(() => {
+    const productRef = ref(database, `products/${product.id}`);
+    
+    const unsubscribe = onValue(productRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const productData = snapshot.val();
+        if (productData.rating !== undefined && productData.reviewCount !== undefined) {
+          setProduct(prev => ({
+            ...prev,
+            rating: productData.rating,
+            reviewCount: productData.reviewCount
+          }));
+        }
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [product.id]);
+  
+  // Also listen for the custom event from other components
+  useEffect(() => {
+    const handleRatingUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.productId === product.id) {
+        setProduct(prev => ({
+          ...prev,
+          rating: customEvent.detail.rating,
+          reviewCount: customEvent.detail.reviewCount
+        }));
+      }
+    };
+    
+    window.addEventListener('productRatingUpdated', handleRatingUpdate);
+    return () => window.removeEventListener('productRatingUpdated', handleRatingUpdate);
+  }, [product.id]);
 
   const handleClick = () => {
     navigate(`/product/${product.id}`);
@@ -136,6 +177,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {product.name}
           {product.brand && <span className="text-sm text-gray-500">({product.brand})</span>}
         </h2>
+        
+        {/* Rating display */}
+        <div className="flex items-center gap-2">
+          <Rating value={product.rating || 0} size="sm" />
+          <span className="text-xs text-gray-500">
+            {product.rating ? product.rating.toFixed(1) : "0"} 
+            ({product.reviewCount || 0})
+          </span>
+        </div>
         
         {product.memory && (
           <p className="text-sm text-gray-600">{product.memory}</p>

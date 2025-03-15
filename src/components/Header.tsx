@@ -62,37 +62,42 @@ const Header = () => {
   }, [searchQuery]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const database = getDatabase(app);
-        const userRef = ref(database, `users/${user.uid}`);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log("Auth state changed:", currentUser?.email || "No user");
+      if (currentUser) {
         try {
+          // Only attempt to get user data from database if we have a user
+          const database = getDatabase(app);
+          const userRef = ref(database, `users/${currentUser.uid}`);
           const snapshot = await get(userRef);
+          
+          let userData = {};
           if (snapshot.exists()) {
-            const userData = snapshot.val();
+            userData = snapshot.val();
             if (userData.avatarURL) {
-              try {
-                // Check URL length before updating profile
-                if (userData.avatarURL.length <= 1024) {
-                  await updateProfile(user, {
-                    photoURL: userData.avatarURL
-                  });
-                  localStorage.setItem('avatarURL', userData.avatarURL);
-                } else {
-                  console.warn('Avatar URL too long, using default avatar');
-                  localStorage.setItem('avatarURL', defaultAvatarSVG);
-                }
-              } catch (profileError) {
-                console.error('Error updating profile:', profileError);
-                localStorage.setItem('avatarURL', defaultAvatarSVG);
-              }
+              setUser({
+                ...currentUser,
+                photoURL: userData.avatarURL
+              });
+            } else {
+              setUser(currentUser);
             }
+          } else {
+            // In case the database doesn't have the user
+            setUser(currentUser);
           }
+          
+          // Update localStorage with latest user data
+          localStorage.setItem('userProfile', JSON.stringify(userData));
         } catch (error) {
           console.error('Error fetching user data:', error);
+          setUser(currentUser);
         }
+      } else {
+        setUser(null);
+        // Clear user-related data from localStorage when logged out
+        localStorage.removeItem('userProfile');
       }
-      setUser(user);
     });
 
     return () => unsubscribe();
@@ -189,6 +194,25 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [userMenuOpen]);
 
+  // Обновим useEffect для отслеживания изменений аватара
+  useEffect(() => {
+    const handleAvatarUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.avatarURL) {
+        if (user) {
+          setUser(prev => ({
+            ...prev,
+            photoURL: customEvent.detail.avatarURL
+          }));
+        }
+        localStorage.setItem('avatarURL', customEvent.detail.avatarURL);
+      }
+    };
+
+    window.addEventListener('avatarUpdated', handleAvatarUpdate);
+    return () => window.removeEventListener('avatarUpdated', handleAvatarUpdate);
+  }, [user]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(`/search?query=${searchQuery}`);
@@ -196,7 +220,17 @@ const Header = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut(auth);
+    try {
+      await signOut(auth);
+      // Explicitly navigate to home page after sign out
+      navigate('/');
+      // Close user menu
+      setUserMenuOpen(false);
+      // Show a sign-out notification
+      alert('You have been signed out');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const handleFavoriteClick = () => {
@@ -215,6 +249,32 @@ const Header = () => {
   const getCartItems = () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     return cart.slice(0, 3); // Get first 3 items for preview
+  };
+
+  // Упростим функцию рендеринга аватара
+  const renderUserAvatar = () => {
+    const avatarUrl = user?.photoURL || defaultAvatarSVG;
+    console.log('Rendering avatar with URL:', avatarUrl);
+    
+    return (
+      <div className="w-10 h-10 rounded-full overflow-hidden">
+        {user ? (
+          <img 
+            src={avatarUrl}
+            alt="User avatar" 
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              console.error('Failed to load avatar, using default');
+              (e.target as HTMLImageElement).src = defaultAvatarSVG;
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+            <User size={24} className="text-gray-600" />
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -335,21 +395,7 @@ const Header = () => {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="btn btn-ghost btn-circle"
                 >
-                  <div className="w-10 h-10 rounded-full bg-neutral-content flex items-center justify-center overflow-hidden">
-                    {user ? (
-                      <img 
-                        src={user.photoURL || localStorage.getItem('avatarURL') || defaultAvatarSVG} 
-                        alt="user avatar" 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = defaultAvatarSVG;
-                        }}
-                      />
-                    ) : (
-                      <User size={22} className="text-neutral" />
-                    )}
-                  </div>
+                  {renderUserAvatar()}
                 </button>
 
                 {/* User menu dropdown */}

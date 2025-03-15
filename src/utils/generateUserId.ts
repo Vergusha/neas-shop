@@ -16,8 +16,27 @@ export const generateRandomPart = () => {
   return result;
 };
 
-export const createCustomUserId = (email: string) => {
-  const username = email.split('@')[0];
-  const randomPart = generateRandomPart();
-  return `${username}_${randomPart}`;
+/**
+ * Creates a custom user ID from an email address
+ * Format: first letter of email + last part of domain + random 4-digit number
+ */
+export const createCustomUserId = (email: string | null): string => {
+  if (!email) return `user${Math.floor(1000 + Math.random() * 9000)}`;
+  
+  try {
+    // Get first letter of email
+    const firstLetter = email.charAt(0).toUpperCase();
+    
+    // Get domain part (after @)
+    const domainParts = email.split('@')[1]?.split('.') || [];
+    const domainPart = domainParts[0]?.substring(0, 3).toUpperCase() || '';
+    
+    // Generate random 4-digit number
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    
+    return `${firstLetter}${domainPart}${randomNum}`;
+  } catch (error) {
+    console.error('Error creating custom user ID:', error);
+    return `USER${Math.floor(1000 + Math.random() * 9000)}`;
+  }
 };

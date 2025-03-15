@@ -19,6 +19,9 @@ import Breadcrumbs from './components/Breadcrumbs';
 import AdminPanel from './components/AdminPanel'; // Fix import path
 import { isAdmin } from './utils/constants';
 import { getAuth } from 'firebase/auth';
+import { useEffect } from 'react'; // Add this import
+import { migrateProductRatings, cleanupDuplicateReviews } from './utils/migrateProductRatings'; // Add this import
+import { AuthProvider } from './utils/AuthProvider'; // Add this import
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const auth = getAuth();
@@ -32,37 +35,46 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
+  useEffect(() => {
+    // Run the migrations once to ensure database structure is correct
+    // You can comment these out after the first run
+    // migrateProductRatings();
+    // cleanupDuplicateReviews();
+  }, []);
+
   return (
-    <Router>
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <Breadcrumbs />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/products/mobil" element={<MobilePage />} />
-            <Route path="/product/:id" element={<ProductPage />} />
-            <Route path="/products/data-og-tilbehor" element={<DataPage />} />
-            <Route path="/products/gaming" element={<GamingPage />} />
-            <Route path="/products/tv-og-lyd" element={<TvPage />} />
-            <Route path="/products/smarte-hjem" element={<SmartHomePage />} />
-            <Route path="/products/power-support" element={<SupportPage />} />
-            <Route path="/search" element={<SearchResultsPage />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/favorites" element={<FavoritesPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/admin" element={
-              <AdminRoute>
-                <AdminPanel />
-              </AdminRoute>
-            } />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <Breadcrumbs />
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/products/mobil" element={<MobilePage />} />
+              <Route path="/product/:id" element={<ProductPage />} />
+              <Route path="/products/data-og-tilbehor" element={<DataPage />} />
+              <Route path="/products/gaming" element={<GamingPage />} />
+              <Route path="/products/tv-og-lyd" element={<TvPage />} />
+              <Route path="/products/smarte-hjem" element={<SmartHomePage />} />
+              <Route path="/products/power-support" element={<SupportPage />} />
+              <Route path="/search" element={<SearchResultsPage />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/favorites" element={<FavoritesPage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              } />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 };
 
