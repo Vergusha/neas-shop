@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, getFirestore } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import { FaFilter } from 'react-icons/fa';
@@ -96,7 +96,7 @@ const MobilePage: React.FC = () => {
       return Object.entries(selectedFilters).every(([filterId, values]) => {
         if (!values.length) return true;
         
-        const productValue = product[filterId as keyof Product]?.toLowerCase() || '';
+        const productValue = String(product[filterId as keyof Product] || '').toLowerCase();
         return values.some(value => productValue === value.toLowerCase());
       });
     });

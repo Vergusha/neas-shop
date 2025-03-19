@@ -49,7 +49,6 @@ const OrderDetailsComponent: React.FC<OrderDetailsComponentProps> = ({ order }) 
   const status = order?.status || 'Unknown';
   const date = order?.date ? new Date(order.date).toLocaleString() : 'Unknown date'; // Changed to toLocaleString() to include time
   const shippingAddress = order?.shippingAddress || 'Default Address';
-  const total = order?.total || 0;
   const customerName = order?.customerName || 'Not provided';
   const customerPhone = order?.customerPhone || 'Not provided';
 

@@ -8,12 +8,14 @@ import { Heart, Plus, Minus, ShoppingCart } from 'lucide-react'; // Import addit
 import Rating from '../components/Rating';
 import Reviews from '../components/Reviews';
 
-interface ProductCardProps {
+// Define a type for your product data
+interface ProductData {
   id: string;
-  image: string;
   name: string;
   description: string;
   price: number;
+  color?: string; // Make it optional if not all products have a color
+  // Add any other properties your product may have
 }
 
 const ProductPage: React.FC = () => {
@@ -38,7 +40,7 @@ const ProductPage: React.FC = () => {
         
         // Try to get product from each collection until we find it
         const collections = ['mobile', 'products', 'tv'];
-        let foundProduct = null;
+        let foundProduct: ProductData | null = null;
         
         for (const collectionName of collections) {
           const docRef = doc(db, collectionName, id);
@@ -49,7 +51,7 @@ const ProductPage: React.FC = () => {
             foundProduct = {
               ...docSnap.data(),
               id: id // Explicitly add the ID to the product data
-            };
+            } as ProductData;
             break;
           }
         }
@@ -82,7 +84,7 @@ const ProductPage: React.FC = () => {
         if (snapshot.exists()) {
           const productData = snapshot.val();
           if (productData.rating !== undefined && productData.reviewCount !== undefined) {
-            setProduct(prev => {
+            setProduct((prev: any) => {
               if (!prev) return prev;
               return {
                 ...prev,
@@ -103,7 +105,7 @@ const ProductPage: React.FC = () => {
     const handleRatingUpdate = (e: Event) => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail?.productId === id) {
-        setProduct(prev => {
+        setProduct((prev: any) => {
           if (!prev) return prev;
           return {
             ...prev,

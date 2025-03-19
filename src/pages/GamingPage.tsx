@@ -18,7 +18,14 @@ const GamingPage: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       const querySnapshot = await getDocs(collection(db, 'products'));
-      const productsData = querySnapshot.docs.map(doc => doc.data());
+      const productsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        image: doc.data().image || '',
+        name: doc.data().name || '',
+        description: doc.data().description || '',
+        price: doc.data().price || 0
+      })) as ProductCardProps[];
       setProducts(productsData);
     };
 

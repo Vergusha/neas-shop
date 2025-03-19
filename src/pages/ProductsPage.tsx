@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 
-// Определение типа для свойств ProductCard
-interface ProductCardProps {
+// Определение типа для продукта
+interface Product {
   id: string;
   image: string;
   name: string;
@@ -11,7 +11,7 @@ interface ProductCardProps {
 }
 
 const ProductsPage: React.FC = () => {
-  const [products, setProducts] = useState<ProductCardProps[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     // Fetch products data from an API or define it statically
@@ -35,11 +35,7 @@ const ProductsPage: React.FC = () => {
         {products.map(product => (
           <ProductCard
             key={product.id || product.name}
-            id={product.id}
-            image={product.image}
-            name={product.name}
-            description={product.description}
-            price={product.price} // Price is already in NOK
+            product={product}  // Pass the entire product object
           />
         ))}
       </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, StarHalf } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 interface RatingProps {
   value: number;
@@ -14,7 +14,6 @@ const Rating: React.FC<RatingProps> = ({
   value,
   maxValue = 5,
   size = 'md',
-  color = 'warning',
   readonly = true,
   onChange
 }) => {

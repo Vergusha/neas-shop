@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
 
+// Define your own interface matching the props of ProductCard
 interface ProductCardProps {
   id: string;
   image: string;
@@ -9,10 +10,13 @@ interface ProductCardProps {
   price: number;
 }
 
+// Define the local product interface 
+type FavoriteProduct = ProductCardProps;
+
 const FavoritesPage: React.FC = () => {
   const userId = 'user123'; // Replace with actual user ID from authentication context
   const favoritesKey = `favorites_${userId}`;
-  const [favorites, setFavorites] = useState<ProductCardProps[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
 
   useEffect(() => {
     const storedFavorites = JSON.parse(localStorage.getItem(favoritesKey) || '[]');
@@ -29,11 +33,7 @@ const FavoritesPage: React.FC = () => {
           {favorites.map((product) => (
             <ProductCard
               key={product.id}
-              id={product.id}
-              image={product.image}
-              name={product.name}
-              description={product.description}
-              price={product.price}
+              product={product}  // Pass the entire product object as a single prop
             />
           ))}
         </div>

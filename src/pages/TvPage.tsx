@@ -77,10 +77,10 @@ const TvPage: React.FC = () => {
     setFilteredProducts(filtered);
   }, [products, activeFilters]);
 
-  const handleFilterChange = (filterKey: string, values: Set<string | number>) => {
+  const handleFilterChange = (filterKey: string, values: string[]) => {
     setActiveFilters(prev => ({
       ...prev,
-      [filterKey]: values
+      [filterKey]: new Set(values)
     }));
   };
 

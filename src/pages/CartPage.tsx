@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, database } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
-import { ref, push, set, get } from 'firebase/database';
+import { ref, set, get } from 'firebase/database';
 
 interface CartItem {
   id: string;

@@ -86,61 +86,6 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
   }, [productId, user]);
 
   // Improved method to update ratings in both databases and broadcast the update
-  const updateProductRating = async (rating: number, reviewCount: number) => {
-    try {
-      // Update in Realtime Database first
-      const productRef = ref(database, `products/${productId}`);
-      await update(productRef, {
-        rating,
-        reviewCount
-      });
-      
-      console.log(`Updated rating in Realtime DB: ${rating.toFixed(2)} from ${reviewCount} reviews`);
-      
-      // Then try to update in Firestore collections
-      const collections = ['mobile', 'products', 'tv'];
-      let updated = false;
-      
-      for (const collectionName of collections) {
-        try {
-          const docRef = doc(db, collectionName, productId);
-          const docSnap = await getDoc(docRef);
-          
-          if (docSnap.exists()) {
-            await updateDoc(docRef, {
-              rating,
-              reviewCount
-            });
-            console.log(`Updated rating in ${collectionName} collection`);
-            updated = true;
-            break; // Exit after finding the right collection
-          }
-        } catch (error) {
-          console.error(`Error updating rating in ${collectionName}:`, error);
-        }
-      }
-      
-      // If no collection was updated, save the data to the products collection as fallback
-      if (!updated) {
-        const fallbackRef = doc(db, 'products', productId);
-        await updateDoc(fallbackRef, {
-          rating,
-          reviewCount
-        });
-      }
-      
-      // Broadcast the change to update UI components
-      window.dispatchEvent(new CustomEvent('productRatingUpdated', {
-        detail: { 
-          productId,
-          rating,
-          reviewCount
-        }
-      }));
-    } catch (error) {
-      console.error('Error updating product rating:', error);
-    }
-  };
 
   const handleSubmitReview = async () => {
     if (!user) {

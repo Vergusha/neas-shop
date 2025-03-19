@@ -40,9 +40,11 @@ export const extractFilters = (products: any[]): FilterOption[] => {
         }
 
         // Добавляем значение и увеличиваем счетчик
-        filterMap.get(key)?.add(value);
-        const countMap = filterCounts.get(key)!;
-        countMap.set(value, (countMap.get(value) || 0) + 1);
+        if (typeof value === 'string' || typeof value === 'number') {
+          filterMap.get(key)?.add(value);
+          const countMap = filterCounts.get(key)!;
+          countMap.set(value, (countMap.get(value) || 0) + 1);
+        }
       }
     });
   });

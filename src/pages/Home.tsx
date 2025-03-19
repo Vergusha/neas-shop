@@ -71,11 +71,7 @@ const Home = () => {
               popularProducts.map(product => (
                 <ProductCard
                   key={product.id}
-                  id={product.id}
-                  image={product.image}
-                  name={product.name}
-                  description={product.description}
-                  price={product.price}
+                  product={product}
                 />
               ))
             ) : (

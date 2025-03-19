@@ -17,7 +17,7 @@ const ProfilePage: React.FC = () => {
   const [nickname, setNickname] = useState(user?.displayName || '');
   const [realName, setRealName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [avatar, setAvatar] = useState<File | null>(null);
+  const [avatar] = useState<File | null>(null);
   const [avatarURL, setAvatarURL] = useState(user?.photoURL || defaultAvatarSVG);
   const [isEditing, setIsEditing] = useState(false);
   const [orderHistory, setOrderHistory] = useState<any[]>([]);

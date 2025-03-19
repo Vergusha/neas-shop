@@ -18,7 +18,16 @@ const SmartHomePage: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       const querySnapshot = await getDocs(collection(db, 'products'));
-      const productsData = querySnapshot.docs.map(doc => doc.data());
+      const productsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || '',
+          description: data.description || '',
+          price: data.price || 0,
+          image: data.image || ''
+        };
+      });
       setProducts(productsData);
     };
 

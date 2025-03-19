@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { collection, addDoc, getFirestore } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
 
 interface ProductForm {
   name: string;

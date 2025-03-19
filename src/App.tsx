@@ -20,7 +20,6 @@ import AdminPanel from './components/AdminPanel'; // Fix import path
 import { isAdmin } from './utils/constants';
 import { getAuth } from 'firebase/auth';
 import { useEffect } from 'react'; // Add this import
-import { migrateProductRatings, cleanupDuplicateReviews } from './utils/migrateProductRatings'; // Add this import
 import { AuthProvider } from './utils/AuthProvider'; // Add this import
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {

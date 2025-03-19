@@ -27,7 +27,8 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
       const reader = new FileReader();
       
       reader.onload = (event) => {
-        if (event.target && event.target.result) {
+        // Check if event.target exists and has a result property
+        if (event.target && typeof event.target.result === 'string') {
           const img = new Image();
           img.onload = () => {
             // Center image initially
@@ -43,9 +44,12 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
             const y = (containerSize - img.height * newScale) / 2;
             setPosition({ x, y });
             
-            setImage(event.target.result as string);
+            // We've already checked that event.target.result is a string above
+            if (event.target && typeof event.target.result === 'string') {
+              setImage(event.target.result);
+            }
           };
-          img.src = event.target.result as string;
+          img.src = event.target.result;
         }
       };
       
@@ -315,6 +319,15 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
             <p>• Круглая область показывает итоговый результат</p>
           </div>
         )}
+
+        {/* Avatar controls */}
+        <div className="avatar-controls">
+          <button className="control-button" title="Move Image">
+            <Move size={18} />
+            <span>Drag to position</span>
+          </button>
+          {/* Other controls */}
+        </div>
       </div>
     </div>
   );

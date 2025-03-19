@@ -55,7 +55,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       } else {
         currentValues.delete(value);
       }
-      (onFilterChange as (key: string, values: Set<string | number>) => void)(filterId, currentValues);
+      (onFilterChange as unknown as (key: string, values: Set<string | number>) => void)(filterId, currentValues);
     }
   };
 

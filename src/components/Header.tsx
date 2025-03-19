@@ -1,24 +1,23 @@
-import { Search, ShoppingCart, Heart, User, Bell } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User } from 'lucide-react';
 import logo from '../assets/logo.svg';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, where, doc, getDoc, getFirestore } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-import { getAuth, onAuthStateChanged, signOut, updateProfile } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import Toast from './Toast';
 import { getDatabase, ref, get, onValue } from 'firebase/database';
 import { app } from '../firebaseConfig'; // Make sure this import exists
 
 const defaultAvatarSVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UwZTBkMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzUiIHI9IjE1IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTUwIDUwYy0xNSAwLTMwIDE1LTMwIDMwczE1IDMwIDMwIDMwIDMwLTE1IDMwLTMwUzY1IDUwIDUwIDUwem0wIDUwYy0xMCAwLTE4IDgtMTggMThzOCAxOCAxOCAxOGMxMC4xIDAgMTgtOCAxOC0xOHMtOC0xOC0xOC0xOHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
 
-const logoColor = '#F0E965'; // Цвет логотипа
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [, setFavorites] = useState<any[]>([]);
   const [cartItemCount, setCartItemCount] = useState(0);
   const [showCartNotification, setShowCartNotification] = useState(false);
   const [notificationItem, setNotificationItem] = useState<string>('');
@@ -71,7 +70,7 @@ const Header = () => {
           const userRef = ref(database, `users/${currentUser.uid}`);
           const snapshot = await get(userRef);
           
-          let userData = {};
+          let userData: { avatarURL?: string } = {};
           if (snapshot.exists()) {
             userData = snapshot.val();
             if (userData.avatarURL) {
@@ -112,7 +111,7 @@ const Header = () => {
         if (snapshot.exists()) {
           const data = snapshot.val();
           if (data.avatarURL && data.avatarURL.length <= 1024) {
-            setUser(prev => ({
+            setUser((prev: any) => ({
               ...prev,
               photoURL: data.avatarURL
             }));
@@ -200,7 +199,7 @@ const Header = () => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail?.avatarURL) {
         if (user) {
-          setUser(prev => ({
+          setUser((prev: any) => ({
             ...prev,
             photoURL: customEvent.detail.avatarURL
           }));
