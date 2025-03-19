@@ -34,7 +34,11 @@ const SearchResultsPage: React.FC = () => {
             where('searchKeywords', 'array-contains', queryParam)
           );
           const querySnapshot = await getDocs(q);
-          const collectionResults = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const collectionResults = querySnapshot.docs.map(doc => ({ 
+            id: doc.id, 
+            ...doc.data(),
+            collection: collectionName // Add collection name to know where this product came from
+          }));
           results = [...results, ...collectionResults];
         }
 

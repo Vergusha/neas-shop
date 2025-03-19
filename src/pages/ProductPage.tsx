@@ -20,6 +20,7 @@ interface ProductData {
   image2?: string; // Additional image
   image3?: string; // Additional image
   color?: string;
+  collection?: string; // Add collection field
   // ...other properties
 }
 
@@ -59,7 +60,8 @@ const ProductPage: React.FC = () => {
             console.log(`Found product in ${collectionName} collection:`, docSnap.data());
             foundProduct = {
               ...docSnap.data(),
-              id: id // Explicitly add the ID to the product data
+              id: id, // Explicitly add the ID to the product data
+              collection: collectionName // Store the collection name
             } as ProductData;
             break;
           }
@@ -239,6 +241,15 @@ const ProductPage: React.FC = () => {
 
   return (
     <div className="container mx-auto py-8">
+      {/* Pass collection info to session storage for breadcrumbs to use */}
+      {product?.collection && (
+        <div style={{ display: 'none' }}>
+          {(() => {
+            sessionStorage.setItem('lastProductCollection', product.collection);
+            return null;
+          })()}
+        </div>
+      )}
       <div className="bg-white p-4 rounded-lg shadow-md">
         <div className="flex flex-col md:flex-row">
           <div className="w-full md:w-2/5 mb-4 md:mb-0">

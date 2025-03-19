@@ -5,6 +5,9 @@ import { ChevronRight } from 'lucide-react';
 // Maps route segments to readable names
 const routeNameMap: Record<string, string> = {
   'product': 'Product',
+  'mobile': 'Mobile Phones',
+  'tv': 'TV & Audio',
+  'products': 'Products',
   'mobil': 'Mobile Phones',
   'data-og-tilbehor': 'Data & Accessories',
   'gaming': 'Gaming',
@@ -17,6 +20,15 @@ const routeNameMap: Record<string, string> = {
   'profile': 'My Profile',
   'login': 'Login',
   'register': 'Register'
+};
+
+// Map to convert collection names to route paths
+const collectionToRoutePath: Record<string, string> = {
+  'mobile': '/mobil',
+  'tv': '/tv-og-lyd',
+  'products': '/products',
+  'gaming': '/gaming',
+  'smart-home': '/smarte-hjem',
 };
 
 interface BreadcrumbItem {
@@ -39,29 +51,43 @@ const Breadcrumbs: React.FC = () => {
     // Build up the breadcrumb path
     let currentPath = '';
     
-    pathSegments.forEach((segment, index) => {
-      currentPath += `/${segment}`;
+    // Check if we're on a product detail page
+    if (pathSegments[0] === 'product' && pathSegments.length > 1) {
+      // Try to get the collection from session storage
+      const productCollection = sessionStorage.getItem('lastProductCollection') || 'products';
       
-      // Skip adding "products" segment to breadcrumbs
-      if (segment === 'products') {
-        return;
+      // Add the collection to breadcrumb path if we have a mapping for it
+      if (collectionToRoutePath[productCollection]) {
+        const routePath = collectionToRoutePath[productCollection];
+        const routeName = routeNameMap[routePath.substring(1)] || productCollection;
+        breadcrumbItems.push({
+          name: routeName,
+          path: routePath
+        });
       }
       
-      // Special case for product detail page
-      if (segment === 'product' && pathSegments[index + 1]) {
+      // Add the product page
+      breadcrumbItems.push({
+        name: 'Product',
+        path: `/${pathSegments[0]}/${pathSegments[1]}`
+      });
+    } else {
+      // Handle regular paths
+      pathSegments.forEach((segment, index) => {
+        currentPath += `/${segment}`;
+        
+        // Skip adding "products" segment to breadcrumbs
+        if (segment === 'products') {
+          return;
+        }
+        
+        // For normal segments
         breadcrumbItems.push({
-          name: routeNameMap[segment] || segment,
+          name: routeNameMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1),
           path: currentPath
         });
-        return;
-      }
-      
-      // For normal segments
-      breadcrumbItems.push({
-        name: routeNameMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1),
-        path: currentPath
       });
-    });
+    }
     
     setBreadcrumbs(breadcrumbItems);
   }, [location.pathname]);
