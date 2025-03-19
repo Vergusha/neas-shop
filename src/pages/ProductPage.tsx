@@ -4,28 +4,37 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { ref, onValue } from 'firebase/database';
 import { database } from '../firebaseConfig';
-import { Heart, Plus, Minus, ShoppingCart } from 'lucide-react'; // Import additional icons
+import { Heart, Plus, Minus, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'; // Added ChevronLeft and ChevronRight icons
 import Rating from '../components/Rating';
 import Reviews from '../components/Reviews';
 
-// Define a type for your product data
+// Update ProductData to include additional images
 interface ProductData {
+  rating: number;
+  reviewCount: number;
   id: string;
   name: string;
   description: string;
   price: number;
-  color?: string; // Make it optional if not all products have a color
-  // Add any other properties your product may have
+  image: string;
+  image2?: string; // Additional image
+  image3?: string; // Additional image
+  color?: string;
+  // ...other properties
 }
 
 const ProductPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
+  
+  // New state for image slider
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [productImages, setProductImages] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -59,6 +68,23 @@ const ProductPage: React.FC = () => {
         if (foundProduct) {
           setProduct(foundProduct);
           setSelectedColor(foundProduct.color || null);
+          
+          // Collect all available images
+          const images: string[] = [];
+          if (foundProduct.image) images.push(foundProduct.image);
+          if (foundProduct.image2) images.push(foundProduct.image2);
+          if (foundProduct.image3) images.push(foundProduct.image3);
+          
+          // Check if there are any other numbered image fields
+          for (let i = 4; i <= 10; i++) {
+            const imageKey = `image${i}` as keyof typeof foundProduct;
+            if (foundProduct[imageKey]) {
+              images.push(foundProduct[imageKey] as string);
+            }
+          }
+          
+          setProductImages(images);
+          setCurrentImageIndex(0); // Reset to first image
         } else {
           console.error("Product not found in any collection");
         }
@@ -84,7 +110,7 @@ const ProductPage: React.FC = () => {
         if (snapshot.exists()) {
           const productData = snapshot.val();
           if (productData.rating !== undefined && productData.reviewCount !== undefined) {
-            setProduct((prev: any) => {
+            setProduct((prev) => {
               if (!prev) return prev;
               return {
                 ...prev,
@@ -186,6 +212,23 @@ const ProductPage: React.FC = () => {
     setTimeout(() => setAddedToCart(false), 3000);
   };
 
+  // Methods for image navigation
+  const nextImage = () => {
+    if (productImages.length <= 1) return;
+    setCurrentImageIndex((prev) => (prev + 1) % productImages.length);
+  };
+
+  const prevImage = () => {
+    if (productImages.length <= 1) return;
+    setCurrentImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length);
+  };
+
+  const goToImage = (index: number) => {
+    if (index >= 0 && index < productImages.length) {
+      setCurrentImageIndex(index);
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-screen"><span className="loading loading-spinner loading-lg"></span></div>;
   }
@@ -198,20 +241,74 @@ const ProductPage: React.FC = () => {
     <div className="container mx-auto py-8">
       <div className="bg-white p-4 rounded-lg shadow-md">
         <div className="flex flex-col md:flex-row">
-          <div className="w-full md:w-1/2 mb-4 md:mb-0">
-            <img src={product?.image} alt={product?.name} className="w-full h-auto mb-4" />
-            <div className="flex justify-center space-x-2">
+          <div className="w-full md:w-2/5 mb-4 md:mb-0">
+            {/* Image carousel */}
+            <div className="relative">
+              {/* Main image */}
+              <div className="w-full h-[400px] relative">
+                {productImages.length > 0 && (
+                  <img 
+                    src={productImages[currentImageIndex]} 
+                    alt={`${product?.name} - Image ${currentImageIndex + 1}`} 
+                    className="w-full h-full object-contain"
+                  />
+                )}
+                
+                {/* Navigation arrows - only show if we have multiple images */}
+                {productImages.length > 1 && (
+                  <>
+                    <button 
+                      onClick={prevImage}
+                      className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button 
+                      onClick={nextImage}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </>
+                )}
+              </div>
+              
+              {/* Thumbnail navigation - only show if we have multiple images */}
+              {productImages.length > 1 && (
+                <div className="flex justify-center mt-4 space-x-2">
+                  {productImages.map((image, idx) => (
+                    <button 
+                      key={idx} 
+                      onClick={() => goToImage(idx)}
+                      className={`w-16 h-16 border-2 rounded-md overflow-hidden ${
+                        idx === currentImageIndex ? 'border-blue-500' : 'border-gray-200'
+                      }`}
+                    >
+                      <img 
+                        src={image} 
+                        alt={`Thumbnail ${idx + 1}`} 
+                        className="w-full h-full object-contain"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Color selector */}
+            <div className="flex justify-center space-x-2 mt-4">
               {product?.color && (
                 <button
                   key={product.color}
                   className={`w-8 h-8 rounded-full border-2 ${selectedColor === product.color ? 'border-black' : 'border-gray-300'}`}
                   style={{ backgroundColor: product.color }}
-                  onClick={() => setSelectedColor(product.color)}
+                  onClick={() => setSelectedColor(product.color || null)}
                 />
               )}
             </div>
           </div>
-          <div className="w-full md:w-1/2 md:pl-8">
+          
+          <div className="w-full md:w-3/5 md:pl-8">
             {/* Rating display - moved above product name */}
             <div className="flex items-center gap-2 mb-2">
               <Rating value={product?.rating || 0} />
