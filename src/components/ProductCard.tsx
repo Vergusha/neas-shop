@@ -25,7 +25,18 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) => {
-  const [product, setProduct] = useState<Product>(initialProduct);
+  // Ensure product has required properties with proper types
+  const normalizedProduct = {
+    ...initialProduct,
+    price: typeof initialProduct.price === 'number' ? initialProduct.price : 
+           typeof initialProduct.price === 'string' ? parseFloat(initialProduct.price) : 0,
+    id: initialProduct.id || '',
+    name: initialProduct.name || 'Unnamed Product',
+    description: initialProduct.description || '',
+    image: initialProduct.image || '',
+  };
+  
+  const [product, setProduct] = useState<Product>(normalizedProduct);
   const auth = getAuth();
   const user = auth.currentUser;
   
@@ -197,7 +208,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
         <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
         
         <div className="flex justify-between items-center mt-4">
-          <span className="text-xl font-bold">{product.price.toFixed(2)} NOK</span>
+          <span className="text-xl font-bold">
+            {typeof product.price === 'number' 
+              ? product.price.toFixed(2) 
+              : Number(product.price).toFixed(2)} NOK
+          </span>
         </div>
       </div>
     </div>
