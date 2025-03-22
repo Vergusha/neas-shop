@@ -134,11 +134,17 @@ const TvPage: React.FC = () => {
         )}
 
         {/* Products grid */}
-        <div className={`${showFilters ? 'lg:col-span-3' : 'lg:col-span-4'} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`}>
+        <div className={`${showFilters ? 'lg:col-span-3' : 'lg:col-span-4'}`}>
           {filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))
+            <div className="px-12 sm:px-16 overflow-x-hidden">
+              <div className="flex flex-row flex-wrap">
+                {filteredProducts.map((product) => (
+                  <div key={product.id} className="w-full sm:w-1/2 lg:w-1/3 mb-6">
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : (
             <div className="col-span-full text-center py-8">
               No products found matching the selected filters.

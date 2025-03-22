@@ -159,60 +159,62 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   };
 
   return (
-    <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
-      <figure className="relative pt-4 px-4 cursor-pointer" onClick={handleClick}>
-        <img 
-          src={product.image} 
-          alt={product.name} 
-          className="rounded-xl h-48 w-full object-contain"
-        />
-        <div className="absolute top-6 left-6 flex gap-2"> {/* Changed position to top-left */}
-          <button
-            onClick={handleAddToCart}
-            className={`btn btn-circle btn-primary ${isInCart ? 'btn-success' : ''}`}
-          >
-            <FaShoppingCart className="w-5 h-5" />
-          </button>
-          <button
-            onClick={handleFavoriteClick}
-            className="p-2 rounded-full bg-white shadow-md hover:bg-gray-100"
-          >
-            <FaHeart className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} />
-          </button>
-        </div>
-      </figure>
-      
-      <div className="card-body">
-        {/* Rating display - moved above product name */}
-        <div className="flex items-center gap-2 mb-1">
-          <Rating value={product.rating || 0} size="sm" />
-          <span className="text-xs text-gray-500">
-            {product.rating ? product.rating.toFixed(1) : "0"} 
-            ({product.reviewCount || 0})
-          </span>
-        </div>
+    <div className="product-card-wrapper">
+      <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card">
+        <figure className="relative pt-4 px-4 cursor-pointer" onClick={handleClick}>
+          <img 
+            src={product.image} 
+            alt={product.name} 
+            className="rounded-xl h-48 w-full object-contain"
+          />
+          <div className="absolute top-6 left-6 flex gap-2 card-actions">
+            <button
+              onClick={handleAddToCart}
+              className={`btn btn-circle btn-primary ${isInCart ? 'btn-success' : ''}`}
+            >
+              <FaShoppingCart className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleFavoriteClick}
+              className="p-2 hover:scale-110 transition-all"
+            >
+              <FaHeart className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} />
+            </button>
+          </div>
+        </figure>
         
-        <h2 className="card-title cursor-pointer" onClick={handleClick}>
-          {product.name}
-          {product.brand && <span className="text-sm text-gray-500">({product.brand})</span>}
-        </h2>
-        
-        {product.memory && (
-          <p className="text-sm text-gray-600">{product.memory}</p>
-        )}
-        
-        {product.color && (
-          <p className="text-sm text-gray-600">{product.color}</p>
-        )}
-        
-        <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
-        
-        <div className="flex justify-between items-center mt-4">
-          <span className="text-xl font-bold">
-            {typeof product.price === 'number' 
-              ? product.price.toFixed(2) 
-              : Number(product.price).toFixed(2)} NOK
-          </span>
+        <div className="card-body">
+          {/* Rating display - moved above product name */}
+          <div className="flex items-center gap-2 mb-1">
+            <Rating value={product.rating || 0} size="sm" />
+            <span className="text-xs text-gray-500">
+              {product.rating ? product.rating.toFixed(1) : "0"} 
+              ({product.reviewCount || 0})
+            </span>
+          </div>
+          
+          <h2 className="card-title cursor-pointer" onClick={handleClick}>
+            {product.name}
+            {product.brand && <span className="text-sm text-gray-500">({product.brand})</span>}
+          </h2>
+          
+          {product.memory && (
+            <p className="text-sm text-gray-600">{product.memory}</p>
+          )}
+          
+          {product.color && (
+            <p className="text-sm text-gray-600">{product.color}</p>
+          )}
+          
+          <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+          
+          <div className="flex justify-between items-center mt-4">
+            <span className="text-xl font-bold">
+              {typeof product.price === 'number' 
+                ? product.price.toFixed(2) 
+                : Number(product.price).toFixed(2)} NOK
+            </span>
+          </div>
         </div>
       </div>
     </div>
