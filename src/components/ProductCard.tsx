@@ -226,6 +226,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     }
   };
 
+  const formatProductName = (product: Product): string => {
+    const parts = [];
+    if (product.brand) parts.push(product.brand);
+    if (product.model) parts.push(product.model);
+    if (product.modelNumber) parts.push(product.modelNumber);
+    if (product.memory) parts.push(product.memory);
+    if (product.color) parts.push(product.color);
+    
+    return parts.join(', ');
+  };
+
   return (
     <div className="product-card-wrapper">
       <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card">
@@ -264,20 +275,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
             </span>
           </div>
           
-          <h2 className="card-title cursor-pointer" onClick={handleClick}>
-            {product.name}
-            {product.brand && <span className="text-sm text-gray-500">({product.brand})</span>}
+          <h2 className="card-title cursor-pointer text-lg font-bold hover:text-primary transition-colors" onClick={handleClick}>
+            {formatProductName(product)}
           </h2>
           
-          {product.memory && (
-            <p className="text-sm text-gray-600">{product.memory}</p>
-          )}
-          
-          {product.color && (
-            <p className="text-sm text-gray-600">{product.color}</p>
-          )}
-          
-          <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+          <p className="text-xs text-gray-500 line-clamp-2 mt-1">{product.description}</p>
           
           <div className="flex justify-between items-center mt-4">
             <span className="text-xl font-bold">

@@ -3,6 +3,8 @@ import { collection, getFirestore, doc, setDoc, getDocs, deleteDoc } from 'fireb
 import EditProductModal from './EditProductModal';
 import { db } from '../firebaseConfig';
 import { ProductForm, NewProductForm } from '../types/product';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { updateAllProductsSearchKeywords } from '../utils/updateSearchKeywords';
 
 const AdminPanel: React.FC = () => {
   const [product, setProduct] = useState<NewProductForm>({
@@ -27,6 +29,8 @@ const AdminPanel: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('mobile');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [productToDelete, setProductToDelete] = useState<ProductForm | null>(null);
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const [isManageCollapsed, setIsManageCollapsed] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -92,7 +96,7 @@ const AdminPanel: React.FC = () => {
         price: Math.abs(Number(product.price)),
         image: finalImageUrl,
         createdAt: new Date().toISOString(),
-        searchKeywords: generateSearchKeywords(productName),
+        searchKeywords: generateSearchKeywords(productName, product.modelNumber),
         clickCount: 0,
         updatedAt: new Date().toISOString(),
         // Фильтры для поиска
@@ -145,9 +149,11 @@ const AdminPanel: React.FC = () => {
     });
   };
 
-  const generateSearchKeywords = (name: string): string[] => {
-    const words = name.toLowerCase().split(' ');
+  const generateSearchKeywords = (name: string, modelNumber?: string): string[] => {
     const keywords: string[] = [];
+    
+    // Process name
+    const words = name.toLowerCase().split(' ');
     
     // Add individual words
     for (const word of words) {
@@ -162,6 +168,16 @@ const AdminPanel: React.FC = () => {
       for (let j = i; j < words.length; j++) {
         combined += words[j] + ' ';
         keywords.push(combined.trim());
+      }
+    }
+
+    // Add model number variations if provided
+    if (modelNumber) {
+      keywords.push(modelNumber.toLowerCase());
+      // Remove spaces and hyphens for alternative search
+      const cleanModelNumber = modelNumber.toLowerCase().replace(/[\s-]/g, '');
+      if (cleanModelNumber !== modelNumber.toLowerCase()) {
+        keywords.push(cleanModelNumber);
       }
     }
     
@@ -209,6 +225,18 @@ const AdminPanel: React.FC = () => {
     } catch (error) {
       console.error('Error deleting product:', error);
       alert('Failed to delete product');
+    }
+  };
+
+  const handleUpdateSearchKeywords = async () => {
+    try {
+      if (window.confirm('Are you sure you want to update search keywords for all products?')) {
+        await updateAllProductsSearchKeywords();
+        alert('Search keywords updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error updating search keywords:', error);
+      alert('Failed to update search keywords');
     }
   };
 
@@ -415,211 +443,238 @@ const AdminPanel: React.FC = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4">Admin Panel</h2>
+    <div className="bg-white p-4 rounded-lg shadow-md">
+      <div className="mb-4">
+        <button
+          onClick={handleUpdateSearchKeywords}
+          className="btn btn-warning btn-sm"
+        >
+          Update All Search Keywords
+        </button>
+      </div>
+
+      <div className="flex justify-between items-center mb-4 cursor-pointer" 
+           onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}>
+        <h2 className="text-xl font-bold">Admin Panel</h2>
+        {isPanelCollapsed ? <FaChevronDown /> : <FaChevronUp />}
+      </div>
       
-      {/* Add Product Form */}
-      <div className="mb-8">
-        <h3 className="text-xl font-bold mb-4">Add New Product</h3>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Category</label>
+      {!isPanelCollapsed && (
+        <>
+          {/* Add Product Form */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">Add New Product</h3>
               <select 
                 value={product.category}
                 onChange={(e) => setProduct({...product, category: e.target.value})}
-                className="input input-bordered w-full"
+                className="select select-bordered select-sm"
                 required
               >
                 <option value="mobile">Mobile Phones</option>
                 <option value="tv">TVs</option>
               </select>
             </div>
-            
-            {/* Render dynamic fields based on category */}
-            {renderFields()}
 
-            {/* Image upload section */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Image</label>
-              <div className="flex gap-4 mb-2">
-                <button
-                  type="button"
-                  className={`btn ${imageInputType === 'file' ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setImageInputType('file')}
-                >
-                  Upload File
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${imageInputType === 'url' ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setImageInputType('url')}
-                >
-                  Insert URL
-                </button>
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Render dynamic fields based on category */}
+                {renderFields()}
+
+                {/* Image upload section */}
+                <div className="lg:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                  <div className="flex gap-2 mb-2">
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${imageInputType === 'file' ? 'btn-primary' : 'btn-outline'}`}
+                      onClick={() => setImageInputType('file')}
+                    >
+                      Upload File
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${imageInputType === 'url' ? 'btn-primary' : 'btn-outline'}`}
+                      onClick={() => setImageInputType('url')}
+                    >
+                      Insert URL
+                    </button>
+                  </div>
+                  
+                  {imageInputType === 'file' ? (
+                    <input
+                      type="file"
+                      onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)}
+                      className="file-input file-input-sm file-input-bordered w-full"
+                      accept="image/*"
+                    />
+                  ) : (
+                    <input
+                      type="url"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      className="input input-sm input-bordered w-full"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  )}
+                </div>
+                
+                <div className="lg:col-span-3">
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary btn-sm w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <span className="loading loading-spinner loading-sm"></span> : 'Add Product'}
+                  </button>
+                </div>
               </div>
-              
-              {imageInputType === 'file' ? (
-                <input
-                  type="file"
-                  onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)}
-                  className="file-input file-input-bordered w-full"
-                  accept="image/*"
-                />
-              ) : (
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="input input-bordered w-full"
-                  placeholder="https://example.com/image.jpg"
-                />
+            </form>
+          </div>
+
+          {/* Manage Products Section */}
+          <div className="mt-8">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2 cursor-pointer"
+                   onClick={() => setIsManageCollapsed(!isManageCollapsed)}>
+                <h3 className="text-lg font-bold">Manage Products</h3>
+                {isManageCollapsed ? <FaChevronDown /> : <FaChevronUp />}
+              </div>
+              {!isManageCollapsed && (
+                <select 
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="select select-bordered select-sm"
+                >
+                  <option value="mobile">Mobile Phones</option>
+                  <option value="tv">TVs</option>
+                </select>
               )}
             </div>
-            
-            <button 
-              type="submit" 
-              className="btn btn-primary w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? <span className="loading loading-spinner"></span> : 'Add Product'}
-            </button>
+
+            {!isManageCollapsed && (
+              <div className="overflow-x-auto">
+                <table className="table table-sm table-zebra w-full">
+                  <thead>
+                    <tr>
+                      <th className="w-16">Image</th>
+                      <th>Name</th>
+                      <th>Brand</th>
+                      <th>Model</th>
+                      <th>Memory</th>
+                      <th>Color</th>
+                      <th>Price</th>
+                      <th className="w-24">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map(product => (
+                      <tr key={product.id} className="hover">
+                        <td>
+                          <img 
+                            src={product.image} 
+                            alt={product.name} 
+                            className="w-12 h-12 object-contain"
+                          />
+                        </td>
+                        <td className="max-w-xs truncate">{product.name}</td>
+                        <td>{product.brand}</td>
+                        <td>{product.model}</td>
+                        <td>{product.memory}</td>
+                        <td>{product.color}</td>
+                        <td>{product.price} NOK</td>
+                        <td>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => {
+                                if (product.id) {
+                                  setSelectedProduct({
+                                    id: product.id,
+                                    name: product.name,
+                                    description: product.description,
+                                    price: product.price,
+                                    image: product.image,
+                                    category: selectedCategory,
+                                    brand: product.brand,
+                                    model: product.model,
+                                    modelNumber: product.modelNumber || '',
+                                    memory: product.memory,
+                                    color: product.color
+                                  } as ProductForm);
+                                  setIsEditModalOpen(true);
+                                }
+                              }}
+                              className="btn btn-xs btn-primary"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => {
+                                setProductToDelete(product);
+                                setShowDeleteConfirm(true);
+                              }}
+                              className="btn btn-xs btn-error"
+                            >
+                              Del
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        </form>
-      </div>
 
-      {/* Manage Products Section */}
-      <div className="mt-12">
-        <h3 className="text-xl font-bold mb-4">Manage Products</h3>
-        
-        <select 
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="select select-bordered mb-4"
-        >
-          <option value="mobile">Mobile Phones</option>
-          <option value="tv">TVs</option>
-        </select>
-
-        <div className="overflow-x-auto">
-          <table className="table w-full">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Brand</th>
-                <th>Model</th>
-                <th>Memory</th>
-                <th>Color</th>
-                <th>Price</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map(product => (
-                <tr key={product.id} className="hover">
-                  <td>
-                    <img 
-                      src={product.image} 
-                      alt={product.name} 
-                      className="w-16 h-16 object-contain"
-                    />
-                  </td>
-                  <td>{product.name}</td>
-                  <td>{product.brand}</td>
-                  <td>{product.model}</td>
-                  <td>{product.memory}</td>
-                  <td>{product.color}</td>
-                  <td>{product.price} NOK</td>
-                  <td>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          if (product.id) {
-                            setSelectedProduct({
-                              id: product.id,
-                              name: product.name,
-                              description: product.description,
-                              price: product.price,
-                              image: product.image,
-                              category: selectedCategory,
-                              brand: product.brand,
-                              model: product.model,
-                              modelNumber: product.modelNumber || '',
-                              memory: product.memory,
-                              color: product.color
-                            } as ProductForm);
-                            setIsEditModalOpen(true);
-                          }
-                        }}
-                        className="btn btn-sm btn-primary"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          setProductToDelete(product);
-                          setShowDeleteConfirm(true);
-                        }}
-                        className="btn btn-sm btn-error"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && productToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h3 className="text-lg font-bold mb-4">Delete Product</h3>
-            <p className="mb-4">
-              Are you sure you want to delete "{productToDelete.name}"? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-2">
-              <button 
-                className="btn btn-ghost"
-                onClick={() => {
-                  setShowDeleteConfirm(false);
-                  setProductToDelete(null);
-                }}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-error"
-                onClick={handleDeleteProduct}
-              >
-                Delete
-              </button>
+          {/* Delete Confirmation Modal */}
+          {showDeleteConfirm && productToDelete && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg max-w-md w-full">
+                <h3 className="text-lg font-bold mb-4">Delete Product</h3>
+                <p className="mb-4">
+                  Are you sure you want to delete "{productToDelete.name}"? This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-2">
+                  <button 
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setProductToDelete(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="btn btn-error"
+                    onClick={handleDeleteProduct}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* Edit Modal */}
-      {selectedProduct && (
-        <EditProductModal
-          product={selectedProduct}
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedProduct(null);
-          }}
-          onUpdate={(updatedProduct) => {
-            setProducts(prevProducts => 
-              prevProducts.map(p => 
-                p.id === updatedProduct.id ? updatedProduct : p
-              )
-            );
-          }}
-        />
+          {/* Edit Modal */}
+          {selectedProduct && (
+            <EditProductModal
+              product={selectedProduct}
+              isOpen={isEditModalOpen}
+              onClose={() => {
+                setIsEditModalOpen(false);
+                setSelectedProduct(null);
+              }}
+              onUpdate={(updatedProduct) => {
+                setProducts(prevProducts => 
+                  prevProducts.map(p => 
+                    p.id === updatedProduct.id ? updatedProduct : p
+                  )
+                );
+              }}
+            />
+          )}
+        </>
       )}
     </div>
   );
