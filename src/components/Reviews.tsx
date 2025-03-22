@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
-import { ref, get, set, onValue, update } from 'firebase/database';
+import { ref, get, set, onValue, update, remove } from 'firebase/database';
 import { database } from '../firebaseConfig';
 import Rating from './Rating';
-import { User, Clock, ThumbsUp } from 'lucide-react';
+import { User, Clock, ThumbsUp, Edit, Trash2 } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { defaultAvatarSVG, handleAvatarError } from '../utils/AvatarHelper';
 
 interface Review {
   id: string;
@@ -16,6 +17,8 @@ interface Review {
   date: string;
   userAvatar?: string;
   helpful?: number;
+  helpfulBy?: string[];
+  createdAt?: string;
 }
 
 interface ReviewsProps {
@@ -31,45 +34,54 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [helpfulReviews, setHelpfulReviews] = useState<Set<string>>(new Set());
   
   const auth = getAuth();
   const user = auth.currentUser;
 
-  // Load reviews for this product
   useEffect(() => {
     const reviewsRef = ref(database, `productReviews/${productId}`);
     
     const unsubscribe = onValue(reviewsRef, (snapshot) => {
       if (snapshot.exists()) {
         const reviewsData = snapshot.val();
-        const reviewsList: Review[] = Object.keys(reviewsData).map(key => ({
-          id: key,
-          ...reviewsData[key]
-        }));
+        const reviewKeys = Object.keys(reviewsData);
         
-        // Sort reviews by date (newest first)
+        if (reviewKeys.length === 0) {
+          setReviews([]);
+          setAverageRating(0);
+          resetProductRating();
+          return;
+        }
+        
+        const reviewsList: Review[] = reviewKeys.map(key => {
+          const review = reviewsData[key];
+          return {
+            id: key,
+            ...review,
+            userAvatar: review.userAvatar || ''
+          };
+        });
+        
         reviewsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
         setReviews(reviewsList);
         
-        // Calculate average rating
         const totalRating = reviewsList.reduce((sum, review) => sum + review.rating, 0);
         setAverageRating(totalRating / reviewsList.length);
         
-        // Check if the current user has already reviewed THIS product
         if (user) {
-          // Используем productId в комбинации с userID как ключ обзора
           const userReviewData = reviewsList.find(review => 
             review.userId === user.uid
           );
           
           if (userReviewData) {
             setUserReview(userReviewData);
-            // Pre-fill form for editing
             setNewReviewText(userReviewData.text);
             setNewRating(userReviewData.rating);
           } else {
-            // Сброс ранее заполненной формы если отзыва на этот товар нет
             setUserReview(null);
             setNewReviewText('');
             setNewRating(5);
@@ -78,14 +90,63 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
       } else {
         setReviews([]);
         setAverageRating(0);
+        resetProductRating();
         setUserReview(null);
       }
     });
     
+    if (user) {
+      const helpfulRef = ref(database, `users/${user.uid}/helpfulReviews`);
+      get(helpfulRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const helpfulData = snapshot.val();
+          const helpfulSet = new Set(Object.keys(helpfulData));
+          setHelpfulReviews(helpfulSet);
+        }
+      }).catch(error => {
+        console.error('Error loading helpful reviews:', error);
+      });
+    }
+    
     return () => unsubscribe();
   }, [productId, user]);
 
-  // Improved method to update ratings in both databases and broadcast the update
+  const resetProductRating = async () => {
+    try {
+      await update(ref(database, `products/${productId}`), {
+        rating: 0,
+        reviewCount: 0
+      });
+      
+      const collections = ['mobile', 'products', 'tv'];
+      for (const collectionName of collections) {
+        try {
+          const docRef = doc(db, collectionName, productId);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            await updateDoc(docRef, {
+              rating: 0,
+              reviewCount: 0
+            });
+            console.log(`Reset rating in ${collectionName} collection`);
+            break;
+          }
+        } catch (error) {
+        }
+      }
+      
+      window.dispatchEvent(new CustomEvent('productRatingUpdated', {
+        detail: { 
+          productId,
+          rating: 0,
+          reviewCount: 0
+        }
+      }));
+    } catch (error) {
+      console.error('Error resetting product rating:', error);
+    }
+  };
 
   const handleSubmitReview = async () => {
     if (!user) {
@@ -98,7 +159,6 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
       return;
     }
     
-    // Validate that productId exists
     if (!productId || productId === 'undefined') {
       setError('Invalid product ID. Please reload the page and try again.');
       console.error('Attempted to submit review with invalid productId:', productId);
@@ -113,28 +173,69 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
       console.log("User:", user.uid);
       console.log("Product ID:", productId);
       
-      // Create a simple review ID to avoid length issues or special characters
-      const reviewId = `${user.uid.slice(0, 8)}_${Date.now()}`;
+      let userAvatarUrl = '';
+      try {
+        const userRef = ref(database, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          if (userData.avatarURL) {
+            userAvatarUrl = userData.avatarURL;
+            console.log('Using avatar directly from database:', userAvatarUrl);
+          }
+        }
+      } catch (dbError) {
+        console.error('Error getting avatar from database:', dbError);
+      }
+      
+      if (!userAvatarUrl && user.photoURL) {
+        userAvatarUrl = user.photoURL;
+        console.log('Using avatar from user.photoURL:', userAvatarUrl);
+      }
+      
+      if (!userAvatarUrl) {
+        const savedAvatar = localStorage.getItem('avatarURL');
+        if (savedAvatar && savedAvatar !== 'null' && savedAvatar !== 'undefined') {
+          userAvatarUrl = savedAvatar;
+          console.log('Using avatar from localStorage:', userAvatarUrl);
+        }
+      }
+      
+      if (!userAvatarUrl) {
+        userAvatarUrl = defaultAvatarSVG;
+        console.log('Using default avatar');
+      }
+      
+      let reviewId: string;
+      
+      if (isEditing && userReview) {
+        reviewId = userReview.id;
+        console.log("Updating existing review with ID:", reviewId);
+      } else {
+        reviewId = `${user.uid.slice(0, 8)}_${Date.now()}`;
+        console.log("Creating new review with ID:", reviewId);
+      }
       
       const reviewData = {
         userId: user.uid,
         productId: productId,
         userName: user.displayName || 'Anonymous',
-        userAvatar: user.photoURL || '',
+        userAvatar: userAvatarUrl,
         rating: newRating,
         text: newReviewText.trim(),
         date: new Date().toISOString(),
-        helpful: userReview?.helpful || 0
+        helpful: userReview?.helpful || 0,
+        createdAt: (isEditing && userReview?.createdAt) ? userReview.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
       
       console.log("Review data prepared:", reviewData);
       
-      // Save or update the review
       const reviewRef = ref(database, `productReviews/${productId}/${reviewId}`);
       await set(reviewRef, reviewData);
-      console.log("Review saved successfully");
+      console.log(`Review ${isEditing ? 'updated' : 'saved'} successfully`);
       
-      // Recalculate average rating
       const reviewsRef = ref(database, `productReviews/${productId}`);
       const reviewsSnapshot = await get(reviewsRef);
       
@@ -149,14 +250,12 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
         console.log("New average rating:", averageRating);
         console.log("New review count:", newReviewCount);
         
-        // Update rating in Realtime Database
         await update(ref(database, `products/${productId}`), {
           rating: averageRating,
           reviewCount: newReviewCount
         });
         console.log("Updated rating in Realtime Database");
         
-        // Try to update in Firestore
         try {
           const collections = ['mobile', 'products', 'tv'];
           let updated = false;
@@ -177,7 +276,6 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
               }
             } catch (collectionError) {
               console.log(`Collection ${collectionName} check failed:`, collectionError);
-              // Continue to try next collection
             }
           }
           
@@ -185,7 +283,6 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
             console.log("Product not found in any collection, skipping Firestore update");
           }
           
-          // Broadcast event regardless of Firestore success
           window.dispatchEvent(new CustomEvent('productRatingUpdated', {
             detail: { 
               productId,
@@ -195,19 +292,16 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
           }));
         } catch (firestoreError) {
           console.error("Error updating Firestore:", firestoreError);
-          // Continue execution - Realtime DB is our source of truth
         }
       }
       
-      // Reset form state
       setUserReview({
         ...reviewData,
         id: reviewId
       });
       setIsEditing(false);
       
-      // Show success alert
-      alert("Your review has been submitted successfully!");
+      alert(`Your review has been ${isEditing ? 'updated' : 'submitted'} successfully!`);
       
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -217,17 +311,194 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
     }
   };
 
-  const handleHelpfulClick = async (reviewId: string) => {
+  const updateReviewAvatars = async () => {
     if (!user) return;
     
     try {
-      const helpfulRef = ref(database, `productReviews/${productId}/${reviewId}/helpful`);
-      const snapshot = await get(helpfulRef);
-      const currentHelpful = snapshot.exists() ? snapshot.val() : 0;
+      const userRef = ref(database, `users/${user.uid}`);
+      const snapshot = await get(userRef);
       
-      await set(helpfulRef, currentHelpful + 1);
+      if (snapshot.exists() && snapshot.val().avatarURL) {
+        const currentAvatar = snapshot.val().avatarURL;
+        
+        const reviewsRef = ref(database, `productReviews/${productId}`);
+        const reviewsSnapshot = await get(reviewsRef);
+        
+        if (reviewsSnapshot.exists()) {
+          const reviewsData = reviewsSnapshot.val();
+          
+          for (const [reviewId, review] of Object.entries(reviewsData)) {
+            const reviewData = review as any;
+            
+            if (reviewData.userId === user.uid && reviewData.userAvatar !== currentAvatar) {
+              console.log(`Updating avatar in review ${reviewId}`);
+              await set(ref(database, `productReviews/${productId}/${reviewId}/userAvatar`), currentAvatar);
+            }
+          }
+        }
+      }
     } catch (error) {
-      console.error('Error marking review as helpful:', error);
+      console.error('Error updating review avatars:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      updateReviewAvatars();
+    }
+  }, [user, productId]);
+
+  useEffect(() => {
+    const handleAvatarUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.avatarURL && user) {
+        console.log('Avatar updated event detected, updating review avatars');
+        updateReviewAvatars();
+      }
+    };
+    
+    window.addEventListener('avatarUpdated', handleAvatarUpdate);
+    return () => window.removeEventListener('avatarUpdated', handleAvatarUpdate);
+  }, [user]);
+
+  const handleDeleteReview = async () => {
+    if (!user || !userReview) {
+      return;
+    }
+    
+    setIsDeleting(true);
+    
+    try {
+      const reviewRef = ref(database, `productReviews/${productId}/${userReview.id}`);
+      await remove(reviewRef);
+      
+      const reviewsRef = ref(database, `productReviews/${productId}`);
+      const reviewsSnapshot = await get(reviewsRef);
+      
+      let averageRating = 0;
+      let newReviewCount = 0;
+      
+      if (reviewsSnapshot.exists()) {
+        const reviewsData = reviewsSnapshot.val();
+        const allReviews = Object.values(reviewsData) as Array<{rating: number}>;
+        
+        newReviewCount = allReviews.length;
+        
+        if (newReviewCount > 0) {
+          const totalRating = allReviews.reduce((sum, review) => sum + review.rating, 0);
+          averageRating = totalRating / newReviewCount;
+        }
+      }
+      
+      await update(ref(database, `products/${productId}`), {
+        rating: averageRating,
+        reviewCount: newReviewCount
+      });
+      
+      try {
+        const collections = ['mobile', 'products', 'tv'];
+        for (const collectionName of collections) {
+          const docRef = doc(db, collectionName, productId);
+          try {
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+              await updateDoc(docRef, {
+                rating: averageRating,
+                reviewCount: newReviewCount
+              });
+              break;
+            }
+          } catch (collectionError) {
+          }
+        }
+        
+        window.dispatchEvent(new CustomEvent('productRatingUpdated', {
+          detail: { 
+            productId,
+            rating: averageRating,
+            reviewCount: newReviewCount
+          }
+        }));
+      } catch (firestoreError) {
+        console.error("Error updating Firestore:", firestoreError);
+      }
+      
+      setUserReview(null);
+      setNewReviewText('');
+      setNewRating(5);
+      setShowDeleteConfirm(false);
+      
+      alert("Your review has been deleted successfully!");
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      alert(`Failed to delete review: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleHelpfulClick = async (reviewId: string) => {
+    if (!user) {
+      alert('You need to be logged in to mark reviews as helpful');
+      return;
+    }
+    
+    try {
+      const isCurrentlyHelpful = helpfulReviews.has(reviewId);
+      
+      if (isCurrentlyHelpful) {
+        const helpfulRef = ref(database, `productReviews/${productId}/${reviewId}/helpful`);
+        const snapshot = await get(helpfulRef);
+        const currentHelpful = snapshot.exists() ? snapshot.val() : 0;
+        await set(helpfulRef, Math.max(0, currentHelpful - 1));
+        
+        const helpfulByRef = ref(database, `productReviews/${productId}/${reviewId}/helpfulBy`);
+        const helpfulBySnapshot = await get(helpfulByRef);
+        
+        if (helpfulBySnapshot.exists()) {
+          const helpfulBy = helpfulBySnapshot.val();
+          if (Array.isArray(helpfulBy)) {
+            const updatedHelpfulBy = helpfulBy.filter(id => id !== user.uid);
+            await set(helpfulByRef, updatedHelpfulBy);
+          }
+        }
+        
+        const userHelpfulRef = ref(database, `users/${user.uid}/helpfulReviews/${reviewId}`);
+        await set(userHelpfulRef, null);
+        
+        const newHelpfulReviews = new Set(helpfulReviews);
+        newHelpfulReviews.delete(reviewId);
+        setHelpfulReviews(newHelpfulReviews);
+        
+      } else {
+        const helpfulRef = ref(database, `productReviews/${productId}/${reviewId}/helpful`);
+        const snapshot = await get(helpfulRef);
+        const currentHelpful = snapshot.exists() ? snapshot.val() : 0;
+        await set(helpfulRef, currentHelpful + 1);
+        
+        const helpfulByRef = ref(database, `productReviews/${productId}/${reviewId}/helpfulBy`);
+        const helpfulBySnapshot = await get(helpfulByRef);
+        const helpfulBy = helpfulBySnapshot.exists() ? helpfulBySnapshot.val() : [];
+        
+        if (!Array.isArray(helpfulBy)) {
+          await set(helpfulByRef, [user.uid]);
+        } else if (!helpfulBy.includes(user.uid)) {
+          await set(helpfulByRef, [...helpfulBy, user.uid]);
+        }
+        
+        const userHelpfulRef = ref(database, `users/${user.uid}/helpfulReviews/${reviewId}`);
+        await set(userHelpfulRef, {
+          productId,
+          timestamp: new Date().toISOString()
+        });
+        
+        setHelpfulReviews(prev => new Set(prev).add(reviewId));
+      }
+      
+    } catch (error) {
+      console.error('Error updating helpful status:', error);
+      alert('Failed to update helpful status. Please try again.');
     }
   };
 
@@ -235,7 +506,6 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
     <div className="mt-8">
       <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
       
-      {/* Summary section */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="text-center">
@@ -245,7 +515,6 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
           </div>
           
           <div className="flex-1">
-            {/* Rating distribution bars */}
             {[5, 4, 3, 2, 1].map(stars => {
               const count = reviews.filter(r => Math.floor(r.rating) === stars).length;
               const percentage = reviews.length ? (count / reviews.length) * 100 : 0;
@@ -275,18 +544,25 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
         </div>
       </div>
       
-      {/* Review form */}
       {user ? (
         userReview && !isEditing ? (
           <div className="bg-white p-6 rounded-lg shadow-md mb-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold">Your Review</h3>
-              <button 
-                className="btn btn-sm btn-outline"
-                onClick={() => setIsEditing(true)}
-              >
-                Edit
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  className="btn btn-sm btn-outline"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit size={16} className="mr-1" /> Edit
+                </button>
+                <button 
+                  className="btn btn-sm btn-outline btn-error"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 size={16} className="mr-1" /> Delete
+                </button>
+              </div>
             </div>
             
             <div className="mb-2">
@@ -297,6 +573,36 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
             <p className="text-xs text-gray-500 mt-2">
               Posted on {new Date(userReview.date).toLocaleDateString()}
             </p>
+            
+            {showDeleteConfirm && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                  <h3 className="font-bold text-lg mb-4">Delete Review</h3>
+                  <p className="mb-6">Are you sure you want to delete your review? This action cannot be undone.</p>
+                  <div className="flex justify-end gap-3">
+                    <button 
+                      className="btn btn-outline"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      className="btn btn-error"
+                      onClick={handleDeleteReview}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? (
+                        <>
+                          <span className="loading loading-spinner loading-xs mr-2"></span>
+                          Deleting...
+                        </>
+                      ) : 'Delete Review'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="bg-white p-6 rounded-lg shadow-md mb-6">
@@ -359,7 +665,6 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
         </div>
       )}
       
-      {/* Reviews list */}
       <div className="space-y-4">
         {reviews.length === 0 ? (
           <p className="text-gray-500 text-center py-8">No reviews yet. Be the first to review this product!</p>
@@ -368,18 +673,19 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
             <div key={review.id} className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex justify-between">
                 <div className="flex items-center gap-2 mb-2">
-                  {review.userAvatar ? (
+                  {review.userAvatar && review.userAvatar !== 'undefined' && review.userAvatar !== 'null' ? (
                     <img 
                       src={review.userAvatar} 
                       alt={review.userName}
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                      onError={handleAvatarError}
                     />
                   ) : (
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                      <User size={16} />
+                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center border border-gray-300">
+                      <User size={20} className="text-gray-500" />
                     </div>
                   )}
-                  <span className="font-medium">{review.userName}</span>
+                  <span className="font-medium">{review.userName || 'Anonymous'}</span>
                 </div>
                 <div className="flex items-center gap-1 text-sm text-gray-500">
                   <Clock size={14} />
@@ -395,11 +701,20 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
               
               <div className="flex justify-end mt-4">
                 <button 
-                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary"
+                  className={`flex items-center gap-1 text-sm 
+                    ${helpfulReviews.has(review.id) 
+                      ? 'text-primary font-medium' 
+                      : 'text-gray-500 hover:text-primary'
+                    }`}
                   onClick={() => handleHelpfulClick(review.id)}
                 >
-                  <ThumbsUp size={14} />
-                  <span>Helpful ({review.helpful || 0})</span>
+                  <ThumbsUp 
+                    size={14} 
+                    className={helpfulReviews.has(review.id) ? 'fill-primary' : ''}
+                  />
+                  <span>
+                    {helpfulReviews.has(review.id) ? 'Marked as helpful' : 'Helpful'} ({review.helpful || 0})
+                  </span>
                 </button>
               </div>
             </div>

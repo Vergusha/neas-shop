@@ -33,7 +33,7 @@ interface FilterOption {
   values: FilterValue[];
 }
 
-const TvPage: React.FC = () => {
+const HomePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,27 +41,29 @@ const TvPage: React.FC = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> }>({});
   const [availableFilters, setAvailableFilters] = useState<FilterOption[]>([]);
+  const [popularProducts, setPopularProducts] = useState<Product[]>([]);
+  const [isPopularLoading, setIsPopularLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const tvCollection = collection(db, 'tv');
-        const tvSnapshot = await getDocs(tvCollection);
-        const tvList = tvSnapshot.docs.map(doc => ({
+        const productsCollection = collection(db, 'products');
+        const productsSnapshot = await getDocs(productsCollection);
+        const productList = productsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as Product[];
         
-        setProducts(tvList);
+        setProducts(productList);
         
         // Extract available filters from products
-        const filters = extractFilters(tvList);
+        const filters = extractFilters(productList);
         setAvailableFilters(filters);
         
         // Initialize filtered products
-        setFilteredProducts(tvList);
+        setFilteredProducts(productList);
       } catch (err) {
-        console.error('Error fetching TV products:', err);
+        console.error('Error fetching products:', err);
         setError('Failed to load products');
       } finally {
         setLoading(false);
@@ -69,6 +71,28 @@ const TvPage: React.FC = () => {
     };
 
     fetchProducts();
+  }, []);
+
+  // Fetch popular products
+  useEffect(() => {
+    const fetchPopularProducts = async () => {
+      try {
+        const popularCollection = collection(db, 'popularProducts');
+        const popularSnapshot = await getDocs(popularCollection);
+        const popularList = popularSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Product[];
+        
+        setPopularProducts(popularList);
+      } catch (err) {
+        console.error('Error fetching popular products:', err);
+      } finally {
+        setIsPopularLoading(false);
+      }
+    };
+
+    fetchPopularProducts();
   }, []);
 
   // Update filtered products when filters change
@@ -108,10 +132,21 @@ const TvPage: React.FC = () => {
     return <div className="text-red-500 text-center py-8">{error}</div>;
   }
 
+  // Listen for favorites updates
+  useEffect(() => {
+    const handleFavoritesUpdated = () => {
+      console.log('Favorites updated event detected in HomePage');
+      // If you're storing favorites in state, update them here
+    };
+    
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
+    return () => window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">TV & Audio</h1>
+        <h1 className="text-2xl font-bold">Products</h1>
         <button 
           onClick={() => setShowFilters(!showFilters)}
           className="btn btn-primary flex items-center gap-2"
@@ -150,8 +185,31 @@ const TvPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Popular Products */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold mb-8">Popular Products</h2>
+          
+          {isPopularLoading ? (
+            <div className="flex justify-center">
+              <span className="loading loading-spinner loading-lg"></span>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="flex flex-row overflow-x-scroll product-row pb-4">
+                {popularProducts.map((product) => (
+                  <div key={product.id} className="product-card-wrapper">
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 };
 
-export default TvPage;
+export default HomePage;

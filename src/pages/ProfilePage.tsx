@@ -8,8 +8,7 @@ import AvatarEditor from '../components/AvatarEditor'; // Импортируем
 import { createCustomUserId } from '../utils/generateUserId';
 import { isAdmin } from '../utils/constants';
 import AdminPanel from '../components/AdminPanel';
-
-const defaultAvatarSVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UwZTBkMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzUiIHI9IjE1IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTUwIDUwYy0xNSAwLTMwIDE1LTMwIDMwczE1IDMwIDMwIDMwIDMwLTE1IDMwLTMwUzY1IDUwIDUwIDUwem0wIDUwYy0xMCAwLTE4IDgtMTggMThzOCAxOCAxOCAxOGMxMC4xIDAgMTgtOCAxOC0xOHMtOC0xOC0xOC0xOHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
+import { defaultAvatarSVG, handleAvatarError, updateAvatarUrl } from '../utils/AvatarHelper';
 
 const ProfilePage: React.FC = () => {
   const auth = getAuth();
@@ -312,15 +311,9 @@ const ProfilePage: React.FC = () => {
         setPreviewAvatar(imageData);
         setAvatarURL(imageData);
         
-        // Save to localStorage
-        localStorage.setItem('avatarURL', imageData);
-        localStorage.setItem('userProfile', JSON.stringify(userData));
+        // Use our centralized avatar update helper
+        updateAvatarUrl(imageData, user.uid);
         
-        // Dispatch event
-        window.dispatchEvent(new CustomEvent('avatarUpdated', { 
-          detail: { avatarURL: imageData, userData } 
-        }));
-
         console.log('Profile updated successfully');
       }
     } catch (error) {
@@ -438,10 +431,7 @@ const ProfilePage: React.FC = () => {
                     alt="Avatar"
                     className="w-full h-full object-cover cursor-pointer"
                     onClick={handleAvatarClick}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = defaultAvatarSVG;
-                    }}
+                    onError={(e) => handleAvatarError(e)}
                   />
                 )}
               </div>

@@ -234,3 +234,46 @@ input:focus {
     margin-right: 0;
   }
 }
+
+/* Carousel specific styles */
+.carousel {
+  position: relative;
+  overflow: hidden;
+}
+
+.carousel-item {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Fade in/out animation for images */
+.carousel-item {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.carousel-item.block {
+  opacity: 1;
+}
+
+/* Hover effects for carousel navigation */
+.carousel button {
+  opacity: 0.6;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.carousel:hover button {
+  opacity: 1;
+}
+
+.carousel button:hover {
+  transform: scale(1.1) translateY(-50%);
+}
+
+/* Dots indicator animation */
+.carousel .rounded-full {
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.carousel .rounded-full:hover {
+  transform: scale(1.5);
+}

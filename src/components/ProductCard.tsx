@@ -5,6 +5,7 @@ import { getAuth } from 'firebase/auth';
 import { ref, get, set, onValue } from 'firebase/database';
 import { database } from '../firebaseConfig';
 import Rating from './Rating'; // Add this import
+import ProductImageCarousel from './ProductImageCarousel';
 
 interface Product {
   id: string;
@@ -12,6 +13,10 @@ interface Product {
   description: string;
   price: number;
   image: string;
+  image2?: string;
+  image3?: string;
+  image4?: string;
+  image5?: string;
   brand?: string;
   category?: string;
   memory?: string;
@@ -48,18 +53,32 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   // Check if product is in favorites when component mounts
   useEffect(() => {
     const checkFavoriteStatus = async () => {
+      console.log('Checking favorite status for product:', product.id);
+      
       if (user) {
         const favRef = ref(database, `users/${user.uid}/favorites/${product.id}`);
         const snapshot = await get(favRef);
-        setIsFavorite(snapshot.exists());
+        const isFav = snapshot.exists();
+        console.log(`Product ${product.id} favorite status:`, isFav ? 'is favorite' : 'not favorite');
+        setIsFavorite(isFav);
       } else {
         // Fallback to localStorage for non-logged in users
         const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-        setIsFavorite(favorites.includes(product.id));
+        const isFav = favorites.includes(product.id);
+        console.log(`Product ${product.id} local favorite status:`, isFav ? 'is favorite' : 'not favorite');
+        setIsFavorite(isFav);
       }
     };
 
     checkFavoriteStatus();
+    
+    // Also listen for favorites updates from other components
+    const handleFavoritesUpdated = () => {
+      checkFavoriteStatus();
+    };
+    
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
+    return () => window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
   }, [user, product.id]);
 
   // Listen for rating updates from Realtime Database
@@ -69,13 +88,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     const unsubscribe = onValue(productRef, (snapshot) => {
       if (snapshot.exists()) {
         const productData = snapshot.val();
-        if (productData.rating !== undefined && productData.reviewCount !== undefined) {
-          setProduct(prev => ({
-            ...prev,
-            rating: productData.rating,
-            reviewCount: productData.reviewCount
-          }));
-        }
+        setProduct(prev => ({
+          ...prev,
+          rating: productData.rating !== undefined ? productData.rating : 0,
+          reviewCount: productData.reviewCount !== undefined ? productData.reviewCount : 0
+        }));
+      } else {
+        // If product node doesn't exist, set default values
+        setProduct(prev => ({
+          ...prev,
+          rating: 0,
+          reviewCount: 0
+        }));
       }
     });
     
@@ -103,6 +127,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     navigate(`/product/${product.id}`);
   };
 
+  // Collect all available images for the product
+  const getProductImages = (): string[] => {
+    const images: string[] = [];
+    if (product.image) images.push(product.image);
+    if (product.image2) images.push(product.image2);
+    if (product.image3) images.push(product.image3);
+    if (product.image4) images.push(product.image4);
+    if (product.image5) images.push(product.image5);
+    
+    // Check if there are any other numbered image fields
+    for (let i = 6; i <= 10; i++) {
+      const imageKey = `image${i}` as keyof typeof product;
+      if (product[imageKey]) {
+        images.push(product[imageKey] as string);
+      }
+    }
+    
+    return images;
+  };
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -127,25 +171,41 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
+    // Add some debug logging
+    console.log('Favorite button clicked for product:', product.id);
+    
     if (user) {
       try {
         const favRef = ref(database, `users/${user.uid}/favorites/${product.id}`);
         if (isFavorite) {
           // Remove from favorites
+          console.log('Removing product from favorites:', product.id);
           await set(favRef, null);
         } else {
-          // Add to favorites
-          await set(favRef, {
+          // Add to favorites - Fix the error by ensuring all properties exist
+          console.log('Adding product to favorites:', product.id);
+          
+          // Create object with fallbacks for all required properties
+          const favoriteData = {
             addedAt: new Date().toISOString(),
             productId: product.id,
-            category: product.category
-          });
+            // Use optional chaining and nullish coalescing to handle potential undefined values
+            category: product.category || 'uncategorized',
+            name: product.name || 'Product',
+            image: product.image || '',
+            price: product.price || 0
+          };
+          
+          console.log('Favorite data prepared:', favoriteData);
+          await set(favRef, favoriteData);
         }
         setIsFavorite(!isFavorite);
         // Dispatch event for updating other components
-        window.dispatchEvent(new Event('favoritesUpdated'));
+        window.dispatchEvent(new CustomEvent('favoritesUpdated'));
       } catch (error) {
         console.error('Error updating favorites:', error);
+        // More detailed error feedback
+        alert(`Failed to update favorites: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     } else {
       // Fallback to localStorage for non-logged in users
@@ -153,8 +213,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
       let updatedFavorites;
       
       if (isFavorite) {
+        console.log('Removing product from local favorites:', product.id);
         updatedFavorites = favorites.filter((id: string) => id !== product.id);
       } else {
+        console.log('Adding product to local favorites:', product.id);
         updatedFavorites = [...favorites, product.id];
       }
       
@@ -167,11 +229,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   return (
     <div className="product-card-wrapper">
       <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card">
-        <figure className="relative pt-4 px-4 cursor-pointer" onClick={handleClick}>
-          <img 
-            src={product.image} 
-            alt={product.name} 
-            className="rounded-xl h-48 w-full object-contain"
+        <figure className="relative pt-4 px-4">
+          {/* Replace static image with our new carousel */}
+          <ProductImageCarousel 
+            images={getProductImages()} 
+            productName={product.name}
+            onClick={handleClick}
           />
           <div className="absolute top-6 left-6 flex gap-2 card-actions">
             <button
@@ -182,7 +245,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
             </button>
             <button
               onClick={handleFavoriteClick}
-              className="p-2 hover:scale-110 transition-all"
+              className="p-2 hover:scale-110 transition-all" // Removed bg-white and shadow-sm
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <FaHeart className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} />
             </button>
@@ -190,12 +254,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
         </figure>
         
         <div className="card-body">
-          {/* Rating display - moved above product name */}
+          {/* Rating display - show only if there are reviews */}
           <div className="flex items-center gap-2 mb-1">
             <Rating value={product.rating || 0} size="sm" />
             <span className="text-xs text-gray-500">
-              {product.rating ? product.rating.toFixed(1) : "0"} 
-              ({product.reviewCount || 0})
+              {(product.reviewCount && product.reviewCount > 0) ? 
+                `${(product.rating || 0).toFixed(1)} (${product.reviewCount})` : 
+                "No reviews"}
             </span>
           </div>
           

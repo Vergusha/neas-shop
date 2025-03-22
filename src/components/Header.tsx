@@ -8,9 +8,8 @@ import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import Toast from './Toast';
 import { getDatabase, ref, get, onValue } from 'firebase/database';
 import { app } from '../firebaseConfig'; // Make sure this import exists
-
-const defaultAvatarSVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UwZTBkMCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMzUiIHI9IjE1IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTUwIDUwYy0xNSAwLTMwIDE1LTMwIDMwczE1IDMwIDMwIDMwIDMwLTE1IDMwLTMwUzY1IDUwIDUwIDUwem0wIDUwYy0xMCAwLTE4IDgtMTggMThzOCAxOCAxOCAxOGMxMC4xIDAgMTgtOCAxOC0xOHMtOC0xOC0xOC0xOHoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
-
+import { getBestAvatarUrl, handleAvatarError } from '../utils/AvatarHelper';
+import { database } from '../firebaseConfig';
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,6 +59,43 @@ const Header = () => {
     fetchSearchResults();
   }, [searchQuery]);
 
+  // Add this function to force refresh the user's avatar
+  const refreshUserAvatar = async () => {
+    if (!user) return;
+    
+    try {
+      // Get the latest avatar URL from Firebase
+      const userRef = ref(database, `users/${user.uid}`);
+      const snapshot = await get(userRef);
+      
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        if (userData.avatarURL) {
+          // Update state with the latest avatar
+          setUser((prev: any) => ({
+            ...prev,
+            photoURL: userData.avatarURL
+          }));
+          
+          // Update localStorage
+          localStorage.setItem('avatarURL', userData.avatarURL);
+          
+          // Update userProfile in localStorage if it exists
+          const savedProfile = localStorage.getItem('userProfile');
+          if (savedProfile) {
+            const profileData = JSON.parse(savedProfile);
+            profileData.avatarURL = userData.avatarURL;
+            localStorage.setItem('userProfile', JSON.stringify(profileData));
+          }
+          
+          console.log('Avatar refreshed from Firebase:', userData.avatarURL);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing avatar:', error);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log("Auth state changed:", currentUser?.email || "No user");
@@ -88,6 +124,9 @@ const Header = () => {
           
           // Update localStorage with latest user data
           localStorage.setItem('userProfile', JSON.stringify(userData));
+          
+          // Ensure avatar is refreshed on login
+          await refreshUserAvatar();
         } catch (error) {
           console.error('Error fetching user data:', error);
           setUser(currentUser);
@@ -252,7 +291,7 @@ const Header = () => {
 
   // Упростим функцию рендеринга аватара
   const renderUserAvatar = () => {
-    const avatarUrl = user?.photoURL || defaultAvatarSVG;
+    const avatarUrl = getBestAvatarUrl(user);
     console.log('Rendering avatar with URL:', avatarUrl);
     
     return (
@@ -262,10 +301,7 @@ const Header = () => {
             src={avatarUrl}
             alt="User avatar" 
             className="w-full h-full object-cover"
-            onError={(e) => {
-              console.error('Failed to load avatar, using default');
-              (e.target as HTMLImageElement).src = defaultAvatarSVG;
-            }}
+            onError={(e) => handleAvatarError(e)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-200">
