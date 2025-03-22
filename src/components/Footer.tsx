@@ -9,15 +9,15 @@ const Footer: React.FC = () => {
           <p>Industriveien 1</p>
           <p>6517 Kristiansund</p>
           <p>Org.nr 960684737</p>
-          <p>Postboks 2260 Løkkemyra, 6503 Kristiansund N</p>
+          <p>P.O Box 2260 Løkkemyra, 6503 Kristiansund N</p>
         </div>
         <div>
-          <h3 className="font-bold">Kontakt oss</h3>
+          <h3 className="font-bold">Contact Us</h3>
           <p>71 56 55 25</p>
-          <p>Åpningstider</p>
+          <p>Opening Hours</p>
         </div>
         <div>
-          <h3 className="font-bold">Følg oss</h3>
+          <h3 className="font-bold">Follow Us</h3>
           <p>
             <a href="https://www.facebook.com/neas.i.nabolaget/" target="_blank" rel="noopener noreferrer">
               Facebook
@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
             <a href="https://www.instagram.com/neas_i_nabolaget/" target="_blank" rel="noopener noreferrer">
             Instagram
             </a>
-        </p>
+          </p>
           <p>
           <a href="https://www.linkedin.com/company/neas-as/" target="_blank" rel="noopener noreferrer">
           LinkedIn</a>
@@ -35,25 +35,25 @@ const Footer: React.FC = () => {
           <p>
           <a href="https://www.youtube.com/user/neaskanalen" target="_blank" rel="noopener noreferrer">
             YouTube</a>
-            </p>
+          </p>
         </div>
         <div>
-          <h3 className="font-bold">Om oss</h3>
-          <p>Kontaktsenter</p>
-          <p>Om oss</p>
-          <p>Hjelp</p>
-          <p>Driftsmeldinger</p>
-          <p>Jobb hos oss</p>
-          <p>Ansatte</p>
-          <p>Sponsorat</p>
-          <p>NEAS-BLOGGEN</p>
-          <p>Grossist</p>
-          <p>Personvern og cookies</p>
+          <h3 className="font-bold">About Us</h3>
+          <p>Contact Center</p>
+          <p>About Us</p>
+          <p>Help</p>
+          <p>Service Status</p>
+          <p>Work With Us</p>
+          <p>Employees</p>
+          <p>Sponsorship</p>
+          <p>NEAS BLOG</p>
+          <p>Wholesale</p>
+          <p>Privacy and Cookies</p>
         </div>
       </div>
       <div className="container mx-auto mt-8 text-center">
         <img src="/assets/logo.svg" alt="NEAS Logo" className="mx-auto h-8" />
-        <p className="mt-4">Vi er en del av NEAS GRUPPEN</p>
+        <p className="mt-4">We are part of the NEAS GROUP</p>
       </div>
     </footer>
   );

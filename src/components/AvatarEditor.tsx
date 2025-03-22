@@ -188,7 +188,7 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-800">Изменить аватар</h3>
+          <h3 className="text-xl font-bold text-gray-800">Edit Avatar</h3>
           <button 
             onClick={onCancel}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -204,7 +204,7 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
             className="btn btn-outline btn-primary w-full flex items-center justify-center gap-2"
           >
             <Upload size={20} />
-            Выбрать изображение
+            Choose Image
           </label>
           <input
             id="avatar-upload"
@@ -249,7 +249,7 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
               
               {/* What you see is what you get indicator */}
               <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-70 text-black text-xs px-3 py-1 rounded-full font-medium">
-                Это будет ваш аватар
+                This will be your avatar
               </div>
             </>
           ) : (
@@ -264,7 +264,7 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
         {image && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Увеличение: {(scale * 100).toFixed(0)}%</span>
+              <span className="text-sm font-medium text-gray-700">Zoom: {(scale * 100).toFixed(0)}%</span>
               <div className="flex space-x-1">
                 <button 
                   onClick={handleZoomOut}
@@ -300,23 +300,23 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
             onClick={onCancel}
             className="btn btn-outline"
           >
-            Отмена
+            Cancel
           </button>
           <button 
             onClick={handleSave}
             className="btn btn-primary"
             disabled={!image}
           >
-            Сохранить
+            Save
           </button>
         </div>
         
         {/* Helpful instructions */}
         {image && (
           <div className="mt-4 p-2 bg-blue-50 text-blue-700 rounded text-xs">
-            <p>• Перемещайте изображение мышью или пальцем</p>
-            <p>• Используйте ползунок для изменения размера</p>
-            <p>• Круглая область показывает итоговый результат</p>
+            <p>• Move image with mouse or finger</p>
+            <p>• Use slider to adjust size</p>
+            <p>• Circular area shows final result</p>
           </div>
         )}
 

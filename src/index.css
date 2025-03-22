@@ -122,6 +122,27 @@ input:focus {
   animation: slideIn 0.3s ease-out forwards;
 }
 
+/* Cart button flash effect */
+@keyframes cartButtonFlash {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.cart-flash {
+  animation: cartButtonFlash 0.5s ease;
+}
+
+.cart-flash .text-[#F0E965] {
+  transition: color 0.5s;
+}
+
 /* Product card overlapping effect */
 .product-card-wrapper {
   position: relative;

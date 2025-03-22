@@ -144,7 +144,7 @@ const AdminPanel: React.FC = () => {
     const commonFields = (
       <>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Название товара</label>
+          <label className="block text-sm font-medium text-gray-700">Product Name</label>
           <input
             type="text"
             value={product.name}
@@ -155,7 +155,7 @@ const AdminPanel: React.FC = () => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700">Описание</label>
+          <label className="block text-sm font-medium text-gray-700">Description</label>
           <textarea
             value={product.description}
             onChange={(e) => setProduct({...product, description: e.target.value})}
@@ -165,7 +165,7 @@ const AdminPanel: React.FC = () => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700">Цена (NOK)</label>
+          <label className="block text-sm font-medium text-gray-700">Price (NOK)</label>
           <input
             type="number"
             value={product.price}
@@ -176,7 +176,7 @@ const AdminPanel: React.FC = () => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700">Бренд</label>
+          <label className="block text-sm font-medium text-gray-700">Brand</label>
           <input
             type="text"
             value={product.brand}
@@ -193,7 +193,7 @@ const AdminPanel: React.FC = () => {
         <>
           {commonFields}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Память</label>
+            <label className="block text-sm font-medium text-gray-700">Memory</label>
             <input
               type="text"
               value={product.memory || ''}
@@ -203,7 +203,7 @@ const AdminPanel: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Цвет</label>
+            <label className="block text-sm font-medium text-gray-700">Color</label>
             <input
               type="text"
               value={product.color || ''}
@@ -213,7 +213,7 @@ const AdminPanel: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Камера</label>
+            <label className="block text-sm font-medium text-gray-700">Camera</label>
             <input
               type="text"
               value={product.camera || ''}
@@ -223,7 +223,7 @@ const AdminPanel: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Размер дисплея</label>
+            <label className="block text-sm font-medium text-gray-700">Screen Size</label>
             <input
               type="text"
               value={product.screenSize || ''}
@@ -233,7 +233,7 @@ const AdminPanel: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Разрешение экрана</label>
+            <label className="block text-sm font-medium text-gray-700">Screen Resolution</label>
             <input
               type="text"
               value={product.resolution || ''}
@@ -251,7 +251,7 @@ const AdminPanel: React.FC = () => {
         <>
           {commonFields}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Диагональ экрана</label>
+            <label className="block text-sm font-medium text-gray-700">Screen Diagonal</label>
             <input
               type="text"
               value={product.screenDiagonal || ''}
@@ -261,7 +261,7 @@ const AdminPanel: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Разрешение экрана</label>
+            <label className="block text-sm font-medium text-gray-700">Screen Resolution</label>
             <input
               type="text"
               value={product.resolution || ''}
@@ -271,7 +271,7 @@ const AdminPanel: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Формат экрана</label>
+            <label className="block text-sm font-medium text-gray-700">Screen Format</label>
             <input
               type="text"
               value={product.screenFormat || ''}
@@ -281,7 +281,7 @@ const AdminPanel: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Цвет</label>
+            <label className="block text-sm font-medium text-gray-700">Color</label>
             <input
               type="text"
               value={product.color || ''}
@@ -299,20 +299,20 @@ const AdminPanel: React.FC = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4">Админ-панель</h2>
+      <h2 className="text-2xl font-bold mb-4">Admin Panel</h2>
       
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Категория</label>
+            <label className="block text-sm font-medium text-gray-700">Category</label>
             <select 
               value={product.category}
               onChange={(e) => setProduct({...product, category: e.target.value})}
               className="input input-bordered w-full"
               required
             >
-              <option value="mobile">Мобильные телефоны</option>
-              <option value="tv">Телевизоры</option>
+              <option value="mobile">Mobile Phones</option>
+              <option value="tv">TVs</option>
             </select>
           </div>
           
@@ -321,21 +321,21 @@ const AdminPanel: React.FC = () => {
 
           {/* Image upload section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Изображение</label>
+            <label className="block text-sm font-medium text-gray-700">Image</label>
             <div className="flex gap-4 mb-2">
               <button
                 type="button"
                 className={`btn ${imageInputType === 'file' ? 'btn-primary' : 'btn-outline'}`}
                 onClick={() => setImageInputType('file')}
               >
-                Загрузить файл
+                Upload File
               </button>
               <button
                 type="button"
                 className={`btn ${imageInputType === 'url' ? 'btn-primary' : 'btn-outline'}`}
                 onClick={() => setImageInputType('url')}
               >
-                Вставить ссылку
+                Insert URL
               </button>
             </div>
             
@@ -362,7 +362,7 @@ const AdminPanel: React.FC = () => {
             className="btn btn-primary w-full"
             disabled={isLoading}
           >
-            {isLoading ? <span className="loading loading-spinner"></span> : 'Добавить товар'}
+            {isLoading ? <span className="loading loading-spinner"></span> : 'Add Product'}
           </button>
         </div>
       </form>

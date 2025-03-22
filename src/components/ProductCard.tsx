@@ -43,6 +43,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   const navigate = useNavigate();
   const [isInCart, setIsInCart] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [cartButtonFlash, setCartButtonFlash] = useState(false);
 
   // Check if product is in favorites when component mounts
   useEffect(() => {
@@ -115,6 +116,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
 
     localStorage.setItem('cart', JSON.stringify(cart));
     setIsInCart(true);
+    
+    // Add flash effect
+    setCartButtonFlash(true);
+    setTimeout(() => setCartButtonFlash(false), 500);
+    
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
@@ -170,9 +176,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
           <div className="absolute top-6 left-6 flex gap-2 card-actions">
             <button
               onClick={handleAddToCart}
-              className={`btn btn-circle btn-primary ${isInCart ? 'btn-success' : ''}`}
+              className={`btn btn-circle btn-primary ${isInCart ? 'btn-success' : ''} ${cartButtonFlash ? 'cart-flash' : ''}`}
             >
-              <FaShoppingCart className="w-5 h-5" />
+              <FaShoppingCart className={`w-5 h-5 ${cartButtonFlash ? 'text-[#F0E965]' : ''}`} />
             </button>
             <button
               onClick={handleFavoriteClick}

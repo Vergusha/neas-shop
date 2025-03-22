@@ -77,9 +77,9 @@ const MobilePage: React.FC = () => {
         });
 
         setFilters([
-          { id: 'brand', name: 'Бренд', values: Array.from(uniqueFilters.brand).sort() },
-          { id: 'memory', name: 'Память', values: Array.from(uniqueFilters.memory).sort() },
-          { id: 'color', name: 'Цвет', values: Array.from(uniqueFilters.color).sort() },
+          { id: 'brand', name: 'Brand', values: Array.from(uniqueFilters.brand).sort() },
+          { id: 'memory', name: 'Memory', values: Array.from(uniqueFilters.memory).sort() },
+          { id: 'color', name: 'Color', values: Array.from(uniqueFilters.color).sort() },
         ]);
       } catch (error) {
         console.error('Error fetching filters:', error);
@@ -128,7 +128,7 @@ const MobilePage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Mobil</h1>
+        <h1 className="text-2xl font-bold">Mobile Phones</h1>
         <button 
           onClick={() => setShowFilters(!showFilters)}
           className="btn btn-primary flex items-center gap-2"

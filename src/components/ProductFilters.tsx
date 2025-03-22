@@ -68,7 +68,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold mb-4">Фильтры</h3>
+      <h3 className="text-lg font-semibold mb-4">Filters</h3>
       {filters.map((filter) => (
         <div key={filter.id || filter.key} className="mb-4">
           <h4 className="font-medium mb-2">{filter.name}</h4>

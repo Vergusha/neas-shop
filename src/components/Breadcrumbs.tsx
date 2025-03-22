@@ -9,11 +9,15 @@ const routeNameMap: Record<string, string> = {
   'tv': 'TV & Audio',
   'products': 'Products',
   'mobil': 'Mobile Phones',
+  'data-accessories': 'Data & Accessories',
   'data-og-tilbehor': 'Data & Accessories',
   'gaming': 'Gaming',
+  'tv-audio': 'TV & Audio',
   'tv-og-lyd': 'TV & Audio',
+  'smart-home': 'Smart Home',
   'smarte-hjem': 'Smart Home',
   'power-support': 'Support',
+  'support': 'Support',
   'search': 'Search Results',
   'cart': 'Shopping Cart',
   'favorites': 'Favorites',
@@ -22,13 +26,22 @@ const routeNameMap: Record<string, string> = {
   'register': 'Register'
 };
 
-// Map to convert collection names to route paths
+// Fix the collection to route path mapping with EXACT routes
 const collectionToRoutePath: Record<string, string> = {
-  'mobile': '/mobil',
-  'tv': '/tv-og-lyd',
+  'mobile': '/products/mobile',  // Make sure this matches App.tsx routes
+  'tv': '/products/tv-audio',    // Make sure this matches App.tsx routes
   'products': '/products',
-  'gaming': '/gaming',
-  'smart-home': '/smarte-hjem',
+  'gaming': '/products/gaming',
+  'smart-home': '/products/smart-home',
+};
+
+// Define exact display names for breadcrumbs based on collection
+const collectionDisplayNames: Record<string, string> = {
+  'mobile': 'Mobile Phones',
+  'tv': 'TV & Audio',
+  'products': 'Products',
+  'gaming': 'Gaming',
+  'smart-home': 'Smart Home'
 };
 
 interface BreadcrumbItem {
@@ -53,37 +66,49 @@ const Breadcrumbs: React.FC = () => {
     
     // Check if we're on a product detail page
     if (pathSegments[0] === 'product' && pathSegments.length > 1) {
-      // Try to get the collection from session storage
-      const productCollection = sessionStorage.getItem('lastProductCollection') || 'products';
+      // Get collection directly from session storage
+      const productCollection = sessionStorage.getItem('lastProductCollection');
+      console.log('Product collection from session:', productCollection);
       
-      // Add the collection to breadcrumb path if we have a mapping for it
-      if (collectionToRoutePath[productCollection]) {
+      if (productCollection && collectionToRoutePath[productCollection]) {
+        // Use exact predefined path and name to avoid mismatches
         const routePath = collectionToRoutePath[productCollection];
-        const routeName = routeNameMap[routePath.substring(1)] || productCollection;
+        const categoryName = collectionDisplayNames[productCollection] || 
+                            productCollection.charAt(0).toUpperCase() + productCollection.slice(1);
+        
+        // Add correct category link to breadcrumbs
         breadcrumbItems.push({
-          name: routeName,
+          name: categoryName,
           path: routePath
+        });
+      } else {
+        // Fallback to generic Products path
+        breadcrumbItems.push({
+          name: 'Products',
+          path: '/products'
         });
       }
       
       // Add the product page
       breadcrumbItems.push({
-        name: 'Product',
+        name: 'Product Details',
         path: `/${pathSegments[0]}/${pathSegments[1]}`
       });
     } else {
       // Handle regular paths
-      pathSegments.forEach((segment, _) => {
+      pathSegments.forEach((segment, index) => {
         currentPath += `/${segment}`;
         
-        // Skip adding "products" segment to breadcrumbs
-        if (segment === 'products') {
+        // Skip adding "products" segment alone to breadcrumbs
+        if (segment === 'products' && index === 0 && pathSegments.length > 1) {
           return;
         }
         
-        // For normal segments
+        // Use route name map for display names
+        const displayName = routeNameMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+        
         breadcrumbItems.push({
-          name: routeNameMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1),
+          name: displayName,
           path: currentPath
         });
       });

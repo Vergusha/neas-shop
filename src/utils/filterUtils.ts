@@ -70,7 +70,7 @@ export const extractFilters = (products: any[]): FilterOption[] => {
 };
 
 const formatFilterName = (key: string): string => {
-  // Преобразование ключей в читаемые названия
+  // Convert keys to readable English names
   const nameMap: { [key: string]: string } = {
     price: 'Price',
     brand: 'Brand',
@@ -79,7 +79,7 @@ const formatFilterName = (key: string): string => {
     camera: 'Camera',
     color: 'Color',
     resolution: 'Resolution',
-    // Добавьте другие маппинги по мере необходимости
+    // Add other mappings as needed
   };
 
   return nameMap[key] || key.charAt(0).toUpperCase() + key.slice(1);
@@ -88,7 +88,7 @@ const formatFilterName = (key: string): string => {
 export const applyFilters = (products: any[], activeFilters: { [key: string]: Set<string | number> }) => {
   return products.filter(product => {
     return Object.entries(activeFilters).every(([key, values]) => {
-      if (values.size === 0) return true; // Пропускаем фильтр если нет выбранных значений
+      if (values.size === 0) return true; // Skip filter if no values are selected
       return values.has(product[key]);
     });
   });

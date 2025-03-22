@@ -50,7 +50,6 @@ const App = () => {
           <main className="flex-grow">
             <Routes>
               <Route path="/" element={<Home />} />
-              {/* Updated routes with English names */}
               <Route path="/products/mobile" element={<MobilePage />} />
               <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/products/data-accessories" element={<DataPage />} />

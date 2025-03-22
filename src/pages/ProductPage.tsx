@@ -63,6 +63,13 @@ const ProductPage: React.FC = () => {
               id: id, // Explicitly add the ID to the product data
               collection: collectionName // Store the collection name
             } as ProductData;
+            
+            // Clear any previous collection
+            sessionStorage.removeItem('lastProductCollection');
+            // Set the new collection
+            sessionStorage.setItem('lastProductCollection', collectionName);
+            console.log('Saved collection to sessionStorage:', collectionName);
+            
             break;
           }
         }

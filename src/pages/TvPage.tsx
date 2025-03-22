@@ -111,7 +111,7 @@ const TvPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">TV og Lyd</h1>
+        <h1 className="text-2xl font-bold">TV & Audio</h1>
         <button 
           onClick={() => setShowFilters(!showFilters)}
           className="btn btn-primary flex items-center gap-2"
