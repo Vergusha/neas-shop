@@ -10,12 +10,12 @@ import { getDatabase, ref, get, onValue } from 'firebase/database';
 import { app } from '../firebaseConfig'; // Make sure this import exists
 import { getBestAvatarUrl, handleAvatarError } from '../utils/AvatarHelper';
 import { database } from '../firebaseConfig';
+import { useAuth } from '../utils/AuthProvider';
 
-const Header = () => {
+const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [, setFavorites] = useState<any[]>([]);
   const [cartItemCount, setCartItemCount] = useState(0);
   const [showCartNotification, setShowCartNotification] = useState(false);
@@ -27,6 +27,7 @@ const Header = () => {
   const searchResultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const auth = getAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchSearchResults = async () => {
@@ -144,7 +145,6 @@ const Header = () => {
   // Добавляем слушатель изменений в базе данных
   useEffect(() => {
     if (user) {
-      const database = getDatabase(app);
       const userRef = ref(database, `users/${user.uid}`);
       const unsubscribe = onValue(userRef, (snapshot) => {
         if (snapshot.exists()) {
@@ -249,6 +249,33 @@ const Header = () => {
 
     window.addEventListener('avatarUpdated', handleAvatarUpdate);
     return () => window.removeEventListener('avatarUpdated', handleAvatarUpdate);
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      const userRef = ref(database, `users/${user.uid}`);
+      const unsubscribe = onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          if (data.avatarURL) {
+            // Обновляем состояние пользователя с новым аватаром
+            setUser((prev: any) => ({
+              ...prev,
+              photoURL: data.avatarURL
+            }));
+            
+            // Обновляем локальное хранилище
+            localStorage.setItem('avatarURL', data.avatarURL);
+            localStorage.setItem('userProfile', JSON.stringify({
+              ...JSON.parse(localStorage.getItem('userProfile') || '{}'),
+              photoURL: data.avatarURL
+            }));
+          }
+        }
+      });
+
+      return () => unsubscribe();
+    }
   }, [user]);
 
   const handleSearch = (e: React.FormEvent) => {

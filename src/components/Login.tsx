@@ -18,23 +18,32 @@ const Login: React.FC = () => {
       const auth = getAuth();
       const { user } = await signInWithEmailAndPassword(auth, email, password);
       
-      // Проверяем статус верификации
-      if (user.emailVerified) {
-        // Обновляем статус в базе данных
-        const db = getDatabase();
-        const emailPrefix = email.split('@')[0].toLowerCase()
-          .replace(/[^a-z0-9-_]/g, '')
-          .replace(/\s+/g, '-');
-          
-        const userRef = ref(db, `users/${emailPrefix}`);
-        await update(userRef, {
-          isEmailVerified: true,
-          emailVerifiedAt: new Date().toISOString()
-        });
+      const db = getDatabase();
+      const emailPrefix = email.split('@')[0].toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '')
+        .replace(/\s+/g, '-');
+      
+      const userRef = ref(db, `users/${emailPrefix}`);
+      const userSnapshot = await get(userRef);
+      
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.val();
+        // Обновляем локальное хранилище с данными пользователя
+        localStorage.setItem('userProfile', JSON.stringify({
+          ...userData,
+          lastLogin: new Date().toISOString()
+        }));
+
+        if (user.emailVerified) {
+          await update(userRef, {
+            isEmailVerified: true,
+            emailVerifiedAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+          });
+        }
       }
 
-      // Редирект после успешного входа
-      // Redirect or perform any other actions after successful login
+      // Redirect or other actions...
     } catch (error) {
       setError('Failed to login. Please check your email and password.');
     } finally {

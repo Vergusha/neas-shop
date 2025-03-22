@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth, updateProfile } from 'firebase/auth';
-import { getDatabase, ref, get, set, onValue } from 'firebase/database';
+import { getDatabase, ref, get, set, onValue, update } from 'firebase/database';
 import { FaPencilAlt, FaHeart, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import OrderDetailsComponent from '../components/OrderDetailsComponent';
 import AvatarEditor from '../components/AvatarEditor';
@@ -8,12 +8,14 @@ import { createCustomUserId } from '../utils/generateUserId';
 import { isAdmin } from '../utils/constants';
 import AdminPanel from '../components/AdminPanel';
 import { defaultAvatarSVG, handleAvatarError } from '../utils/AvatarHelper';
+import { useAuth } from '../utils/AuthProvider';
 
 const ProfilePage: React.FC = () => {
   const auth = getAuth();
   const user = auth.currentUser;
   const [nickname, setNickname] = useState(user?.displayName || '');
-  const [realName, setRealName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [avatar] = useState<File | null>(null);
   const [avatarURL, setAvatarURL] = useState(user?.photoURL || defaultAvatarSVG);
@@ -29,9 +31,11 @@ const ProfilePage: React.FC = () => {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [showAvatarEditor, setShowAvatarEditor] = useState(false); // Новое состояние для отображения редактора
   const [customUserId, setCustomUserId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Initialize Firebase Realtime Database
   const database = getDatabase();
+  const { updateUserAvatar } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -45,13 +49,15 @@ const ProfilePage: React.FC = () => {
       console.log('No user logged in, restoring from localStorage');
       // Restore data from localStorage if user is not available
       const savedNickname = localStorage.getItem('nickname');
-      const savedRealName = localStorage.getItem('realName');
+      const savedFirstName = localStorage.getItem('firstName'); // Changed from realName
+      const savedLastName = localStorage.getItem('lastName'); // Added lastName
       const savedPhoneNumber = localStorage.getItem('phoneNumber');
       const savedAvatarURL = localStorage.getItem('avatarURL');
       const savedFavorites = localStorage.getItem('favorites');
       const savedUserId = localStorage.getItem('userId');
       if (savedNickname) setNickname(savedNickname);
-      if (savedRealName) setRealName(savedRealName);
+      if (savedFirstName) setFirstName(savedFirstName); // Update firstName
+      if (savedLastName) setLastName(savedLastName); // Update lastName
       if (savedPhoneNumber) setPhoneNumber(savedPhoneNumber);
       if (savedAvatarURL) setAvatarURL(savedAvatarURL);
       if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
@@ -72,8 +78,12 @@ const ProfilePage: React.FC = () => {
   }, [nickname]);
 
   useEffect(() => {
-    localStorage.setItem('realName', realName);
-  }, [realName]);
+    localStorage.setItem('firstName', firstName);
+  }, [firstName]);
+
+  useEffect(() => {
+    localStorage.setItem('lastName', lastName);
+  }, [lastName]);
 
   useEffect(() => {
     localStorage.setItem('phoneNumber', phoneNumber);
@@ -92,71 +102,31 @@ const ProfilePage: React.FC = () => {
   }, [userId]);
 
   const fetchUserProfile = async () => {
-    if (user) {
-      const userRef = ref(database, `users/${user.uid}`);
+    if (user?.email) {
+      const emailPrefix = user.email.split('@')[0].toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '')
+        .replace(/\s+/g, '-');
+      
+      const db = getDatabase();
+      const userRef = ref(db, `users/${emailPrefix}`);
+      
       try {
         const snapshot = await get(userRef);
         if (snapshot.exists()) {
           const data = snapshot.val();
-          console.log('User profile data:', data);
-          
-          // Если аватар слишком длинный, сохраняем его только в базе данных
-          const avatarURL = data.avatarURL || defaultAvatarSVG;
-          
-          // Update all user data at once
-          const userData = {
-            realName: data.realName || '',
-            phoneNumber: data.phoneNumber || '',
-            nickname: data.nickname || '',
-            avatarURL: avatarURL,
-            customUserId: data.customUserId || createCustomUserId(user.email || '')
-          };
+          setNickname(data.nickname || '');
+          setFirstName(data.firstName || '');
+          setLastName(data.lastName || '');
+          setPhoneNumber(data.phoneNumber || '');
+          setCustomUserId(emailPrefix); // Используем emailPrefix как ID
+          setAvatarURL(data.avatarURL || defaultAvatarSVG);
+          setPreviewAvatar(data.avatarURL || defaultAvatarSVG);
 
-          // Update states
-          setRealName(userData.realName);
-          setPhoneNumber(userData.phoneNumber);
-          setNickname(userData.nickname);
-          setCustomUserId(userData.customUserId);
-          setAvatarURL(avatarURL);
-          setPreviewAvatar(avatarURL);
-
-          // Обновляем Firebase Auth profile только если URL не слишком длинный
-          if (avatarURL.length <= 255) {
-            try {
-              await updateProfile(user, {
-                photoURL: avatarURL
-              });
-            } catch (error) {
-              console.warn('Could not update Auth profile photo URL:', error);
-              // Продолжаем работу, так как аватар все равно сохранен в базе данных
-            }
-          }
-          
-          localStorage.setItem('userProfile', JSON.stringify(userData));
-        } else {
-          // If no user data exists, create it
-          const userData = {
-            email: user.email,
-            customUserId: createCustomUserId(user.email || ''),
-            createdAt: new Date().toISOString()
-          };
-          await set(userRef, userData);
-          setCustomUserId(userData.customUserId);
+          // Обновляем локальное хранилище
+          localStorage.setItem('userProfile', JSON.stringify(data));
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
-        
-        // Try to restore from localStorage if fetch fails
-        const savedProfile = localStorage.getItem('userProfile');
-        if (savedProfile) {
-          const userData = JSON.parse(savedProfile);
-          setRealName(userData.realName || '');
-          setPhoneNumber(userData.phoneNumber || '');
-          setNickname(userData.nickname || '');
-          setCustomUserId(userData.customUserId || '');
-          setAvatarURL(userData.avatarURL || defaultAvatarSVG);
-          setPreviewAvatar(userData.avatarURL || defaultAvatarSVG);
-        }
       }
     }
   };
@@ -209,54 +179,80 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const checkNicknameAvailability = async (newNickname: string): Promise<boolean> => {
+    if (newNickname === nickname) return true; // Если никнейм не изменился
+    
+    const db = getDatabase();
+    const nicknameRef = ref(db, `nicknames/${newNickname.toLowerCase()}`);
+    const snapshot = await get(nicknameRef);
+    return !snapshot.exists();
+  };
+
   const handleUpdateProfile = async () => {
-    if (user) {
-      try {
-        let avatarBase64 = avatarURL;
-        if (avatar) {
-          setIsUploading(true);
-          avatarBase64 = await convertToBase64(avatar);
-        }
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
 
-        // Get existing user data first
-        const userRef = ref(database, `users/${user.uid}`);
-        const snapshot = await get(userRef);
-        const existingData = snapshot.exists() ? snapshot.val() : {};
-
-        // Create updated user data object
-        const updatedUserData = {
-          ...existingData, // Keep existing data
-          realName,
-          phoneNumber,
-          avatarURL: avatarBase64,
-          nickname,
-          lastUpdated: new Date().toISOString(),
-          customUserId: existingData.customUserId || createCustomUserId(user.email || ''), // Keep existing ID or create new if missing
-        };
-
-        // Update Firebase Auth profile
-        await updateProfile(user, {
-          displayName: nickname,
-          photoURL: avatarBase64,
-        });
-
-        // Update Realtime Database
-        await set(userRef, updatedUserData);
-
-        // Update local state
-        setAvatarURL(avatarBase64);
-        setCustomUserId(updatedUserData.customUserId);
-
-        alert('Profile updated successfully');
-        setIsEditing(false);
-        setIsUploading(false);
-
-        // Update localStorage
-        localStorage.setItem('userProfile', JSON.stringify(updatedUserData));
-      } catch (error) {
-        console.error('Error updating profile:', error);
-        setIsUploading(false);
+      // Проверяем доступность никнейма
+      const isNicknameAvailable = await checkNicknameAvailability(nickname);
+      if (!isNicknameAvailable) {
+        throw new Error('This nickname is already taken');
       }
+
+      // Получаем emailPrefix для ID пользователя
+      const emailPrefix = user.email?.split('@')[0].toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '')
+        .replace(/\s+/g, '-');
+
+      if (!emailPrefix) throw new Error('Invalid email');
+
+      const db = getDatabase();
+      const userRef = ref(db, `users/${emailPrefix}`);
+      
+      // Если никнейм изменился, обновляем nicknames
+      if (nickname !== user.displayName) {
+        // Удаляем старый никнейм
+        if (user.displayName) {
+          await set(ref(db, `nicknames/${user.displayName.toLowerCase()}`), null);
+        }
+        // Добавляем новый никнейм
+        await set(ref(db, `nicknames/${nickname.toLowerCase()}`), user.uid);
+      }
+
+      // Обновляем данные пользователя
+      const updatedUserData = {
+        nickname,
+        firstName,
+        lastName,
+        phoneNumber,
+        avatarURL: previewAvatar,
+        lastUpdated: new Date().toISOString(),
+      };
+
+      // Обновляем Firebase Auth профиль
+      await updateProfile(user, {
+        displayName: nickname,
+        photoURL: previewAvatar
+      });
+
+      // Обновляем данные в базе
+      await update(userRef, updatedUserData);
+
+      // Обновляем локальное хранилище
+      const currentData = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      localStorage.setItem('userProfile', JSON.stringify({
+        ...currentData,
+        ...updatedUserData
+      }));
+
+      alert('Profile updated successfully');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert(error instanceof Error ? error.message : 'Failed to update profile');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -281,38 +277,37 @@ const ProfilePage: React.FC = () => {
     try {
       setIsUploading(true);
       
-      if (user) {
-        const userRef = ref(database, `users/${user.uid}`);
-        const snapshot = await get(userRef);
-        const existingData = snapshot.exists() ? snapshot.val() : {};
-
-        // Сохраняем аватар в базе данных независимо от длины
-        const updatedData = {
-          ...existingData,
-          avatarURL: imageData,
-          lastUpdated: new Date().toISOString()
-        };
-
-        // Сохраняем в базу данных
-        await set(userRef, updatedData);
-
-        // Обновляем Auth profile только если URL не слишком длинный
-        if (imageData.length <= 255) {
-          try {
-            await updateProfile(user, {
-              photoURL: imageData
-            });
-          } catch (error) {
-            console.warn('Could not update Auth profile photo URL:', error);
-            // Продолжаем работу, так как аватар сохранен в базе данных
-          }
-        }
-
-        // Обновляем локальное состояние
-        setPreviewAvatar(imageData);
-        setAvatarURL(imageData);
-        localStorage.setItem('avatarURL', imageData);
+      if (!user) {
+        throw new Error('No user logged in');
       }
+
+      // Используем user.uid для пути в базе данных
+      const userRef = ref(database, `users/${user.uid}`);
+      
+      // Сначала обновляем в базе данных
+      await update(userRef, {
+        avatarURL: imageData,
+        lastUpdated: new Date().toISOString()
+      });
+
+      // Затем обновляем профиль в Firebase Auth
+      await updateProfile(user, {
+        photoURL: imageData
+      });
+
+      // Обновляем локальное состояние
+      setPreviewAvatar(imageData);
+      setAvatarURL(imageData);
+
+      // Обновляем локальное хранилище
+      localStorage.setItem('avatarURL', imageData);
+      
+      // Диспатчим событие об обновлении аватара
+      window.dispatchEvent(new CustomEvent('avatarUpdated', {
+        detail: { avatarURL: imageData }
+      }));
+
+      console.log('Avatar updated successfully');
     } catch (error) {
       console.error('Error updating avatar:', error);
       alert('Failed to update avatar');
@@ -442,7 +437,7 @@ const ProfilePage: React.FC = () => {
           </div>
           
           <div className="ml-4">
-            <h2 className="text-xl font-bold">{nickname || realName}</h2>
+            <h2 className="text-xl font-bold">{nickname || `${firstName} ${lastName}`.trim()}</h2>
             <p className="text-sm text-gray-500">ID: {customUserId}</p>
             <FaHeart
               className="w-5 h-5 ml-2 cursor-pointer"
@@ -453,56 +448,68 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
         
-        <div className="mb-4 flex items-center">
-          <label htmlFor="nickname" className="block text-gray-700 w-1/3">Nickname</label>
-          <input
-            type="text"
-            id="nickname"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            className="w-2/3 input input-bordered"
-            disabled={!isEditing}
-          />
-          <FaPencilAlt
-            className="w-5 h-5 ml-2 cursor-pointer"
-            onClick={() => setIsEditing(true)}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mb-4 flex items-center">
+            <label htmlFor="nickname" className="block text-gray-700 w-1/3">Nickname</label>
+            <input
+              type="text"
+              id="nickname"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              className="w-2/3 input input-bordered"
+              disabled={!isEditing}
+            />
+            <FaPencilAlt
+              className="w-5 h-5 ml-2 cursor-pointer"
+              onClick={() => setIsEditing(true)}
+            />
+          </div>
+
+          <div className="mb-4 flex items-center">
+            <label htmlFor="firstName" className="block text-gray-700 w-1/3">First Name</label>
+            <input
+              type="text"
+              id="firstName"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="w-2/3 input input-bordered"
+              disabled={!isEditing}
+            />
+          </div>
+
+          <div className="mb-4 flex items-center">
+            <label htmlFor="lastName" className="block text-gray-700 w-1/3">Last Name</label>
+            <input
+              type="text"
+              id="lastName"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="w-2/3 input input-bordered"
+              disabled={!isEditing}
+            />
+          </div>
+
+          <div className="mb-4 flex items-center">
+            <label htmlFor="phoneNumber" className="block text-gray-700 w-1/3">Phone Number</label>
+            <input
+              type="text"
+              id="phoneNumber"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-2/3 input input-bordered"
+              disabled={!isEditing}
+            />
+          </div>
         </div>
-        
-        <div className="mb-4 flex items-center">
-          <label htmlFor="realName" className="block text-gray-700 w-1/3">Real Name</label>
-          <input
-            type="text"
-            id="realName"
-            value={realName}
-            onChange={(e) => setRealName(e.target.value)}
-            className="w-2/3 input input-bordered"
-            disabled={!isEditing}
-          />
-          <FaPencilAlt
-            className="w-5 h-5 ml-2 cursor-pointer"
-            onClick={() => setIsEditing(true)}
-          />
-        </div>
-        
-        <div className="mb-4 flex items-center">
-          <label htmlFor="phoneNumber" className="block text-gray-700 w-1/3">Phone Number</label>
-          <input
-            type="text"
-            id="phoneNumber"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            className="w-2/3 input input-bordered"
-            disabled={!isEditing}
-          />
-          <FaPencilAlt
-            className="w-5 h-5 ml-2 cursor-pointer"
-            onClick={() => setIsEditing(true)}
-          />
-        </div>
-        
+
         {isEditing && (
-          <button onClick={handleUpdateProfile} className="btn btn-primary w-full">Save Changes</button>
+          <button 
+            onClick={handleUpdateProfile} 
+            className="btn btn-primary w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? <span className="loading loading-spinner"></span> : 'Save Changes'}
+          </button>
         )}
       </div>
       

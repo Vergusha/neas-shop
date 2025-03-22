@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { getDatabase, ref, set, get } from 'firebase/database';
 import { useNavigate } from 'react-router-dom'; // Добавляем импорт
 import { createCustomUserId } from '../utils/generateUserId';
@@ -79,33 +79,32 @@ const Register: React.FC = () => {
       }
 
       const auth = getAuth();
-      const userCredential = await createUserWithEmailAndPassword(
+      const { user } = await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
 
-      const user = userCredential.user;
       const customUserId = createCustomUserId(formData.email);
-
       const db = getDatabase();
-      const userRef = ref(db, `users/${customUserId}`); // Используем email-based ID вместо UID
+      const userRef = ref(db, `users/${customUserId}`);
 
-      // Проверяем, не занят ли такой ID
-      const snapshot = await get(userRef);
-      if (snapshot.exists()) {
-        throw new Error('User with this email already exists');
-      }
-
-      // Сохраняем данные пользователя
+      // Сохраняем расширенные данные пользователя
       await set(userRef, {
-        uid: user.uid, // Сохраняем Firebase UID для связи
+        uid: user.uid,
         nickname: formData.nickname,
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
+        displayName: `${formData.firstName} ${formData.lastName}`,
+        customUserId,
         createdAt: new Date().toISOString(),
         isEmailVerified: false
+      });
+
+      // Обновляем профиль в Firebase Auth
+      await updateProfile(user, {
+        displayName: formData.nickname
       });
 
       // Резервируем никнейм

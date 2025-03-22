@@ -16,12 +16,14 @@ interface AuthContextType {
   user: UserData | null;
   loading: boolean;
   error: Error | null;
+  updateUserAvatar: (avatarURL: string) => Promise<void>; // Add this
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  error: null
+  error: null,
+  updateUserAvatar: async () => {} // Add this
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -92,9 +94,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     return () => unsubscribe();
   }, []);
-  
+
+  const updateUserAvatar = async (avatarURL: string) => {
+    if (!user) return;
+
+    try {
+      const emailPrefix = user.email?.split('@')[0].toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '')
+        .replace(/\s+/g, '-');
+      
+      if (!emailPrefix) return;
+
+      const userRef = ref(database, `users/${emailPrefix}`);
+      await update(userRef, { avatarURL });
+
+      setUser(prev => prev ? { ...prev, photoURL: avatarURL } : null);
+      localStorage.setItem('userProfile', JSON.stringify({ 
+        ...user, 
+        photoURL: avatarURL 
+      }));
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, error }}>
+    <AuthContext.Provider value={{ user, loading, error, updateUserAvatar }}>
       {children}
     </AuthContext.Provider>
   );
