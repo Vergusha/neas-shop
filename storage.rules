@@ -1,0 +1,27 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /avatars/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null 
+                   && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*')
+                   && request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp'];
+
+      // Add CORS headers
+      function addCorsHeaders() {
+        response.headers['Access-Control-Allow-Origin'] = '*';
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+        response.headers['Access-Control-Max-Age'] = '3600';
+      }
+
+      // Apply CORS headers to all requests
+      options {
+        addCorsHeaders();
+        return true;
+      }
+    }
+  }
+}

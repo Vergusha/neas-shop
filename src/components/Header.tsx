@@ -233,26 +233,29 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('avatarUpdated', handleAvatarUpdate);
   }, [user, updateUserAvatar]);
 
-  // Оставляем только один эффект для синхронизации аватара
+  // Оптимизируем эффект для синхронизации аватара
   useEffect(() => {
-    if (user?.email) {
-      const emailPrefix = user.email.split('@')[0].toLowerCase()
-        .replace(/[^a-z0-9-_]/g, '')
-        .replace(/\s+/g, '-');
-      
-      const userRef = ref(database, `users/${emailPrefix}`);
-      
-      const unsubscribe = onValue(userRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          if (data.avatarURL && data.avatarURL !== user.photoURL) {
-            updateUserAvatar(data.avatarURL).catch(console.error);
-          }
-        }
-      });
+    if (!user?.email) return;
 
-      return () => unsubscribe();
-    }
+    const emailPrefix = user.email.split('@')[0].toLowerCase()
+      .replace(/[^a-z0-9-_]/g, '')
+      .replace(/\s+/g, '-');
+    
+    const userRef = ref(database, `users/${emailPrefix}`);
+    
+    const unsubscribe = onValue(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        if (data.avatarURL && data.avatarURL !== user.photoURL) {
+          // Используем setTimeout чтобы избежать множественных обновлений
+          setTimeout(() => {
+            updateUserAvatar(data.avatarURL).catch(console.error);
+          }, 0);
+        }
+      }
+    });
+
+    return () => unsubscribe();
   }, [user?.email, user?.photoURL, updateUserAvatar]);
 
   // Мемоизированный аватар с проверкой авторизации

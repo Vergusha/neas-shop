@@ -277,37 +277,35 @@ const ProfilePage: React.FC = () => {
     try {
       setIsUploading(true);
       
-      if (!user?.email) {
-        throw new Error('No user email found');
+      if (!user?.uid) {
+        throw new Error('No user ID found');
       }
 
-      const emailPrefix = user.email.split('@')[0].toLowerCase()
-        .replace(/[^a-z0-9-_]/g, '')
-        .replace(/\s+/g, '-');
-
-      // 1. Обновляем данные в базе
-      const userRef = ref(database, `users/${emailPrefix}`);
+      // Используем uid пользователя вместо email prefix
+      const userRef = ref(database, `users/${user.uid}`);
+      
+      // Сначала обновляем базу данных
       await update(userRef, {
         avatarURL: imageData,
         lastUpdated: new Date().toISOString()
       });
 
-      // 2. Обновляем профиль в Auth
-      await updateProfile(user, {
-        photoURL: imageData
-      });
-
-      // 3. Обновляем через AuthProvider
+      // Затем обновляем через AuthProvider
       await updateUserAvatar(imageData);
 
-      // 4. Обновляем локальное состояние
+      // Обновляем локальное состояние
       setPreviewAvatar(imageData);
       setAvatarURL(imageData);
+
+      // Диспатчим событие обновления аватара
+      window.dispatchEvent(new CustomEvent('avatarUpdated', {
+        detail: { avatarURL: imageData }
+      }));
 
       console.log('Avatar updated successfully');
     } catch (error) {
       console.error('Error updating avatar:', error);
-      alert('Failed to update avatar');
+      alert('Failed to update avatar. Please try again.');
     } finally {
       setIsUploading(false);
       setShowAvatarEditor(false);
@@ -576,9 +574,10 @@ const ProfilePage: React.FC = () => {
       </div>
       
       {/* Компонент AvatarEditor */}
-      {showAvatarEditor && (
+      {showAvatarEditor && user && (
         <AvatarEditor
           initialImage={avatarURL}
+          userId={user.uid}
           onSave={handleAvatarEditorSave}
           onCancel={handleAvatarEditorCancel}
         />

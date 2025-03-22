@@ -36,6 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const auth = getAuth();
     
+    // Настраиваем авторизацию для работы с повышенной приватностью
+    auth.settings.appVerificationDisabledForTesting = false;
+    
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => {
@@ -78,6 +81,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 emailVerifiedAt: new Date().toISOString()
               });
             }
+
+            // Добавляем настройки сессии
+            document.cookie = `__session=1; path=/; SameSite=Strict; ${
+              window.location.protocol === 'https:' ? 'Secure;' : ''
+            }`;
           } else {
             // User is signed out - очищаем все данные
             setUser(null);
@@ -87,6 +95,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.removeItem('firstName');
             localStorage.removeItem('lastName');
             console.log("AuthProvider: User is signed out, cleared all data");
+
+            // Очищаем куки сессии
+            document.cookie = '__session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
           }
         } catch (err) {
           console.error("Error in auth state change handler:", err);
@@ -121,47 +132,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .replace(/[^a-z0-9-_]/g, '')
         .replace(/\s+/g, '-');
 
-      // Проверяем, изменился ли аватар
-      const currentAvatarURL = user.photoURL || localStorage.getItem('avatarURL');
+      // Проверяем изменился ли URL аватара
+      const currentAvatarURL = user.photoURL;
       if (currentAvatarURL === newAvatarURL) {
-        return; // Если URL тот же самый, прерываем выполнение
+        return;
       }
 
-      // Обновляем все синхронно
-      const updates: { [key: string]: any } = {
+      // 1. Сначала обновляем базу данных
+      const userRef = ref(database, `users/${emailPrefix}`);
+      await update(userRef, {
         avatarURL: newAvatarURL,
         lastUpdated: new Date().toISOString()
-      };
+      });
 
-      // 1. Обновляем базу данных
-      const userRef = ref(database, `users/${emailPrefix}`);
-      await update(userRef, updates);
+      // 2. Обновляем контекст
+      setUser(prev => prev ? { ...prev, photoURL: newAvatarURL } : null);
 
-      // 2. Обновляем Auth профиль если URL не слишком длинный
+      // 3. Обновляем Auth профиль только если URL не слишком длинный
       const auth = getAuth();
       if (auth.currentUser && newAvatarURL.length <= 1024) {
         try {
           await updateProfile(auth.currentUser, { photoURL: newAvatarURL });
         } catch (err) {
-          console.warn('Auth profile update failed:', err);
+          console.warn('Auth profile photo not updated due to length:', err);
+          // Продолжаем выполнение, так как основные данные уже обновлены
         }
       }
 
-      // 3. Обновляем локальное состояние и хранилище
-      setUser(prev => prev ? { ...prev, photoURL: newAvatarURL } : null);
-      localStorage.setItem('avatarURL', newAvatarURL);
-      
-      const currentProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      // 4. Обновляем локальное хранилище
+      const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
       localStorage.setItem('userProfile', JSON.stringify({
-        ...currentProfile,
+        ...userProfile,
         photoURL: newAvatarURL,
         avatarURL: newAvatarURL
       }));
+      localStorage.setItem('avatarURL', newAvatarURL);
 
     } catch (error) {
       console.error('Error updating avatar:', error);
+      throw error;
     }
-  }, [user]);
+  }, [user?.email]);
 
   return (
     <AuthContext.Provider value={{ user, loading, error, updateUserAvatar }}>

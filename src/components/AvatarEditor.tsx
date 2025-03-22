@@ -1,9 +1,11 @@
 import React, { createRef, useState } from 'react';
 import AvatarEditorLib from 'react-avatar-editor';
 import { FaUndo, FaRedo, FaUpload } from 'react-icons/fa';
+import { compressImageToBase64 } from '../utils/imageUtils';
 
 interface AvatarEditorProps {
   initialImage: string;
+  userId: string; // Add userId prop
   onSave: (imageData: string) => void;
   onCancel: () => void;
 }
@@ -15,7 +17,21 @@ interface ImageProperties {
   rotate: number;
 }
 
-const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCancel }) => {
+// Add new utility function for image compression
+const compressImage = (canvas: HTMLCanvasElement, maxSize: number = 150): string => {
+  let quality = 0.9;
+  let result = canvas.toDataURL('image/jpeg', quality);
+  
+  // Gradually reduce quality until the URL length is under maxSize KB
+  while (result.length > maxSize * 1024 && quality > 0.1) {
+    quality -= 0.1;
+    result = canvas.toDataURL('image/jpeg', quality);
+  }
+  
+  return result;
+};
+
+const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, userId, onSave, onCancel }) => {
   const editorRef = createRef<AvatarEditorLib>();
   const [imageProperties, setImageProperties] = useState<ImageProperties>({
     image: initialImage,
@@ -49,10 +65,24 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (editorRef.current) {
       const canvas = editorRef.current.getImageScaledToCanvas();
-      onSave(canvas.toDataURL());
+      try {
+        // Сжимаем изображение до очень маленького размера
+        const compressedImage = await compressImageToBase64(canvas, 20);
+        
+        // Проверяем размер сжатого изображения
+        if (compressedImage.length > 240 * 1024) {
+          throw new Error('Image is too large even after compression');
+        }
+
+        // Передаем в родительский компонент
+        onSave(compressedImage);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        alert('Failed to process image. Please try a smaller image or lower quality.');
+      }
     }
   };
 
