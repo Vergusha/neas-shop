@@ -73,7 +73,7 @@ const Breadcrumbs: React.FC = () => {
       });
     } else {
       // Handle regular paths
-      pathSegments.forEach((segment, index) => {
+      pathSegments.forEach((segment, _) => {
         currentPath += `/${segment}`;
         
         // Skip adding "products" segment to breadcrumbs

@@ -16,7 +16,7 @@ interface ProductFiltersProps {
   filters: FilterOption[];
   selectedFilters?: Record<string, string[]>;
   activeFilters?: { [key: string]: Set<string | number> };
-  onFilterChange: (filterId: string, values: string[]) => void | ((filterKey: string, values: Set<string | number>) => void);
+  onFilterChange: (filterId: string, values: string[]) => void | ((filterKey: string, values: string[]) => void);
 }
 
 const ProductFilters: React.FC<ProductFiltersProps> = ({
@@ -27,10 +27,13 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 }) => {
   // Helper function to check if a value is selected
   const isValueSelected = (filterId: string, value: string | number): boolean => {
-    if (selectedFilters && selectedFilters[filterId]) {
-      return selectedFilters[filterId].includes(String(value));
+    if (selectedFilters && filterId in selectedFilters) {
+      // Handle array type (MobilePage)
+      return Array.isArray(selectedFilters[filterId]) && 
+             selectedFilters[filterId].includes(String(value));
     }
-    if (activeFilters && activeFilters[filterId]) {
+    if (activeFilters && filterId in activeFilters) {
+      // Handle Set type (TvPage)
       return activeFilters[filterId].has(value);
     }
     return false;
@@ -38,24 +41,28 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
   // Helper function to handle filter change
   const handleFilterChange = (filterId: string, value: string | number, checked: boolean) => {
-    // Handle old filter format (string[])
-    if (selectedFilters && Object.keys(selectedFilters).length > 0) {
+    // Проверка какой тип фильтров используется и вызов соответствующей функции
+    if (Object.keys(selectedFilters).length > 0) {
+      // Обработка для MobilePage (string[])
       const currentValues = selectedFilters[filterId] || [];
       const stringValue = String(value);
       const newValues = checked
         ? [...currentValues, stringValue]
         : currentValues.filter((v) => v !== stringValue);
-      (onFilterChange as (id: string, values: string[]) => void)(filterId, newValues);
-    }
-    // Handle new filter format (Set<string | number>)
-    else if (activeFilters) {
-      const currentValues = new Set(activeFilters[filterId] || []);
+      onFilterChange(filterId, newValues);
+    } else {
+      // Обработка для TvPage (Set<string | number>)
+      const filterKey = filterId;
+      const currentValues = activeFilters[filterKey] ? Array.from(activeFilters[filterKey]) : [];
+      let newValues: string[] = [];
+      
       if (checked) {
-        currentValues.add(value);
+        newValues = [...currentValues.map(String), String(value)];
       } else {
-        currentValues.delete(value);
+        newValues = currentValues.map(String).filter(v => v !== String(value));
       }
-      (onFilterChange as unknown as (key: string, values: Set<string | number>) => void)(filterId, currentValues);
+      
+      onFilterChange(filterKey, newValues);
     }
   };
 

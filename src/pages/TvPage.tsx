@@ -78,9 +78,21 @@ const TvPage: React.FC = () => {
   }, [products, activeFilters]);
 
   const handleFilterChange = (filterKey: string, values: string[]) => {
+    // Преобразуем массив строк обратно в Set для совместимости с applyFilters
+    const valueSet = new Set<string | number>();
+    values.forEach(val => {
+      // Пробуем преобразовать значение в число, если это возможно
+      const numValue = Number(val);
+      if (!isNaN(numValue) && String(numValue) === val) {
+        valueSet.add(numValue);
+      } else {
+        valueSet.add(val);
+      }
+    });
+    
     setActiveFilters(prev => ({
       ...prev,
-      [filterKey]: new Set(values)
+      [filterKey]: valueSet
     }));
   };
 
