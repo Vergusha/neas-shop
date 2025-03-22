@@ -1,6 +1,6 @@
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, ShoppingCart, Heart, User } from 'lucide-react';
 import logo from '../assets/logo.svg';
-import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -11,6 +11,7 @@ import { app } from '../firebaseConfig'; // Make sure this import exists
 import { getBestAvatarUrl, handleAvatarError } from '../utils/AvatarHelper';
 import { database } from '../firebaseConfig';
 import { useAuth } from '../utils/AuthProvider';
+import UserAvatar from './UserAvatar';
 
 const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,7 +28,7 @@ const Header: React.FC = () => {
   const searchResultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const auth = getAuth();
-  const { user } = useAuth();
+  const { user, updateUserAvatar } = useAuth(); // Добавляем updateUserAvatar из контекста
 
   useEffect(() => {
     const fetchSearchResults = async () => {
@@ -73,10 +74,7 @@ const Header: React.FC = () => {
         const userData = snapshot.val();
         if (userData.avatarURL) {
           // Update state with the latest avatar
-          setUser((prev: any) => ({
-            ...prev,
-            photoURL: userData.avatarURL
-          }));
+          await updateUserAvatar(userData.avatarURL);
           
           // Update localStorage
           localStorage.setItem('avatarURL', userData.avatarURL);
@@ -111,16 +109,8 @@ const Header: React.FC = () => {
           if (snapshot.exists()) {
             userData = snapshot.val();
             if (userData.avatarURL) {
-              setUser({
-                ...currentUser,
-                photoURL: userData.avatarURL
-              });
-            } else {
-              setUser(currentUser);
+              await updateUserAvatar(userData.avatarURL);
             }
-          } else {
-            // In case the database doesn't have the user
-            setUser(currentUser);
           }
           
           // Update localStorage with latest user data
@@ -130,17 +120,15 @@ const Header: React.FC = () => {
           await refreshUserAvatar();
         } catch (error) {
           console.error('Error fetching user data:', error);
-          setUser(currentUser);
         }
       } else {
-        setUser(null);
         // Clear user-related data from localStorage when logged out
         localStorage.removeItem('userProfile');
       }
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth, updateUserAvatar]);
 
   // Добавляем слушатель изменений в базе данных
   useEffect(() => {
@@ -150,17 +138,14 @@ const Header: React.FC = () => {
         if (snapshot.exists()) {
           const data = snapshot.val();
           if (data.avatarURL && data.avatarURL.length <= 1024) {
-            setUser((prev: any) => ({
-              ...prev,
-              photoURL: data.avatarURL
-            }));
+            updateUserAvatar(data.avatarURL);
           }
         }
       });
 
       return () => unsubscribe();
     }
-  }, [user]);
+  }, [user, updateUserAvatar]);
 
   useEffect(() => {
     const storedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
@@ -238,10 +223,7 @@ const Header: React.FC = () => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail?.avatarURL) {
         if (user) {
-          setUser((prev: any) => ({
-            ...prev,
-            photoURL: customEvent.detail.avatarURL
-          }));
+          updateUserAvatar(customEvent.detail.avatarURL);
         }
         localStorage.setItem('avatarURL', customEvent.detail.avatarURL);
       }
@@ -249,33 +231,38 @@ const Header: React.FC = () => {
 
     window.addEventListener('avatarUpdated', handleAvatarUpdate);
     return () => window.removeEventListener('avatarUpdated', handleAvatarUpdate);
-  }, [user]);
+  }, [user, updateUserAvatar]);
 
+  // Оставляем только один эффект для синхронизации аватара
   useEffect(() => {
-    if (user) {
-      const userRef = ref(database, `users/${user.uid}`);
+    if (user?.email) {
+      const emailPrefix = user.email.split('@')[0].toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '')
+        .replace(/\s+/g, '-');
+      
+      const userRef = ref(database, `users/${emailPrefix}`);
+      
       const unsubscribe = onValue(userRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
-          if (data.avatarURL) {
-            // Обновляем состояние пользователя с новым аватаром
-            setUser((prev: any) => ({
-              ...prev,
-              photoURL: data.avatarURL
-            }));
-            
-            // Обновляем локальное хранилище
-            localStorage.setItem('avatarURL', data.avatarURL);
-            localStorage.setItem('userProfile', JSON.stringify({
-              ...JSON.parse(localStorage.getItem('userProfile') || '{}'),
-              photoURL: data.avatarURL
-            }));
+          if (data.avatarURL && data.avatarURL !== user.photoURL) {
+            updateUserAvatar(data.avatarURL).catch(console.error);
           }
         }
       });
 
       return () => unsubscribe();
     }
+  }, [user?.email, user?.photoURL, updateUserAvatar]);
+
+  // Мемоизированный аватар с проверкой авторизации
+  const userAvatar = useMemo(() => {
+    // Показываем аватар только если пользователь авторизован
+    if (!user) {
+      return <User size={32} className="text-white" />;
+    }
+    const avatarUrl = user.photoURL || localStorage.getItem('avatarURL') || null;
+    return <UserAvatar photoURL={avatarUrl} />;
   }, [user]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -287,11 +274,15 @@ const Header: React.FC = () => {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      // Explicitly navigate to home page after sign out
-      navigate('/');
-      // Close user menu
+      // Очищаем все данные пользователя из localStorage
+      localStorage.removeItem('userProfile');
+      localStorage.removeItem('avatarURL');
+      localStorage.removeItem('nickname');
+      localStorage.removeItem('firstName');
+      localStorage.removeItem('lastName');
+      // Закрываем меню и переходим на главную
       setUserMenuOpen(false);
-      // Show a sign-out notification
+      navigate('/');
       alert('You have been signed out');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -299,11 +290,28 @@ const Header: React.FC = () => {
   };
 
   const handleFavoriteClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     navigate('/favorites');
   };
 
   const handleCartClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     navigate('/cart');
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    // ...rest of add to cart logic...
   };
 
   const toggleCartPreview = () => {
@@ -314,29 +322,6 @@ const Header: React.FC = () => {
   const getCartItems = () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     return cart.slice(0, 3); // Get first 3 items for preview
-  };
-
-  // Упростим функцию рендеринга аватара
-  const renderUserAvatar = () => {
-    const avatarUrl = getBestAvatarUrl(user);
-    console.log('Rendering avatar with URL:', avatarUrl);
-    
-    return (
-      <div className="w-10 h-10 rounded-full overflow-hidden">
-        {user ? (
-          <img 
-            src={avatarUrl}
-            alt="User avatar" 
-            className="w-full h-full object-cover"
-            onError={(e) => handleAvatarError(e)}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200">
-            <User size={24} className="text-gray-600" />
-          </div>
-        )}
-      </div>
-    );
   };
 
   return (
@@ -395,7 +380,11 @@ const Header: React.FC = () => {
             {/* Icon buttons in a row - Adjusted for consistent alignment */}
             <div className="flex items-center gap-2">
               {/* Favorites button */}
-              <button onClick={handleFavoriteClick} className="btn btn-ghost btn-circle">
+              <button 
+                onClick={handleFavoriteClick} 
+                className={`btn btn-ghost btn-circle ${!user ? 'opacity-50' : ''}`}
+                title={!user ? 'Please login to use favorites' : 'Favorites'}
+              >
                 <Heart size={32} className="text-white" />
               </button>
               
@@ -403,10 +392,11 @@ const Header: React.FC = () => {
               <div className="relative pt-2"> {/* Added padding-top here */}
                 <button 
                   onClick={toggleCartPreview} 
-                  className="btn btn-ghost btn-circle relative"
+                  className={`btn btn-ghost btn-circle relative ${!user ? 'opacity-50' : ''}`}
+                  title={!user ? 'Please login to use cart' : 'Cart'}
                 >
                   <ShoppingCart size={32} className="text-white" />
-                  {cartItemCount > 0 && (
+                  {user && cartItemCount > 0 && (
                     <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
                       {cartItemCount}
                     </div>
@@ -414,7 +404,7 @@ const Header: React.FC = () => {
                 </button>
                 
                 {/* Cart preview dropdown */}
-                {cartOpen && cartItemCount > 0 && (
+                {user && cartOpen && cartItemCount > 0 && (
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-xl z-20">
                     <div className="p-4 border-b">
                       <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
@@ -457,7 +447,7 @@ const Header: React.FC = () => {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="btn btn-ghost btn-circle"
                 >
-                  {renderUserAvatar()}
+                  {userAvatar}
                 </button>
 
                 {/* User menu dropdown */}

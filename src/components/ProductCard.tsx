@@ -149,7 +149,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const cart = JSON.parse(localStorage.getItem(`cart_${user.uid}`) || '[]');
     const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
 
     if (existingItemIndex >= 0) {
@@ -158,71 +164,41 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
       cart.push({ ...product, quantity: 1 });
     }
 
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem(`cart_${user.uid}`, JSON.stringify(cart));
     setIsInCart(true);
-    
-    // Add flash effect
     setCartButtonFlash(true);
     setTimeout(() => setCartButtonFlash(false), 500);
     
-    window.dispatchEvent(new Event('cartUpdated'));
+    window.dispatchEvent(new CustomEvent('cartUpdated'));
   };
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Add some debug logging
-    console.log('Favorite button clicked for product:', product.id);
-    
-    if (user) {
-      try {
-        const favRef = ref(database, `users/${user.uid}/favorites/${product.id}`);
-        if (isFavorite) {
-          // Remove from favorites
-          console.log('Removing product from favorites:', product.id);
-          await set(favRef, null);
-        } else {
-          // Add to favorites - Fix the error by ensuring all properties exist
-          console.log('Adding product to favorites:', product.id);
-          
-          // Create object with fallbacks for all required properties
-          const favoriteData = {
-            addedAt: new Date().toISOString(),
-            productId: product.id,
-            // Use optional chaining and nullish coalescing to handle potential undefined values
-            category: product.category || 'uncategorized',
-            name: product.name || 'Product',
-            image: product.image || '',
-            price: product.price || 0
-          };
-          
-          console.log('Favorite data prepared:', favoriteData);
-          await set(favRef, favoriteData);
-        }
-        setIsFavorite(!isFavorite);
-        // Dispatch event for updating other components
-        window.dispatchEvent(new CustomEvent('favoritesUpdated'));
-      } catch (error) {
-        console.error('Error updating favorites:', error);
-        // More detailed error feedback
-        alert(`Failed to update favorites: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-    } else {
-      // Fallback to localStorage for non-logged in users
-      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-      let updatedFavorites;
-      
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const favRef = ref(database, `users/${user.uid}/favorites/${product.id}`);
       if (isFavorite) {
-        console.log('Removing product from local favorites:', product.id);
-        updatedFavorites = favorites.filter((id: string) => id !== product.id);
+        await set(favRef, null);
       } else {
-        console.log('Adding product to local favorites:', product.id);
-        updatedFavorites = [...favorites, product.id];
+        await set(favRef, {
+          addedAt: new Date().toISOString(),
+          productId: product.id,
+          category: product.category || 'uncategorized',
+          name: product.name || 'Product',
+          image: product.image || '',
+          price: product.price || 0
+        });
       }
-      
-      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
       setIsFavorite(!isFavorite);
-      window.dispatchEvent(new Event('favoritesUpdated'));
+      window.dispatchEvent(new CustomEvent('favoritesUpdated'));
+    } catch (error) {
+      console.error('Error updating favorites:', error);
+      alert(`Failed to update favorites: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -250,14 +226,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
           <div className="absolute top-6 left-6 flex gap-2 card-actions">
             <button
               onClick={handleAddToCart}
-              className={`btn btn-circle btn-primary ${isInCart ? 'btn-success' : ''} ${cartButtonFlash ? 'cart-flash' : ''}`}
+              className={`btn btn-circle btn-primary ${!user ? 'opacity-50' : ''} ${isInCart ? 'btn-success' : ''} ${cartButtonFlash ? 'cart-flash' : ''}`}
+              title={!user ? 'Please login to add to cart' : 'Add to cart'}
             >
               <FaShoppingCart className={`w-5 h-5 ${cartButtonFlash ? 'text-[#F0E965]' : ''}`} />
             </button>
             <button
               onClick={handleFavoriteClick}
-              className="p-2 hover:scale-110 transition-all" // Removed bg-white and shadow-sm
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              className={`p-2 hover:scale-110 transition-all ${!user ? 'opacity-50' : ''}`}
+              title={!user ? 'Please login to add to favorites' : isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <FaHeart className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} />
             </button>

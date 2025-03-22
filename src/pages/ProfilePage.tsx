@@ -277,35 +277,32 @@ const ProfilePage: React.FC = () => {
     try {
       setIsUploading(true);
       
-      if (!user) {
-        throw new Error('No user logged in');
+      if (!user?.email) {
+        throw new Error('No user email found');
       }
 
-      // Используем user.uid для пути в базе данных
-      const userRef = ref(database, `users/${user.uid}`);
-      
-      // Сначала обновляем в базе данных
+      const emailPrefix = user.email.split('@')[0].toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '')
+        .replace(/\s+/g, '-');
+
+      // 1. Обновляем данные в базе
+      const userRef = ref(database, `users/${emailPrefix}`);
       await update(userRef, {
         avatarURL: imageData,
         lastUpdated: new Date().toISOString()
       });
 
-      // Затем обновляем профиль в Firebase Auth
+      // 2. Обновляем профиль в Auth
       await updateProfile(user, {
         photoURL: imageData
       });
 
-      // Обновляем локальное состояние
+      // 3. Обновляем через AuthProvider
+      await updateUserAvatar(imageData);
+
+      // 4. Обновляем локальное состояние
       setPreviewAvatar(imageData);
       setAvatarURL(imageData);
-
-      // Обновляем локальное хранилище
-      localStorage.setItem('avatarURL', imageData);
-      
-      // Диспатчим событие об обновлении аватара
-      window.dispatchEvent(new CustomEvent('avatarUpdated', {
-        detail: { avatarURL: imageData }
-      }));
 
       console.log('Avatar updated successfully');
     } catch (error) {
