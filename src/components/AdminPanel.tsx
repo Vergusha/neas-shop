@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getFirestore, doc, setDoc, getDocs } from 'firebase/firestore';
+import { collection, getFirestore, doc, setDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import EditProductModal from './EditProductModal';
 import { db } from '../firebaseConfig';
 import { ProductForm, NewProductForm } from '../types/product';
@@ -25,6 +25,8 @@ const AdminPanel: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<ProductForm | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('mobile');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<ProductForm | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -180,12 +182,34 @@ const AdminPanel: React.FC = () => {
   const generateProductId = (product: NewProductForm): string => {
     const brand = formatForUrl(product.brand);
     const model = formatForUrl(product.model);
+    const modelNumber = product.modelNumber ? `-${formatForUrl(product.modelNumber)}` : '';
     const memory = formatForUrl(product.memory)
       .replace('gb', '') // убираем 'gb' из памяти
       + 'gb'; // добавляем 'gb' в конце
     const color = formatForUrl(product.color);
     
-    return `${brand}-${model}-${memory}-${color}`;
+    return `${brand}-${model}${modelNumber}-${memory}-${color}`;
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return;
+    
+    try {
+      const productRef = doc(db, selectedCategory, productToDelete.id);
+      await deleteDoc(productRef);
+      
+      // Update products list
+      setProducts(prevProducts => 
+        prevProducts.filter(p => p.id !== productToDelete.id)
+      );
+      
+      setShowDeleteConfirm(false);
+      setProductToDelete(null);
+      alert('Product deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('Failed to delete product');
+    }
   };
 
   const renderMobileFields = () => (
@@ -250,6 +274,20 @@ const AdminPanel: React.FC = () => {
       </div>
 
       <div>
+        <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
+        <input
+          type="number"
+          value={product.price}
+          onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
+          className="input input-bordered w-full"
+          placeholder="e.g. 4999"
+          min="0"
+          step="1"
+          required
+        />
+      </div>
+
+      <div>
         <label className="block text-sm font-medium text-gray-700 required">Description</label>
         <textarea
           value={product.description}
@@ -264,10 +302,10 @@ const AdminPanel: React.FC = () => {
       <div className="mt-4 p-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
         <div className="mt-1 text-sm text-gray-900">
-          {generateProductId(product) || 'Example: motorola-moto-g24-128gb-steelgray'}
+          {generateProductId(product) || 'Example: motorola-moto-g24-xt2341-128gb-steelgray'}
         </div>
         <div className="mt-2 text-xs text-gray-500">
-          Format: brand-model-memory-color
+          Format: brand-model-modelnumber-memory-color
         </div>
       </div>
     </>
@@ -494,29 +532,40 @@ const AdminPanel: React.FC = () => {
                   <td>{product.color}</td>
                   <td>{product.price} NOK</td>
                   <td>
-                    <button
-                      onClick={() => {
-                        if (product.id) { // Add type guard
-                          setSelectedProduct({
-                            id: product.id,
-                            name: product.name,
-                            description: product.description,
-                            price: product.price,
-                            image: product.image,
-                            category: selectedCategory,
-                            brand: product.brand,
-                            model: product.model,
-                            modelNumber: product.modelNumber || '',
-                            memory: product.memory,
-                            color: product.color
-                          } as ProductForm);
-                          setIsEditModalOpen(true);
-                        }
-                      }}
-                      className="btn btn-sm btn-primary"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          if (product.id) {
+                            setSelectedProduct({
+                              id: product.id,
+                              name: product.name,
+                              description: product.description,
+                              price: product.price,
+                              image: product.image,
+                              category: selectedCategory,
+                              brand: product.brand,
+                              model: product.model,
+                              modelNumber: product.modelNumber || '',
+                              memory: product.memory,
+                              color: product.color
+                            } as ProductForm);
+                            setIsEditModalOpen(true);
+                          }
+                        }}
+                        className="btn btn-sm btn-primary"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setProductToDelete(product);
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="btn btn-sm btn-error"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -524,6 +573,35 @@ const AdminPanel: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && productToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h3 className="text-lg font-bold mb-4">Delete Product</h3>
+            <p className="mb-4">
+              Are you sure you want to delete "{productToDelete.name}"? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button 
+                className="btn btn-ghost"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setProductToDelete(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-error"
+                onClick={handleDeleteProduct}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {selectedProduct && (
