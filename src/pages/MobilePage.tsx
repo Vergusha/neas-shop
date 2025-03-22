@@ -68,19 +68,46 @@ const MobilePage: React.FC = () => {
           memory: new Set(),
           color: new Set(),
         };
+        
+        // For price range
+        let minPrice = Infinity;
+        let maxPrice = 0;
 
         snapshot.forEach((doc) => {
           const data = doc.data();
           if (data.brand) uniqueFilters.brand.add(data.brand);
           if (data.memory) uniqueFilters.memory.add(data.memory);
           if (data.color) uniqueFilters.color.add(data.color);
+          
+          // Track price range
+          if (data.price) {
+            const price = Number(data.price);
+            if (!isNaN(price)) {
+              minPrice = Math.min(minPrice, price);
+              maxPrice = Math.max(maxPrice, price);
+            }
+          }
         });
+        
+        // Round min down to nearest 100 and max up to nearest 100
+        const roundedMinPrice = Math.floor(minPrice / 100) * 100;
+        const roundedMaxPrice = Math.ceil(maxPrice / 100) * 100;
 
-        setFilters([
+        const filtersList = [
+          {
+            id: 'price',
+            name: 'Price',
+            values: [],
+            type: 'range' as const,
+            min: roundedMinPrice,
+            max: roundedMaxPrice
+          },
           { id: 'brand', name: 'Brand', values: Array.from(uniqueFilters.brand).sort() },
           { id: 'memory', name: 'Memory', values: Array.from(uniqueFilters.memory).sort() },
           { id: 'color', name: 'Color', values: Array.from(uniqueFilters.color).sort() },
-        ]);
+        ];
+
+        setFilters(filtersList);
       } catch (error) {
         console.error('Error fetching filters:', error);
       }
@@ -96,6 +123,14 @@ const MobilePage: React.FC = () => {
       return Object.entries(selectedFilters).every(([filterId, values]) => {
         if (!values.length) return true;
         
+        // Handle price range filter
+        if (filterId === 'price' && values.length === 2) {
+          const [min, max] = values.map(Number);
+          const productPrice = Number(product.price);
+          return !isNaN(productPrice) && productPrice >= min && productPrice <= max;
+        }
+        
+        // Regular filters
         const productValue = String(product[filterId as keyof Product] || '').toLowerCase();
         return values.some(value => productValue === value.toLowerCase());
       });
@@ -105,8 +140,10 @@ const MobilePage: React.FC = () => {
     setFilteredProducts(filtered);
   }, [products, selectedFilters]);
 
-  const handleFilterChange = (filterId: string, values: string[]) => {
+  const handleFilterChange = (filterId: string, values: string[] | [number, number]) => {
     console.log('Filter changed:', filterId, values); // Debug log
+    
+    // Handle both regular filters and price range
     setSelectedFilters(prev => ({
       ...prev,
       [filterId]: values

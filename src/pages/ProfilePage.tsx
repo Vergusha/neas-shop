@@ -10,6 +10,44 @@ import { isAdmin } from '../utils/constants';
 import AdminPanel from '../components/AdminPanel';
 import { defaultAvatarSVG, handleAvatarError, updateAvatarUrl } from '../utils/AvatarHelper';
 
+const fetchUserProfile = async (userId: string) => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      // Update user profile with truncated photo URL if needed
+      const photoURL = userData.photoURL;
+      if (photoURL && photoURL.length > 255) {
+        // Truncate or use a default image if URL is too long
+        userData.photoURL = photoURL.substring(0, 255);
+      }
+      return userData;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
+};
+
+const updateUserProfile = async (userId: string, data: any) => {
+  try {
+    // Check and truncate photo URL if needed
+    if (data.photoURL && data.photoURL.length > 255) {
+      data.photoURL = data.photoURL.substring(0, 255);
+    }
+    
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      ...data,
+      updatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    throw error;
+  }
+};
+
 const ProfilePage: React.FC = () => {
   const auth = getAuth();
   const user = auth.currentUser;
@@ -98,41 +136,38 @@ const ProfilePage: React.FC = () => {
           const data = snapshot.val();
           console.log('User profile data:', data);
           
-          // If customUserId is missing, create it
-          if (!data.customUserId) {
-            data.customUserId = createCustomUserId(user.email || '');
-            // Save the new customUserId
-            await set(userRef, {
-              ...data,
-              customUserId: data.customUserId
-            });
-          }
+          // Если аватар слишком длинный, сохраняем его только в базе данных
+          const avatarURL = data.avatarURL || defaultAvatarSVG;
           
           // Update all user data at once
           const userData = {
             realName: data.realName || '',
             phoneNumber: data.phoneNumber || '',
             nickname: data.nickname || '',
-            avatarURL: data.avatarURL || defaultAvatarSVG,
-            customUserId: data.customUserId
+            avatarURL: avatarURL,
+            customUserId: data.customUserId || createCustomUserId(user.email || '')
           };
 
-          // Update all states
+          // Update states
           setRealName(userData.realName);
           setPhoneNumber(userData.phoneNumber);
           setNickname(userData.nickname);
           setCustomUserId(userData.customUserId);
+          setAvatarURL(avatarURL);
+          setPreviewAvatar(avatarURL);
 
-          if (userData.avatarURL) {
-            setAvatarURL(userData.avatarURL);
-            setPreviewAvatar(userData.avatarURL);
-            // Обновляем photoURL в Firebase Auth
-            await updateProfile(user, {
-              photoURL: userData.avatarURL
-            });
+          // Обновляем Firebase Auth profile только если URL не слишком длинный
+          if (avatarURL.length <= 255) {
+            try {
+              await updateProfile(user, {
+                photoURL: avatarURL
+              });
+            } catch (error) {
+              console.warn('Could not update Auth profile photo URL:', error);
+              // Продолжаем работу, так как аватар все равно сохранен в базе данных
+            }
           }
           
-          // Save complete user data to localStorage
           localStorage.setItem('userProfile', JSON.stringify(userData));
         } else {
           // If no user data exists, create it
@@ -283,42 +318,40 @@ const ProfilePage: React.FC = () => {
       setIsUploading(true);
       
       if (user) {
-        // Get existing user data
         const userRef = ref(database, `users/${user.uid}`);
         const snapshot = await get(userRef);
         const existingData = snapshot.exists() ? snapshot.val() : {};
 
-        // Create updated user data object
-        const userData = {
-          ...existingData, // Keep existing data
-          realName,
-          phoneNumber,
-          nickname,
+        // Сохраняем аватар в базе данных независимо от длины
+        const updatedData = {
+          ...existingData,
           avatarURL: imageData,
-          lastUpdated: new Date().toISOString(),
+          lastUpdated: new Date().toISOString()
         };
 
-        // Save to Realtime Database
-        await set(userRef, userData);
+        // Сохраняем в базу данных
+        await set(userRef, updatedData);
 
-        // Update Firebase Auth profile
-        await updateProfile(user, {
-          photoURL: imageData,
-          displayName: nickname
-        });
+        // Обновляем Auth profile только если URL не слишком длинный
+        if (imageData.length <= 255) {
+          try {
+            await updateProfile(user, {
+              photoURL: imageData
+            });
+          } catch (error) {
+            console.warn('Could not update Auth profile photo URL:', error);
+            // Продолжаем работу, так как аватар сохранен в базе данных
+          }
+        }
 
-        // Update local state
+        // Обновляем локальное состояние
         setPreviewAvatar(imageData);
         setAvatarURL(imageData);
-        
-        // Use our centralized avatar update helper
-        updateAvatarUrl(imageData, user.uid);
-        
-        console.log('Profile updated successfully');
+        localStorage.setItem('avatarURL', imageData);
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      console.error('Error updating avatar:', error);
+      alert('Failed to update avatar');
     } finally {
       setIsUploading(false);
       setShowAvatarEditor(false);

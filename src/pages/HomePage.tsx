@@ -101,20 +101,26 @@ const HomePage: React.FC = () => {
     setFilteredProducts(filtered);
   }, [products, activeFilters]);
 
-  const handleFilterChange = (filterKey: string, values: string[]) => {
-    // Convert array of strings back to Set for compatibility with applyFilters
+  const handleFilterChange = (filterKey: string, values: string[] | [number, number]) => {
+    // Create a new copy of active filters
     const newActiveFilters = { ...activeFilters };
     
-    if (values.length === 0) {
-      // If no values selected, remove the filter
-      delete newActiveFilters[filterKey];
-    } else {
-      // Create a new Set from the selected values
-      newActiveFilters[filterKey] = new Set(values.map(val => {
-        // Try to convert to number if it's numeric
-        const num = Number(val);
-        return isNaN(num) ? val : num;
-      }));
+    if (filterKey === 'price' && Array.isArray(values) && values.length === 2) {
+      // Handle price range filter
+      newActiveFilters[filterKey] = values as [number, number];
+    } else if (Array.isArray(values) && !Array.isArray(values[0])) {
+      // Regular checkbox filters
+      if (values.length === 0) {
+        // If no values selected, remove the filter
+        delete newActiveFilters[filterKey];
+      } else {
+        // Create a new Set from the selected values
+        newActiveFilters[filterKey] = new Set(values.map(val => {
+          // Try to convert to number if it's numeric
+          const num = Number(val);
+          return isNaN(num) ? val : num;
+        }));
+      }
     }
     
     setActiveFilters(newActiveFilters);

@@ -7,13 +7,17 @@ export interface FilterOption {
   name: string;
   key: string;
   values: FilterValue[];
+  type?: 'checkbox' | 'range';
+  min?: number;
+  max?: number;
 }
 
 export const extractFilters = (products: any[]): FilterOption[] => {
   const filterMap = new Map<string, Set<string | number>>();
   const filterCounts = new Map<string, Map<string | number, number>>();
+  const priceRange = { min: Infinity, max: 0 };
 
-  // Расширим список исключаемых полей
+  // Remove 'price' from excluded fields
   const excludedFields = [
     'id', 
     'name', 
@@ -24,13 +28,21 @@ export const extractFilters = (products: any[]): FilterOption[] => {
     'searchKeywords', 
     'clickCount',
     'category',
-    'price',
     'quantity',
     'addedAt',
     'productId'
   ];
 
   products.forEach(product => {
+    // Special handling for price range
+    if (product.price !== undefined && product.price !== null) {
+      const price = Number(product.price);
+      if (!isNaN(price)) {
+        priceRange.min = Math.min(priceRange.min, price);
+        priceRange.max = Math.max(priceRange.max, price);
+      }
+    }
+
     Object.entries(product).forEach(([key, value]) => {
       if (!excludedFields.includes(key) && value !== undefined && value !== null) {
         // Инициализируем множества для уникальных значений
@@ -50,7 +62,7 @@ export const extractFilters = (products: any[]): FilterOption[] => {
   });
 
   // Преобразуем в массив фильтров
-  return Array.from(filterMap.entries())
+  const filters = Array.from(filterMap.entries())
     .map(([key, values]) => ({
       name: formatFilterName(key),
       key: key,
@@ -65,8 +77,27 @@ export const extractFilters = (products: any[]): FilterOption[] => {
         }
         // Сортировка строковых значений
         return String(a.value).localeCompare(String(b.value));
-      })
+      }),
+      type: 'checkbox' as const
     })); 
+
+  // Add price range filter if we have valid min/max
+  if (priceRange.min !== Infinity && priceRange.max > 0 && priceRange.max >= priceRange.min) {
+    // Round min down to nearest 100 and max up to nearest 100
+    const min = Math.floor(priceRange.min / 100) * 100;
+    const max = Math.ceil(priceRange.max / 100) * 100;
+    
+    filters.unshift({
+      name: 'Price',
+      key: 'price',
+      values: [],
+      type: 'range',
+      min,
+      max
+    });
+  }
+
+  return filters;
 };
 
 const formatFilterName = (key: string): string => {
@@ -85,11 +116,25 @@ const formatFilterName = (key: string): string => {
   return nameMap[key] || key.charAt(0).toUpperCase() + key.slice(1);
 };
 
-export const applyFilters = (products: any[], activeFilters: { [key: string]: Set<string | number> }) => {
+export const applyFilters = (products: any[], activeFilters: { [key: string]: Set<string | number> | [number, number] }) => {
   return products.filter(product => {
     return Object.entries(activeFilters).every(([key, values]) => {
-      if (values.size === 0) return true; // Skip filter if no values are selected
-      return values.has(product[key]);
+      // Skip filter if no values are selected
+      if (values instanceof Set && values.size === 0) return true;
+      
+      // Handle price range filter
+      if (Array.isArray(values) && key === 'price') {
+        const [min, max] = values;
+        const productPrice = Number(product[key]);
+        return !isNaN(productPrice) && productPrice >= min && productPrice <= max;
+      }
+      
+      // Handle regular checkbox filters
+      if (values instanceof Set) {
+        return values.has(product[key]);
+      }
+      
+      return true;
     });
   });
 };
