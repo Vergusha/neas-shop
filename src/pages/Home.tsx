@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import CategoryList from '../components/CategoryList';
 import ProductCard from '../components/ProductCard';
-import { collection, getDocs, query, orderBy, limit, getCountFromServer } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db, database } from '../firebaseConfig';
 import { ref, get } from 'firebase/database';
 
@@ -108,13 +108,15 @@ const Home = () => {
         // Calculate a popularity score (weight favorites and purchases)
         allProducts = allProducts.map(product => ({
           ...product,
-          popularityScore: (product.favoriteCount * 2) + (product.purchaseCount * 3) + (product.clickCount || 0)
+          popularityScore: ((product.favoriteCount || 0) * 2) + 
+                          ((product.purchaseCount || 0) * 3) + 
+                          (product.clickCount || 0)
         }));
         
         // Ensure all products have valid price values before displaying
         const topProducts = allProducts
           .filter(product => product && product.id && !isNaN(Number(product.price)))
-          .sort((a: any, b: any) => b.popularityScore - a.popularityScore)
+          .sort((a: any, b: any) => (b.popularityScore || 0) - (a.popularityScore || 0))
           .slice(0, 20);
         
         setPopularProducts(topProducts);
