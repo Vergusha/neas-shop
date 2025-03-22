@@ -9,7 +9,7 @@ import TvPage from './pages/TvPage';
 import SmartHomePage from './pages/SmartHomePage';
 import SupportPage from './pages/SupportPage';
 import SearchResultsPage from './pages/SearchResultsPage';
-import Register from './pages/Register';
+import Register from './components/Register'; // Убедитесь, что импорт правильный
 import Login from './pages/Login';
 import ProfilePage from './pages/ProfilePage';
 import FavoritesPage from './pages/FavoritesPage';

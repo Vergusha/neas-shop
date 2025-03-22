@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "nicknames": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "users": {
+      "$userId": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && !newData.child('isEmailVerified').exists()) || data.child('uid').val() === auth.uid)",
+        "isEmailVerified": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { ref, get } from 'firebase/database';
+import { ref, get, update } from 'firebase/database';
 import { database } from '../firebaseConfig';
 
 interface UserData {
@@ -62,6 +62,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             // Store in localStorage
             localStorage.setItem('userProfile', JSON.stringify(userData));
+
+            // Check if email is verified
+            if (firebaseUser.emailVerified) {
+              // Update emailVerified status in Realtime Database
+              const emailPrefix = firebaseUser.email?.split('@')[0].toLowerCase()
+                .replace(/[^a-z0-9-_]/g, '')
+                .replace(/\s+/g, '-');
+                
+              const userRef = ref(database, `users/${emailPrefix}`);
+              await update(userRef, {
+                isEmailVerified: true,
+                emailVerifiedAt: new Date().toISOString()
+              });
+            }
           } else {
             // User is signed out
             console.log("AuthProvider: User is signed out");
