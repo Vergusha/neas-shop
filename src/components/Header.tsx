@@ -297,7 +297,7 @@ const Header = () => {
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Искать товары..."
+                  placeholder="Search for anything..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);

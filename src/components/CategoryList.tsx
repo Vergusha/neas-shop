@@ -8,12 +8,12 @@ interface Category {
 }
 
 const categories: Category[] = [
-  { name: 'Mobil', icon: <FaMobileAlt />, link: '/products/mobil' },
-  { name: 'Data og tilbehør', icon: <FaLaptopCode />, link: '/products/data-og-tilbehor' },
+  { name: 'Mobile', icon: <FaMobileAlt />, link: '/products/mobile' },
+  { name: 'Data and Accessories', icon: <FaLaptopCode />, link: '/products/data-accessories' },
   { name: 'Gaming', icon: <FaGamepad />, link: '/products/gaming' },
-  { name: 'TV и lyd', icon: <FaTv />, link: '/products/tv-og-lyd' },
-  { name: 'Smarte hjem', icon: <FaHome />, link: '/products/smarte-hjem' },
-  { name: 'POWER Support', icon: <FaWrench />, link: '/products/power-support' },
+  { name: 'TV and Sound', icon: <FaTv />, link: '/products/tv-audio' },
+  { name: 'Smart Home', icon: <FaHome />, link: '/products/smart-home' },
+  { name: 'NEAS Support', icon: <FaWrench />, link: '/products/support' },
 ];
 
 const logoColor = '#F0E965'; // Цвет логотипа

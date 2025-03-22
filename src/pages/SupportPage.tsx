@@ -3,18 +3,18 @@ import React from 'react';
 const SupportPage: React.FC = () => {
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">Hva kan vi hjelpe deg med?</h1>
+      <h1 className="text-2xl font-bold mb-4">How can we help you?</h1>
       <p className="mb-4">
-        Når du trenger en hjelpende hånd til din nye hjemmeelektronikk eller til å få i gang eldre apparater står NEAS Support klare til å hjelpe deg! Uansett hva problemet måtte være står våre faglærte medarbeidere og samarbeidspartnere klare til å løse det og finne rett teknisk løsning for deg.
+      When you need a helping hand with your new home electronics or to get older devices up and running, NEAS Support is ready to assist you! No matter what the problem might be, our skilled employees and partners are ready to solve it and find the right technical solution for you.
       </p>
       <p className="mb-4">
-        Vi i NEAS har gjort det til vårt oppdrag å ikke bare gi deg en best mulig handleopplevelse, men også gi deg den beste brukeropplevelsen. Vi ønsker å forenkle din hverdag ved å guide deg gjennom forvirrende begreper, tilby fleksible betalingsløsninger и sørge for at dine produkter får den beskyttelsen de trenger. Alle våre tjenester gjelder nyinnkjøpte produkter, men vi har også tjenester for elektronikk og hvitevarer du eier fra før, uansett hvor du måtte ha kjøpt det. La oss hjelpe deg til en bedre brukeropplevelse!
+      At NEAS, we have made it our mission not only to give you the best possible shopping experience but also to provide you with the best user experience. We want to simplify your everyday life by guiding you through confusing terms, offering flexible payment solutions, and ensuring that your products get the protection they need. All our services apply to newly purchased products, but we also have services for electronics and appliances you already own, no matter where you bought them. Let us help you achieve a better user experience!
       </p>
       <p className="mb-4">
-        Ikke sjeldent lar vi oss overraske over hvor lang tid det kan ta å sette opp en ny datamaskin eller mobiltelefon. Å installere ny programvare, overføre data fra en gammel enhet, laste ned alle nødvendige oppdateringer и få på plass ønskede innstillinger kan iblant vise seg å være en utmattende prosess. Selv å kalibrere tv-ens fargeinnstillinger (som fra fabrikken kommer optimalisert for fremvisning i butikk) etter lysforholdene i din egen stue kan få selv den mest tekniske kløpper til å miste мотет.
+      It's not uncommon to be surprised by how long it can take to set up a new computer or mobile phone. Installing new software, transferring data from an old device, downloading all necessary updates, and setting up desired configurations can sometimes prove to be an exhausting process. Even calibrating your TV's color settings (which are optimized for store display by default) to match the lighting conditions in your own living room can challenge even the most tech-savvy individuals.
       </p>
       <p className="mb-4">
-        Spar deg selv tid и frustrasjon и la oss gjøre jobben for deg! Vi i NEAS tilbyr allsidige tjenester som hjelper deg å komme raskest mulig i gang med ditt nye продукт. Enten det er snakk om en ny TV, mobiltelefon eller datamaskin er vi her for at du skal få din nye vare levert som du ønsker den - klar til bruk!
+      Save yourself time and frustration and let us do the work for you! At NEAS, we offer versatile services that help you get started with your new product as quickly as possible. Whether it's a new TV, mobile phone, or computer, we are here to ensure that your new item is delivered just the way you want it - ready to use!
       </p>
     </div>
   );

@@ -50,13 +50,14 @@ const App = () => {
           <main className="flex-grow">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/products/mobil" element={<MobilePage />} />
+              {/* Updated routes with English names */}
+              <Route path="/products/mobile" element={<MobilePage />} />
               <Route path="/product/:id" element={<ProductPage />} />
-              <Route path="/products/data-og-tilbehor" element={<DataPage />} />
+              <Route path="/products/data-accessories" element={<DataPage />} />
               <Route path="/products/gaming" element={<GamingPage />} />
-              <Route path="/products/tv-og-lyd" element={<TvPage />} />
-              <Route path="/products/smarte-hjem" element={<SmartHomePage />} />
-              <Route path="/products/power-support" element={<SupportPage />} />
+              <Route path="/products/tv-audio" element={<TvPage />} />
+              <Route path="/products/smart-home" element={<SmartHomePage />} />
+              <Route path="/products/support" element={<SupportPage />} />
               <Route path="/search" element={<SearchResultsPage />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
