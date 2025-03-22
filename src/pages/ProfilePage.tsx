@@ -4,7 +4,6 @@ import { getDatabase, ref, get, set, onValue, update } from 'firebase/database';
 import { FaPencilAlt, FaHeart, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import OrderDetailsComponent from '../components/OrderDetailsComponent';
 import AvatarEditor from '../components/AvatarEditor';
-import { createCustomUserId } from '../utils/generateUserId';
 import { isAdmin } from '../utils/constants';
 import AdminPanel from '../components/AdminPanel';
 import { defaultAvatarSVG, handleAvatarError } from '../utils/AvatarHelper';
@@ -17,7 +16,6 @@ const ProfilePage: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [avatar] = useState<File | null>(null);
   const [avatarURL, setAvatarURL] = useState(user?.photoURL || defaultAvatarSVG);
   const [isEditing, setIsEditing] = useState(false);
   const [orderHistory, setOrderHistory] = useState<any[]>([]);
@@ -254,15 +252,6 @@ const ProfilePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
   };
 
   const handleAvatarClick = () => {
@@ -577,7 +566,6 @@ const ProfilePage: React.FC = () => {
       {showAvatarEditor && user && (
         <AvatarEditor
           initialImage={avatarURL}
-          userId={user.uid}
           onSave={handleAvatarEditorSave}
           onCancel={handleAvatarEditorCancel}
         />

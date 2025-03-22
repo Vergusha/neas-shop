@@ -7,8 +7,7 @@ import { db } from '../firebaseConfig';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import Toast from './Toast';
 import { getDatabase, ref, get, onValue } from 'firebase/database';
-import { app } from '../firebaseConfig'; // Make sure this import exists
-import { getBestAvatarUrl, handleAvatarError } from '../utils/AvatarHelper';
+import { app } from '../firebaseConfig';
 import { database } from '../firebaseConfig';
 import { useAuth } from '../utils/AuthProvider';
 import UserAvatar from './UserAvatar';
@@ -306,15 +305,6 @@ const Header: React.FC = () => {
       return;
     }
     navigate('/cart');
-  };
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    // ...rest of add to cart logic...
   };
 
   const toggleCartPreview = () => {

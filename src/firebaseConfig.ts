@@ -1,7 +1,7 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth"; // Import getAuth
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCdKE4Qpl1YGMMcU7-dtqPAjsqo0Bn43h4",
@@ -14,19 +14,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp({
-  ...firebaseConfig,
-  authDomain: window.location.hostname,  // Используем текущий домен
-  cookieName: '__session',  // Устанавливаем имя cookie
-  cookieOptions: {
-    secure: window.location.protocol === 'https:',  // Secure только для HTTPS
-    sameSite: 'strict' as const  // Строгие настройки SameSite
-  }
-});
+const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
-auth.useDeviceLanguage(); // Используем язык устройства
-await setPersistence(auth, browserLocalPersistence); // Используем локальное хранение
+auth.useDeviceLanguage();
+setPersistence(auth, browserLocalPersistence).catch(console.error);
 
 const db = getFirestore(app);
 const database = getDatabase(app);

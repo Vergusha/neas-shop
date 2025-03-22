@@ -21,6 +21,8 @@ interface Product {
   category?: string;
   memory?: string;
   color?: string;
+  model?: string;
+  modelNumber?: string;
   rating?: number;
   reviewCount?: number;
 }

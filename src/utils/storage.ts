@@ -3,16 +3,6 @@ import { app } from '../firebaseConfig';
 
 const storage = getStorage(app);
 
-// Добавляем конфигурацию CORS
-const storageConfig = {
-  customDomain: process.env.REACT_APP_STORAGE_CUSTOM_DOMAIN,
-  cors: {
-    origin: ['http://localhost:5173'],
-    methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
-    maxAge: 3600
-  }
-};
-
 export const uploadAvatar = async (userId: string, file: File): Promise<string> => {
   try {
     // Проверяем размер файла (максимум 5MB)
