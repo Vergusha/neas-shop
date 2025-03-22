@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { X, ZoomIn, ZoomOut, Move, Upload } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { X, RotateCcw, RotateCw, Upload, Save } from 'lucide-react';
 
 interface AvatarEditorProps {
   initialImage: string;
@@ -7,188 +7,249 @@ interface AvatarEditorProps {
   onCancel: () => void;
 }
 
+interface ImageProperties {
+  originalImage: string | File | null;
+  croppedImage: string | null;
+  position: { x: number; y: number };
+  scale: number;
+  rotate: number;
+}
+
 const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCancel }) => {
-  const [image, setImage] = useState<string | null>(null);
-  const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [imageProperties, setImageProperties] = useState<ImageProperties>({
+    originalImage: initialImage || null,
+    croppedImage: null,
+    position: { x: 0.5, y: 0.5 },
+    scale: 1,
+    rotate: 0
+  });
+
+  const { originalImage, croppedImage, position, scale, rotate } = imageProperties;
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  
   const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
-
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  
+  // Load the initial image
   useEffect(() => {
-    // Initialize with the provided image
-    setImage(initialImage);
-  }, [initialImage]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      
-      reader.onload = (event) => {
-        // Check if event.target exists and has a result property
-        if (event.target && typeof event.target.result === 'string') {
-          const img = new Image();
-          img.onload = () => {
-            // Center image initially
-            const containerSize = containerRef.current?.clientWidth || 256;
-            // Find the best fit scale that fills the container
-            const scaleX = containerSize / img.width;
-            const scaleY = containerSize / img.height;
-            const newScale = Math.max(scaleX, scaleY);
-            setScale(newScale);
-            
-            // Calculate center position
-            const x = (containerSize - img.width * newScale) / 2;
-            const y = (containerSize - img.height * newScale) / 2;
-            setPosition({ x, y });
-            
-            // We've already checked that event.target.result is a string above
-            if (event.target && typeof event.target.result === 'string') {
-              setImage(event.target.result);
-            }
-          };
-          img.src = event.target.result;
-        }
-      };
-      
-      reader.readAsDataURL(file);
+    if (initialImage) {
+      setImageProperties(prev => ({
+        ...prev,
+        originalImage: initialImage
+      }));
     }
+  }, [initialImage]);
+  
+  // Create and store image reference when image changes
+  useEffect(() => {
+    if (!originalImage) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      imageRef.current = img;
+      renderCanvas();
+    };
+    
+    if (typeof originalImage === 'string') {
+      img.src = originalImage;
+    } else {
+      img.src = URL.createObjectURL(originalImage);
+    }
+    
+    return () => {
+      if (typeof originalImage !== 'string') {
+        URL.revokeObjectURL(img.src);
+      }
+    };
+  }, [originalImage]);
+  
+  // Re-render canvas when properties change
+  useEffect(() => {
+    renderCanvas();
+  }, [scale, rotate, position]);
+  
+  const renderCanvas = () => {
+    if (!canvasRef.current || !imageRef.current || !containerRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const img = imageRef.current;
+    
+    if (!ctx) return;
+    
+    // Set canvas size to match container
+    const containerSize = Math.min(containerRef.current.clientWidth, 250);
+    canvas.width = containerSize;
+    canvas.height = containerSize;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Create circular clipping path
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
+    ctx.clip();
+    
+    // Fill with background color
+    ctx.fillStyle = 'rgba(200, 200, 200, 0.6)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Calculate center of canvas
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    // Translate to center of canvas
+    ctx.translate(centerX, centerY);
+    
+    // Rotate around center
+    ctx.rotate((rotate * Math.PI) / 180);
+    
+    // Calculate scaled dimensions
+    const scaledWidth = img.width * scale;
+    const scaledHeight = img.height * scale;
+    
+    // Calculate position based on x,y (0-1 range)
+    const x = -scaledWidth * position.x;
+    const y = -scaledHeight * position.y;
+    
+    // Draw the image
+    ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+    
+    // Restore context
+    ctx.restore();
   };
-
-  // Handle mouse and touch events for dragging
+  
+  function handleDrop(e: React.DragEvent<HTMLDivElement>): void {
+    e.preventDefault();
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      setImageProperties(prevState => ({
+        ...prevState,
+        originalImage: file,
+        croppedImage: null
+      }));
+    }
+  }
+  
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>): void {
+    e.preventDefault();
+  }
+  
+  function handleAdd(e: React.ChangeEvent<HTMLInputElement>): void {
+    if (e.target.files && e.target.files[0]) {
+      setImageProperties(prevState => ({
+        ...prevState,
+        originalImage: e.target.files![0],
+        croppedImage: null
+      }));
+    }
+  }
+  
+  function handleZoom(e: React.ChangeEvent<HTMLInputElement>): void {
+    const scale = +e.target.value;
+    setImageProperties(prevState => ({ ...prevState, scale }));
+  }
+  
+  function handleRotate(direction: "left" | "right"): void {
+    setImageProperties(prevState => ({
+      ...prevState,
+      rotate:
+        direction === "left"
+          ? (prevState.rotate - 90) % 360
+          : (prevState.rotate + 90) % 360
+    }));
+  }
+  
+  // Mouse and touch event handlers for dragging
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageRef.current) return;
-    e.preventDefault(); // Prevent default behavior
+    e.preventDefault();
     
     setIsDragging(true);
     setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
+      x: e.clientX,
+      y: e.clientY
     });
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging) return;
-    e.preventDefault(); // Prevent default behavior
+    e.preventDefault();
     
-    setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
+    const deltaX = (e.clientX - dragStart.x) / (containerRef.current?.clientWidth || 250) / scale;
+    const deltaY = (e.clientY - dragStart.y) / (containerRef.current?.clientHeight || 250) / scale;
+    
+    setDragStart({
+      x: e.clientX,
+      y: e.clientY
     });
+    
+    setImageProperties(prevState => ({
+      ...prevState,
+      position: {
+        x: Math.max(0, Math.min(1, prevState.position.x - deltaX)),
+        y: Math.max(0, Math.min(1, prevState.position.y - deltaY))
+      }
+    }));
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
   };
-
-  // Add touch support
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!imageRef.current || e.touches.length !== 1) return;
-    e.preventDefault(); // Prevent default behavior
-    
-    setIsDragging(true);
-    setDragStart({
-      x: e.touches[0].clientX - position.x,
-      y: e.touches[0].clientY - position.y
-    });
+  
+  const getCroppingRect = (): { x: number; y: number; width: number; height: number } => {
+    // This is a simplified version - in a real implementation this would calculate 
+    // the actual cropping rectangle based on position, scale, and rotation
+    return {
+      x: position.x,
+      y: position.y,
+      width: 1 / scale,
+      height: 1 / scale
+    };
   };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!isDragging || e.touches.length !== 1) return;
-    e.preventDefault(); // Prevent default behavior
+  
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    setPosition({
-      x: e.touches[0].clientX - dragStart.x,
-      y: e.touches[0].clientY - dragStart.y
-    });
+    if (!canvasRef.current) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      // Get the cropping rectangle data for debugging
+      const croppingRect = getCroppingRect();
+      console.log('Cropping rect:', croppingRect);
+      
+      // Get the canvas with the cropped image
+      const canvas = canvasRef.current;
+      const imageData = canvas.toDataURL('image/png');
+      
+      // Update cropped image in state
+      setImageProperties(prevState => ({
+        ...prevState,
+        croppedImage: imageData
+      }));
+      
+      // Call the onSave callback
+      onSave(imageData);
+    } catch (error) {
+      console.error('Error saving avatar:', error);
+      alert('Failed to save avatar. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
-  const handleZoomIn = () => {
-    setScale(prev => Math.min(prev + 0.1, 3));
-  };
-
-  const handleZoomOut = () => {
-    setScale(prev => Math.max(prev - 0.1, 0.5));
-  };
-
-  // Completely rewritten save function for accurate cropping
-  const handleSave = () => {
-    if (!containerRef.current || !imageRef.current || !image) return;
-
-    // Get the size and position of the container
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const containerSize = containerRect.width;
-    
-    // Create a temporary canvas for the first step - exact same size as the container
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = containerSize;
-    tempCanvas.height = containerSize;
-    const tempCtx = tempCanvas.getContext('2d');
-    
-    if (!tempCtx) return;
-    
-    // First, draw exactly what's visible in the editor
-    tempCtx.clearRect(0, 0, containerSize, containerSize);
-    
-    // Draw the image with the same transformations as in the preview
-    const img = imageRef.current;
-    tempCtx.save();
-    tempCtx.drawImage(
-      img,
-      position.x,
-      position.y,
-      img.naturalWidth * scale,
-      img.naturalHeight * scale
-    );
-    tempCtx.restore();
-    
-    // Now create a second canvas for the circular crop, with 2x resolution for quality
-    const finalCanvas = document.createElement('canvas');
-    const finalSize = containerSize * 2;
-    finalCanvas.width = finalSize;
-    finalCanvas.height = finalSize;
-    const finalCtx = finalCanvas.getContext('2d');
-    
-    if (!finalCtx) return;
-    
-    // Set up the circular clipping path
-    finalCtx.beginPath();
-    finalCtx.arc(finalSize / 2, finalSize / 2, finalSize / 2, 0, Math.PI * 2);
-    finalCtx.closePath();
-    finalCtx.clip();
-    
-    // Draw white background to handle transparent images
-    finalCtx.fillStyle = '#ffffff';
-    finalCtx.fillRect(0, 0, finalSize, finalSize);
-    
-    // Scale up the temp canvas to the final size
-    finalCtx.drawImage(tempCanvas, 0, 0, finalSize, finalSize);
-    
-    // Get the final image data
-    const imageData = finalCanvas.toDataURL('image/png', 1.0);
-    
-    // Log the process for debugging
-    console.log('Avatar capture completed:', {
-      containerSize,
-      finalSize,
-      imagePosition: position,
-      scale
-    });
-    
-    onSave(imageData);
-  };
-
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-800">Edit Avatar</h3>
+          <h2 className="text-xl font-bold text-gray-800">Edit Avatar</h2>
           <button 
             onClick={onCancel}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -197,136 +258,144 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
             <X size={24} />
           </button>
         </div>
-        
-        <div className="mb-6">
-          <label 
-            htmlFor="avatar-upload" 
-            className="btn btn-outline btn-primary w-full flex items-center justify-center gap-2"
-          >
-            <Upload size={20} />
-            Choose Image
-          </label>
-          <input
-            id="avatar-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </div>
-        
-        {/* Preview container */}
-        <div 
-          ref={containerRef}
-          className="relative w-64 h-64 mx-auto mb-6 overflow-hidden rounded-full bg-gray-100 border-4 border-primary shadow-lg"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          {image ? (
-            <>
-              <img
-                ref={imageRef}
-                src={image}
-                alt="Avatar Preview"
-                className="absolute select-none"
-                style={{
-                  transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                  transformOrigin: '0 0',
-                  cursor: isDragging ? 'grabbing' : 'grab',
-                  userSelect: 'none'
-                }}
-                draggable="false"
-                onDragStart={(e) => e.preventDefault()}
-              />
-              
-              {/* Circle outline indicating crop area */}
-              <div className="absolute inset-0 pointer-events-none border-2 border-white border-dashed rounded-full"></div>
-              
-              {/* What you see is what you get indicator */}
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-70 text-black text-xs px-3 py-1 rounded-full font-medium">
-                This will be your avatar
-              </div>
-            </>
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center">
-              <Upload size={40} className="text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500">Выберите изображение</p>
-            </div>
-          )}
-        </div>
-        
-        {/* Improved zoom controls */}
-        {image && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Zoom: {(scale * 100).toFixed(0)}%</span>
-              <div className="flex space-x-1">
-                <button 
-                  onClick={handleZoomOut}
-                  className="p-1 rounded bg-gray-100 hover:bg-gray-200"
-                  disabled={scale <= 0.5}
-                >
-                  <ZoomOut size={18} className={scale <= 0.5 ? "text-gray-300" : "text-gray-700"} />
-                </button>
-                <button 
-                  onClick={handleZoomIn}
-                  className="p-1 rounded bg-gray-100 hover:bg-gray-200"
-                  disabled={scale >= 3}
-                >
-                  <ZoomIn size={18} className={scale >= 3 ? "text-gray-300" : "text-gray-700"} />
-                </button>
-              </div>
-            </div>
-            
-            <input
-              type="range"
-              min="0.5"
-              max="3"
-              step="0.05"
-              value={scale}
-              onChange={(e) => setScale(parseFloat(e.target.value))}
-              className="range range-sm range-primary w-full"
-            />
-          </div>
-        )}
-        
-        <div className="flex justify-end gap-3">
-          <button 
-            onClick={onCancel}
-            className="btn btn-outline"
-          >
-            Cancel
-          </button>
-          <button 
-            onClick={handleSave}
-            className="btn btn-primary"
-            disabled={!image}
-          >
-            Save
-          </button>
-        </div>
-        
-        {/* Helpful instructions */}
-        {image && (
-          <div className="mt-4 p-2 bg-blue-50 text-blue-700 rounded text-xs">
-            <p>• Move image with mouse or finger</p>
-            <p>• Use slider to adjust size</p>
-            <p>• Circular area shows final result</p>
-          </div>
-        )}
 
-        {/* Avatar controls */}
-        <div className="avatar-controls">
-          <button className="control-button" title="Move Image">
-            <Move size={18} />
-            <span>Drag to position</span>
-          </button>
-          {/* Other controls */}
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Left section - Editor */}
+          <div className="flex-1">
+            <div className="avatar-section">
+              <p className="mb-2 text-gray-600">Drag and Drop an Image:</p>
+              
+              <div 
+                ref={containerRef}
+                className="dropzone border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 cursor-move max-w-xs mx-auto"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                {/* Canvas for rendering the image */}
+                <canvas 
+                  ref={canvasRef} 
+                  className="rounded-full mx-auto"
+                  width={250}
+                  height={250}
+                ></canvas>
+              </div>
+              
+              <form className="mt-6" onSubmit={handleSave}>
+                <div className="mb-4">
+                  <label className="btn btn-primary w-full flex justify-center items-center gap-2">
+                    <Upload size={18} /> Upload
+                    <input
+                      type="file"
+                      onChange={handleAdd}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Zoom
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="3"
+                    step="0.01"
+                    value={scale}
+                    onChange={handleZoom}
+                    className="range range-sm w-full"
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rotate
+                  </label>
+                  <div className="flex gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => handleRotate('left')}
+                      className="btn btn-sm flex-1"
+                    >
+                      <RotateCcw size={16} className="mr-1" /> Left
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => handleRotate('right')}
+                      className="btn btn-sm flex-1"
+                    >
+                      <RotateCw size={16} className="mr-1" /> Right
+                    </button>
+                  </div>
+                </div>
+                
+                <button 
+                  type="submit"
+                  className="mt-6 btn btn-primary w-full"
+                  disabled={isProcessing || !originalImage}
+                >
+                  {isProcessing ? (
+                    <span className="loading loading-spinner loading-sm mr-2"></span>
+                  ) : (
+                    <Save size={18} className="mr-2" />
+                  )}
+                  Crop / Save
+                </button>
+              </form>
+            </div>
+          </div>
+          
+          {/* Right section - Preview & Info */}
+          <div className="flex-1">
+            <ul className="space-y-2 mb-6">
+              <li className="flex justify-between">
+                <span className="font-semibold">Image:</span> 
+                <span>{typeof originalImage === 'object' && originalImage ? originalImage.name : String(originalImage).substring(0, 20) + '...'}</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="font-semibold">Zoom:</span> 
+                <span>{scale.toFixed(2)}x</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="font-semibold">Rotate:</span> 
+                <span>{rotate}°</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="font-semibold">Position X:</span> 
+                <span>{position.x.toFixed(5)}</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="font-semibold">Position Y:</span> 
+                <span>{position.y.toFixed(5)}</span>
+              </li>
+            </ul>
+            
+            {croppedImage && (
+              <div className="mt-6">
+                <h3 className="font-semibold mb-3">Cropped Image:</h3>
+                <div className="w-48 h-48 mx-auto border-4 border-primary rounded-full overflow-hidden">
+                  <img 
+                    src={croppedImage} 
+                    alt="Cropped preview" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="mt-8 p-3 bg-blue-50 text-blue-700 rounded text-sm">
+              <h3 className="font-semibold mb-2">How to use:</h3>
+              <p>• Drag on the image to position it</p>
+              <p>• Use zoom slider to resize the image</p>
+              <p>• Rotate buttons turn the image 90 degrees</p>
+              <p>• Click "Crop / Save" when you're happy with the result</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -334,3 +403,4 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
 };
 
 export default AvatarEditor;
+
