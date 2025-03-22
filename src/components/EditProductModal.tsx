@@ -1,26 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-
-interface ProductForm {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  brand: string;
-  model: string;
-  modelNumber: string;
-  memory: string;
-  color: string;
-}
+import { ProductForm } from '../types/product';
 
 interface EditProductModalProps {
-  product: ProductForm;
+  product: ProductForm & { id: string }; // Ensure id is required for editing
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (updatedProduct: ProductForm) => void;
+  onUpdate: (updatedProduct: ProductForm & { id: string }) => void;
 }
 
 const EditProductModal: React.FC<EditProductModalProps> = ({
@@ -31,7 +18,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 }) => {
   const [editedProduct, setEditedProduct] = useState<ProductForm>(product);
   const [isLoading, setIsLoading] = useState(false);
-  const [imageInputType, setImageInputType] = useState<'file' | 'url'>('url');
 
   useEffect(() => {
     setEditedProduct(product);
@@ -42,14 +28,19 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     setIsLoading(true);
 
     try {
+      if (!editedProduct.id || !editedProduct.category) {
+        throw new Error('Invalid product data');
+      }
+
       const productRef = doc(db, editedProduct.category, editedProduct.id);
+      const { id, ...updateData } = editedProduct;
       const updatedData = {
-        ...editedProduct,
+        ...updateData,
         updatedAt: new Date().toISOString(),
       };
 
       await updateDoc(productRef, updatedData);
-      onUpdate(updatedData);
+      onUpdate({ ...updatedData, id } as ProductForm);
       onClose();
     } catch (error) {
       console.error('Error updating product:', error);

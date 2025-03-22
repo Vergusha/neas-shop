@@ -102,14 +102,12 @@ const HomePage: React.FC = () => {
   }, [products, activeFilters]);
 
   const handleFilterChange = (filterKey: string, values: string[] | [number, number]) => {
-    // Create a new copy of active filters
     const newActiveFilters = { ...activeFilters };
     
     if (filterKey === 'price' && Array.isArray(values) && values.length === 2) {
-      // Handle price range filter
-      newActiveFilters[filterKey] = values as [number, number];
-    } else if (Array.isArray(values) && !Array.isArray(values[0])) {
-      // Regular checkbox filters
+      // Convert to Set for consistency
+      newActiveFilters[filterKey] = new Set([values[0], values[1]]);
+    } else if (Array.isArray(values)) {
       if (values.length === 0) {
         // If no values selected, remove the filter
         delete newActiveFilters[filterKey];

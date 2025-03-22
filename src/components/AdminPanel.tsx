@@ -1,30 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getFirestore, doc, setDoc, getDocs } from 'firebase/firestore';
+import { collection, getFirestore, doc, setDoc, getDocs } from 'firebase/firestore';
 import EditProductModal from './EditProductModal';
-import { db } from '../firebaseConfig'; // Add this import
-
-interface ProductForm {
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  brand: string;
-  model: string;
-  modelNumber: string;
-  memory: string;
-  color: string;
-  // Mobile specific
-  camera?: string;
-  screenSize?: string;
-  resolution?: string;
-  // TV specific
-  screenDiagonal?: string;
-  screenFormat?: string;
-}
+import { db } from '../firebaseConfig';
+import { ProductForm, NewProductForm } from '../types/product';
 
 const AdminPanel: React.FC = () => {
-  const [product, setProduct] = useState<ProductForm>({
+  const [product, setProduct] = useState<NewProductForm>({
     name: '',
     description: '',
     price: 0,
@@ -40,11 +21,10 @@ const AdminPanel: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState('');
   const [imageInputType, setImageInputType] = useState<'file' | 'url'>('file');
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductForm[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<ProductForm | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('mobile');
-  const [productsList, setProductsList] = useState<ProductForm[]>([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -53,7 +33,7 @@ const AdminPanel: React.FC = () => {
         const productsList = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })) as ProductForm[];
         setProducts(productsList);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -62,21 +42,6 @@ const AdminPanel: React.FC = () => {
 
     fetchProducts();
   }, [selectedCategory]);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const productsCollection = collection(db, product.category);
-        const snapshot = await getDocs(productsCollection);
-        const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setProductsList(products);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    };
-
-    fetchProducts();
-  }, [product.category]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,7 +177,7 @@ const AdminPanel: React.FC = () => {
   };
 
   // Обновленная функция для генерации ID товара
-  const generateProductId = (product: ProductForm): string => {
+  const generateProductId = (product: NewProductForm): string => {
     const brand = formatForUrl(product.brand);
     const model = formatForUrl(product.model);
     const memory = formatForUrl(product.memory)
@@ -280,20 +245,6 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, color: e.target.value})}
           className="input input-bordered w-full"
           placeholder="e.g. Steel Gray"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
-        <input
-          type="number"
-          value={product.price}
-          onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
-          className="input input-bordered w-full"
-          placeholder="e.g. 4999"
-          min="0"
-          step="1"
           required
         />
       </div>
@@ -545,20 +496,22 @@ const AdminPanel: React.FC = () => {
                   <td>
                     <button
                       onClick={() => {
-                        setSelectedProduct({
-                          id: product.id,
-                          name: product.name,
-                          description: product.description,
-                          price: product.price,
-                          image: product.image,
-                          category: selectedCategory,
-                          brand: product.brand,
-                          model: product.model,
-                          modelNumber: product.modelNumber || '',
-                          memory: product.memory,
-                          color: product.color
-                        });
-                        setIsEditModalOpen(true);
+                        if (product.id) { // Add type guard
+                          setSelectedProduct({
+                            id: product.id,
+                            name: product.name,
+                            description: product.description,
+                            price: product.price,
+                            image: product.image,
+                            category: selectedCategory,
+                            brand: product.brand,
+                            model: product.model,
+                            modelNumber: product.modelNumber || '',
+                            memory: product.memory,
+                            color: product.color
+                          } as ProductForm);
+                          setIsEditModalOpen(true);
+                        }
                       }}
                       className="btn btn-sm btn-primary"
                     >

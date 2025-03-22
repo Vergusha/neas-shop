@@ -77,20 +77,6 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     onFilterChange('price', newRange);
   };
 
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>, handle: 'min' | 'max') => {
-    const value = Number(e.target.value);
-    if (handle === 'min') {
-      const newMin = Math.min(value, priceRange.current[1]);
-      setPriceRange(prev => ({ ...prev, current: [newMin, prev.current[1]] }));
-      setMinPriceInput(String(newMin));
-    } else {
-      const newMax = Math.max(value, priceRange.current[0]);
-      setPriceRange(prev => ({ ...prev, current: [prev.current[0], newMax] }));
-      setMaxPriceInput(String(newMax));
-    }
-    onFilterChange('price', priceRange.current);
-  };
-
   // Helper function to check if a value is selected
   const isValueSelected = (filterId: string, value: string | number): boolean => {
     if (selectedFilters && filterId in selectedFilters) {

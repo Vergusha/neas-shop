@@ -141,13 +141,10 @@ const MobilePage: React.FC = () => {
   }, [products, selectedFilters]);
 
   const handleFilterChange = (filterId: string, values: string[] | [number, number]) => {
-    console.log('Filter changed:', filterId, values); // Debug log
-    
-    // Handle both regular filters and price range
     setSelectedFilters(prev => ({
       ...prev,
-      [filterId]: values
-    }));
+      [filterId]: Array.isArray(values) ? values.map(String) : values
+    } as Record<string, string[]>));
   };
 
   if (loading) {

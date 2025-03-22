@@ -1,52 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth, updateProfile } from 'firebase/auth';
-import { ref, get, set, onValue } from 'firebase/database';
-import { database } from '../firebaseConfig';
+import { getDatabase, ref, get, set, onValue } from 'firebase/database';
 import { FaPencilAlt, FaHeart, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import OrderDetailsComponent from '../components/OrderDetailsComponent';
-import AvatarEditor from '../components/AvatarEditor'; // Импортируем новый компонент
+import AvatarEditor from '../components/AvatarEditor';
 import { createCustomUserId } from '../utils/generateUserId';
 import { isAdmin } from '../utils/constants';
 import AdminPanel from '../components/AdminPanel';
-import { defaultAvatarSVG, handleAvatarError, updateAvatarUrl } from '../utils/AvatarHelper';
-
-const fetchUserProfile = async (userId: string) => {
-  try {
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      // Update user profile with truncated photo URL if needed
-      const photoURL = userData.photoURL;
-      if (photoURL && photoURL.length > 255) {
-        // Truncate or use a default image if URL is too long
-        userData.photoURL = photoURL.substring(0, 255);
-      }
-      return userData;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error fetching user profile:', error);
-    throw error;
-  }
-};
-
-const updateUserProfile = async (userId: string, data: any) => {
-  try {
-    // Check and truncate photo URL if needed
-    if (data.photoURL && data.photoURL.length > 255) {
-      data.photoURL = data.photoURL.substring(0, 255);
-    }
-    
-    const userRef = doc(db, 'users', userId);
-    await updateDoc(userRef, {
-      ...data,
-      updatedAt: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error updating user profile:', error);
-    throw error;
-  }
-};
+import { defaultAvatarSVG, handleAvatarError } from '../utils/AvatarHelper';
 
 const ProfilePage: React.FC = () => {
   const auth = getAuth();
@@ -68,6 +29,9 @@ const ProfilePage: React.FC = () => {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [showAvatarEditor, setShowAvatarEditor] = useState(false); // Новое состояние для отображения редактора
   const [customUserId, setCustomUserId] = useState<string>('');
+
+  // Initialize Firebase Realtime Database
+  const database = getDatabase();
 
   useEffect(() => {
     if (user) {

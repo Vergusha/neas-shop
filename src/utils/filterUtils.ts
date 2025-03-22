@@ -7,7 +7,7 @@ export interface FilterOption {
   name: string;
   key: string;
   values: FilterValue[];
-  type?: 'checkbox' | 'range';
+  type: 'checkbox' | 'range';
   min?: number;
   max?: number;
 }
@@ -78,7 +78,7 @@ export const extractFilters = (products: any[]): FilterOption[] => {
         // Сортировка строковых значений
         return String(a.value).localeCompare(String(b.value));
       }),
-      type: 'checkbox' as const
+      type: 'checkbox' as 'checkbox' | 'range'
     })); 
 
   // Add price range filter if we have valid min/max
@@ -94,7 +94,7 @@ export const extractFilters = (products: any[]): FilterOption[] => {
       type: 'range',
       min,
       max
-    });
+    } as FilterOption);
   }
 
   return filters;
