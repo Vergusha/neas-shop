@@ -1,0 +1,133 @@
+.color-variant {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.color-variant:hover {
+  transform: scale(1.1);
+  z-index: 10;
+}
+
+.color-variant.active {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.color-variant::after {
+  content: attr(data-color-name);
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: #888;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.color-variant:hover::after {
+  opacity: 1;
+}
+
+.color-variant-tooltip {
+  position: absolute;
+  bottom: -1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1f2937;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+}
+
+.color-variant:hover .color-variant-tooltip {
+  opacity: 1;
+}
+
+/* Specific debugging style for Rosa */
+[data-color-name="Rosa"], 
+[data-color-name="rosa"], 
+[data-color-name="ROSA"], 
+[data-color-name="Pink"], 
+[data-color-name="pink"] {
+  background-color: #FFC0CB !important;
+}
+
+/* Product color variant styles */
+.product-color-variant {
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-color-variant:hover {
+  transform: scale(1.05);
+  z-index: 10;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.product-color-variant.active {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.product-color-image {
+  flex: 1;
+  width: 100%;
+  background-color: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-color-name {
+  font-size: 0.6rem;
+  text-align: center;
+  padding: 0.2rem 0;
+  background-color: rgba(0, 0, 0, 0.03);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.active-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  background-color: #3b82f6;
+  border-radius: 0 0 0 0.5rem;
+}
+
+.active-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0.25rem;
+  left: 0.25rem;
+  width: 0.25rem;
+  height: 0.25rem;
+  border-right: 2px solid white;
+  border-bottom: 2px solid white;
+  transform: rotate(45deg);
+}

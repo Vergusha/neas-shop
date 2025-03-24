@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
+import { useParams, useNavigate } from 'react-router-dom';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { ref, onValue } from 'firebase/database';
 import { database } from '../firebaseConfig';
-import { Heart, Plus, Minus, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'; // Added ChevronLeft and ChevronRight icons
+import { Heart, Plus, Minus, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'; 
 import Rating from '../components/Rating';
 import Reviews from '../components/Reviews';
+import ColorVariantSelector from '../components/ColorVariantSelector';
 
 // Update ProductData to include additional images
 interface ProductData {
@@ -21,11 +22,15 @@ interface ProductData {
   image3?: string; // Additional image
   color?: string;
   collection?: string; // Add collection field
-  // ...other properties
+  brand?: string;
+  model?: string;
+  modelNumber?: string;
+  memory?: string;
 }
 
 const ProductPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -33,9 +38,10 @@ const ProductPage: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   
-  // New state for image slider
+  // New state for image slider and color variants
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [productImages, setProductImages] = useState<string[]>([]);
+  const [colorVariants, setColorVariants] = useState<Array<{id: string, color: string, image: string}>>([]);
 
   useEffect(() => {
     // Ensure the page scrolls to top when loaded
@@ -99,6 +105,9 @@ const ProductPage: React.FC = () => {
           
           setProductImages(images);
           setCurrentImageIndex(0); // Reset to first image
+          
+          // Fetch color variants for this product
+          await fetchColorVariants(foundProduct);
         } else {
           console.error("Product not found in any collection");
         }
@@ -139,6 +148,81 @@ const ProductPage: React.FC = () => {
       return () => unsubscribe();
     }
   }, [id]);
+
+  // Function to fetch color variants
+  const fetchColorVariants = async (currentProduct: ProductData) => {
+    if (!currentProduct.brand || !currentProduct.model || !currentProduct.modelNumber) {
+      console.log("Missing brand, model, or modelNumber - cannot fetch color variants");
+      return;
+    }
+    
+    try {
+      // We'll look for products with the same brand, model, AND modelNumber but different colors
+      const collections = ['mobile', 'products', 'tv'];
+      const variants: Array<{id: string, color: string, image: string}> = [];
+      
+      // First add current product to variants
+      if (currentProduct.color) {
+        variants.push({
+          id: currentProduct.id,
+          color: currentProduct.color,
+          image: currentProduct.image
+        });
+      }
+      
+      for (const collectionName of collections) {
+        const collectionRef = collection(db, collectionName);
+        // Create a composite query that matches exact brand, model, AND modelNumber
+        const q = query(
+          collectionRef,
+          where('brand', '==', currentProduct.brand),
+          where('model', '==', currentProduct.model),
+          where('modelNumber', '==', currentProduct.modelNumber)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((docSnapshot) => {
+          // Skip if this is the current product
+          if (docSnapshot.id === id) return;
+          
+          const data = docSnapshot.data();
+          if (data.color) {
+            // Check if we already have this color in our variants
+            const existingVariant = variants.find(v => 
+              v.color.toLowerCase() === data.color.toLowerCase()
+            );
+            
+            if (!existingVariant) {
+              console.log(`Found variant: ${data.color} (${docSnapshot.id})`);
+              variants.push({
+                id: docSnapshot.id,
+                color: data.color,
+                image: data.image || ''
+              });
+            }
+          }
+        });
+      }
+      
+      // Sort variants alphabetically by color name
+      variants.sort((a, b) => a.color.localeCompare(b.color));
+      
+      console.log(`Found ${variants.length} color variants for product ${currentProduct.id}:`, 
+        variants.map(v => v.color).join(', '));
+        
+      setColorVariants(variants);
+    } catch (error) {
+      console.error("Error fetching color variants:", error);
+    }
+  };
+
+  // Function to handle color variant selection
+  const handleColorVariantSelect = (variantId: string) => {
+    if (variantId !== id) {
+      // Navigate to the selected color variant
+      navigate(`/product/${variantId}`, { replace: true });
+    }
+  };
 
   // Also listen for the custom event
   useEffect(() => {
@@ -356,17 +440,12 @@ const ProductPage: React.FC = () => {
               )}
             </div>
             
-            {/* Color selector */}
-            <div className="flex justify-center space-x-2 mt-4">
-              {product?.color && (
-                <button
-                  key={product.color}
-                  className={`w-8 h-8 rounded-full border-2 ${selectedColor === product.color ? 'border-black' : 'border-gray-300'}`}
-                  style={{ backgroundColor: product.color }}
-                  onClick={() => setSelectedColor(product.color || null)}
-                />
-              )}
-            </div>
+            {/* Color variant selector */}
+            <ColorVariantSelector 
+              variants={colorVariants}
+              currentVariantId={id || ''}
+              onSelectVariant={handleColorVariantSelect}
+            />
           </div>
           
           <div className="w-full md:w-3/5 md:pl-8">
