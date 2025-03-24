@@ -38,6 +38,11 @@ const ProductPage: React.FC = () => {
   const [productImages, setProductImages] = useState<string[]>([]);
 
   useEffect(() => {
+    // Ensure the page scrolls to top when loaded
+    window.scrollTo(0, 0);
+  }, [id]); // Re-execute when product ID changes
+
+  useEffect(() => {
     const fetchProduct = async () => {
       if (!id) {
         console.error("Product ID is undefined");
@@ -433,7 +438,11 @@ const ProductPage: React.FC = () => {
       </div>
       
       {/* Reviews section - pass the ID explicitly */}
-      {product && id && <Reviews productId={id} />}
+      {product && id && (
+        <div>
+          <Reviews productId={id} />
+        </div>
+      )}
     </div>
   );
 };

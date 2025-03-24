@@ -502,8 +502,28 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
     }
   };
 
+  // Add this useEffect to prevent automatic scrolling when component mounts
+  useEffect(() => {
+    // Prevent automatic scrolling to reviews section
+    const preventAutoScroll = () => {
+      if (window.location.hash === '#reviews') {
+        window.scrollTo(0, 0);
+      }
+    };
+    
+    // Execute once after component is mounted
+    preventAutoScroll();
+    
+    // Remove any hash fragment from URL without scrolling
+    if (window.location.hash) {
+      const scrollPosition = window.pageYOffset;
+      window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+      window.scrollTo(0, scrollPosition);
+    }
+  }, []);
+
   return (
-    <div className="mt-8">
+    <div className="mt-8" id="reviews">
       <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
       
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
