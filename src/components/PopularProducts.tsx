@@ -1,22 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query as firestoreQuery, orderBy, limit } from 'firebase/firestore';
 import { database, db } from '../firebaseConfig';
 import ProductCard from './ProductCard';
-
-interface ProductData {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  rating: number;
-  reviewCount: number;
-  createdAt?: string;
-  popularityScore?: number;
-}
+import { Product } from '../types/product';
 
 const PopularProducts: React.FC = () => {
-  const [products, setProducts] = useState<ProductData[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -65,6 +55,12 @@ const PopularProducts: React.FC = () => {
                     const productData = docSnap.data();
                     return {
                       id: item.id,
+                      name: productData.name || 'Unnamed Product',
+                      description: productData.description || '',
+                      image: productData.image || '',
+                      price: typeof productData.price === 'number' ? productData.price : 
+                           typeof productData.price === 'string' ? parseFloat(productData.price) : 0,
+                      collection: collectionName,
                       ...productData,
                       popularityScore: statsSnapshot.exists() ? 
                         statsSnapshot.val().popularityScore || 0 : 0,
@@ -74,7 +70,7 @@ const PopularProducts: React.FC = () => {
                         statsSnapshot.val().favoriteCount || 0 : 0,
                       cartCount: statsSnapshot.exists() ? 
                         statsSnapshot.val().cartCount || 0 : 0
-                    };
+                    } as Product;
                   }
                 } catch (e) {
                   console.warn(`Error fetching product ${item.id} from ${collectionName}:`, e);
@@ -90,19 +86,17 @@ const PopularProducts: React.FC = () => {
           });
           
           const fetchedProducts = await Promise.all(productPromises);
+          
           // Filter out null values and ensure each product has required fields
           const validProducts = fetchedProducts
-            .filter((p): p is ProductData => p !== null)
-            .map(product => ({
-              ...product,
-              // Ensure required fields have default values
-              name: product.name || 'Unnamed Product',
-              price: typeof product.price === 'number' ? product.price : 
-                     typeof product.price === 'string' ? parseFloat(product.price) : 0,
-              image: product.image || '',
-              rating: product.rating || 0,
-              reviewCount: product.reviewCount || 0
-            }));
+            .filter((p): p is Product => p !== null && 
+              typeof p === 'object' &&
+              typeof p.id === 'string' &&
+              typeof p.name === 'string' &&
+              typeof p.description === 'string' &&
+              typeof p.image === 'string' &&
+              !isNaN(Number(p.price))
+            );
           
           setProducts(validProducts);
         } else {
@@ -132,46 +126,58 @@ const PopularProducts: React.FC = () => {
     fetchPopularProducts();
   }, []);
   
-  // Fallback method unchanged
-  const fetchRecentProducts = async (): Promise<ProductData[]> => {
+  const fetchRecentProducts = async (): Promise<Product[]> => {
     try {
-      // Получаем последние добавленные продукты из Firestore
-      const recentProducts: ProductData[] = [];
-      
+      const recentProducts: Product[] = [];
       const collections = ['mobile', 'products', 'tv'];
+      
       for (const collectionName of collections) {
         try {
-          const q = query(
-            collection(db, collectionName),
+          const collectionRef = collection(db, collectionName);
+          const q = firestoreQuery(
+            collectionRef,
             orderBy('createdAt', 'desc'),
             limit(4)
           );
           
           const querySnapshot = await getDocs(q);
           querySnapshot.forEach((doc) => {
+            const data = doc.data();
             recentProducts.push({
               id: doc.id,
-              ...doc.data()
-            } as ProductData);
+              name: data.name || 'Unnamed Product',
+              description: data.description || '',
+              image: data.image || '',
+              price: typeof data.price === 'number' ? data.price : 
+                     typeof data.price === 'string' ? parseFloat(data.price) : 0,
+              collection: collectionName,
+              clickCount: 0,
+              favoriteCount: 0,
+              cartCount: 0,
+              popularityScore: 0,
+              ...data
+            } as Product);
           });
         } catch (e) {
           console.warn(`Error fetching recent from ${collectionName}:`, e);
         }
       }
       
-      // Если мы получили продукты из нескольких коллекций, 
-      // сортируем их по дате создания и берем только первые 8
-      if (recentProducts.length > 0) {
-        return recentProducts
-          .sort((a, b) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateB - dateA; // От новых к старым
-          })
-          .slice(0, 8); // Берем только первые 8
-      }
-      
-      return [];
+      return recentProducts
+        .filter((product): product is Product => 
+          Boolean(product) && 
+          typeof product.id === 'string' && 
+          typeof product.name === 'string' && 
+          typeof product.description === 'string' && 
+          !isNaN(Number(product.price)) && 
+          typeof product.image === 'string'
+        )
+        .sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        })
+        .slice(0, 8);
     } catch (err) {
       console.error('Error in fallback products fetch:', err);
       return [];

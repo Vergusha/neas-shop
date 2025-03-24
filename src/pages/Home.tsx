@@ -4,18 +4,7 @@ import ProductCard from '../components/ProductCard';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db, database } from '../firebaseConfig';
 import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
-
-interface Product {
-  id: string;
-  image: string;
-  name: string;
-  description: string;
-  price: number;
-  clickCount: number;
-  favoriteCount?: number;
-  purchaseCount?: number;
-  collection?: string;
-}
+import { Product } from '../types/product';
 
 const Home = () => {
   const [popularProducts, setPopularProducts] = useState<Product[]>([]);
@@ -68,16 +57,21 @@ const Home = () => {
                 const docSnap = await getDoc(docRef);
                 
                 if (docSnap.exists()) {
-                  const data = docSnap.data();
+                  const productData = docSnap.data();
                   allPopularProducts.push({
                     id: productId,
-                    name: data.name || 'Unnamed Product',
-                    description: data.description || '',
-                    image: data.image || '',
-                    price: typeof data.price === 'number' ? data.price : 
-                           typeof data.price === 'string' ? parseFloat(data.price) : 0,
-                    collection: collectionName
-                  });
+                    name: productData?.name || 'Unnamed Product',
+                    description: productData?.description || '',
+                    image: productData?.image || '',
+                    price: typeof productData?.price === 'number' ? productData.price : 
+                           typeof productData?.price === 'string' ? parseFloat(productData.price) : 0,
+                    collection: collectionName,
+                    clickCount: 0,
+                    favoriteCount: 0,
+                    cartCount: 0,
+                    popularityScore: 0,
+                    ...productData
+                  } as Product);
                   found = true;
                 }
               } catch (error) {

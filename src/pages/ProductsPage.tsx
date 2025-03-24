@@ -41,11 +41,22 @@ const ProductsPage: React.FC = () => {
           const productsCollection = collection(db, collectionName);
           const productsSnapshot = await getDocs(productsCollection);
           
-          const collectionProducts = productsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            collection: collectionName // Store source collection
-          })) as Product[];
+          const collectionProducts = productsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name || 'Unnamed Product',
+              description: data.description || '',
+              image: data.image || '',
+              price: typeof data.price === 'number' ? data.price :
+                     typeof data.price === 'string' ? parseFloat(data.price) : 0,
+              collection: collectionName,
+              clickCount: 0,
+              favoriteCount: 0,
+              cartCount: 0,
+              ...data
+            } as Product;
+          });
           
           allProducts = [...allProducts, ...collectionProducts];
         }

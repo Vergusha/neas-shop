@@ -2,32 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { FaHeart, FaShoppingCart } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
-import { ref, get, set, onValue } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
 import { database } from '../firebaseConfig';
 import Rating from './Rating'; // Add this import
 import ProductImageCarousel from './ProductImageCarousel';
 import { trackProductInteraction } from '../utils/productTracking';
 import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  image2?: string;
-  image3?: string;
-  image4?: string;
-  image5?: string;
-  brand?: string;
-  category?: string;
-  memory?: string;
-  color?: string;
-  model?: string;
-  modelNumber?: string;
-  rating?: number;
-  reviewCount?: number;
-}
+import { Product } from '../types/product';
 
 interface ProductCardProps {
   product: Product;
