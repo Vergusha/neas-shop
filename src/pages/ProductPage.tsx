@@ -238,6 +238,44 @@ const ProductPage: React.FC = () => {
     }
   };
 
+  // Функция для форматирования имени продукта
+  const formatProductName = (product: any): string => {
+    const parts = [];
+    if (product.brand) parts.push(product.brand);
+    if (product.model) parts.push(product.model);
+    if (product.modelNumber) parts.push(product.modelNumber);
+    if (product.memory) parts.push(product.memory);
+    if (product.color) parts.push(product.color);
+    
+    return parts.length > 0 
+      ? parts.join(' ') 
+      : product.name || 'Unnamed Product';
+  };
+
+  // Функция для форматирования описания товара
+  const formatDescription = (description: string) => {
+    if (!description) return null;
+    
+    // Проверяем, содержит ли описание маркеры списка
+    if (description.includes('•')) {
+      // Разбиваем текст на элементы списка по символу •
+      const listItems = description.split('•').filter(item => item.trim().length > 0);
+      
+      if (listItems.length > 0) {
+        return (
+          <ul className="list-disc pl-5 space-y-1 mt-2">
+            {listItems.map((item, index) => (
+              <li key={index} className="text-gray-700">{item.trim()}</li>
+            ))}
+          </ul>
+        );
+      }
+    }
+    
+    // Если нет маркеров, возвращаем обычный текст
+    return <p className="mt-2 text-gray-700">{description}</p>;
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-screen"><span className="loading loading-spinner loading-lg"></span></div>;
   }
@@ -336,8 +374,8 @@ const ProductPage: React.FC = () => {
               </span>
             </div>
             
-            <div className="flex items-center justify-between mb-2">
-              <h1 className="text-2xl font-bold">{product?.name}</h1>
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl font-bold">{formatProductName(product)}</h1>
               <button 
                 className={`p-2 rounded-full transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400'}`}
                 onClick={toggleFavorite}
@@ -346,7 +384,13 @@ const ProductPage: React.FC = () => {
               </button>
             </div>
             
-            <p className="text-gray-500 mb-4">{product?.description}</p>
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-2">Description</h3>
+              {formatDescription(product?.description || '')}
+            </div>
+
+            {/* Удалили секцию Product Specifications */}
+            
             <p className="text-xl font-bold text-gray-900 mb-4">{Number(product?.price).toFixed(2)} NOK</p>
             
             {/* Quantity selector */}
