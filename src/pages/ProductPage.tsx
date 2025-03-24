@@ -484,17 +484,15 @@ const ProductPage: React.FC = () => {
           </div>
           
           <div className="w-full md:w-3/5 md:pl-8">
-            {/* Rating display - moved above product name */}
-            <div className="flex items-center gap-2 mb-2">
-              <Rating value={product?.rating || 0} />
-              <span className="text-sm text-gray-600">
-                {product?.rating ? product.rating.toFixed(1) : "0"} 
-                ({product?.reviewCount || 0} reviews)
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold">{formatProductName(product)}</h1>
+            {/* Переместим кнопку избранного в блок с рейтингом */}
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Rating value={product?.rating || 0} />
+                <span className="text-sm text-gray-600">
+                  {product?.rating ? product.rating.toFixed(1) : "0"} 
+                  ({product?.reviewCount || 0} reviews)
+                </span>
+              </div>
               <button 
                 className={`p-2 rounded-full transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400'}`}
                 onClick={toggleFavorite}
@@ -504,6 +502,9 @@ const ProductPage: React.FC = () => {
               </button>
             </div>
             
+            {/* Заголовок продукта теперь без кнопки избранного */}
+            <h1 className="text-2xl font-bold mb-4">{formatProductName(product)}</h1>
+            
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-2">Description</h3>
               {formatDescription(product?.description || '')}
@@ -511,7 +512,20 @@ const ProductPage: React.FC = () => {
 
             {/* Удалили секцию Product Specifications */}
             
-            <p className="text-xl font-bold text-gray-900 mb-4">{Number(product?.price).toFixed(2)} NOK</p>
+            {/* Обновленный блок с ценой - меняем цвет на точный цвет логотипа #003D2D */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#003D2D] to-[#005040] rounded-lg transform -rotate-1 scale-105"></div>
+              <div className="relative bg-white py-3 px-4 rounded-lg border-2 border-[#003D2D] shadow-md">
+                <p className="text-2xl font-bold text-gray-900">
+                  {Number(product?.price).toFixed(2)} <span className="text-[#003D2D]">NOK</span>
+                </p>
+                {product?.price > 1000 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    or {(product.price / 12).toFixed(2)} NOK/month with 12-month payment plan
+                  </p>
+                )}
+              </div>
+            </div>
             
             {/* Quantity selector */}
             <div className="flex items-center mb-6">
