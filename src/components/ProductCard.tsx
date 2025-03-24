@@ -204,22 +204,71 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     }
   };
 
-  const formatProductName = (product: Product): string => {
-    const parts = [];
-    if (product.brand) parts.push(product.brand);
-    if (product.model) parts.push(product.model);
-    if (product.modelNumber) parts.push(product.modelNumber);
-    if (product.memory) parts.push(product.memory);
-    if (product.color) parts.push(product.color);
+  const formatProductDetails = (product: Product) => {
+    const details = [];
     
-    return parts.join(', ');
+    if (product.brand) details.push(
+      <span key="brand" className="font-medium text-primary">{product.brand}</span>
+    );
+    
+    if (product.model) details.push(
+      <span key="model" className="font-medium">{product.model}</span>
+    );
+    
+    if (product.modelNumber) details.push(
+      <span key="modelNumber" className="font-medium">{product.modelNumber}</span>
+    );
+    
+    if (product.memory) details.push(
+      <span key="memory" className="font-medium">{product.memory}</span>
+    );
+    
+    if (product.color) details.push(
+      <span key="color" className="font-medium">{product.color}</span>
+    );
+
+    return details.length > 0 ? (
+      <div className="flex flex-wrap gap-1">
+        {details}
+      </div>
+    ) : (
+      <span className="font-medium">{product.name}</span>
+    );
+  };
+
+  // Функция для обработки описания с маркерами
+  const formatDescription = (description: string) => {
+    if (!description) return null;
+    
+    // Проверяем, содержит ли описание маркеры списка
+    if (description.includes('•')) {
+      // Разбиваем текст на элементы списка по символу •
+      const listItems = description.split('•').filter(item => item.trim().length > 0);
+      
+      if (listItems.length > 0) {
+        // Ограничиваем количество элементов до 3
+        const displayItems = listItems.slice(0, 3);
+        const hasMore = listItems.length > 3;
+        
+        return (
+          <ul className="list-disc pl-4 text-xs text-gray-500 space-y-0.5 max-h-24 overflow-hidden">
+            {displayItems.map((item, index) => (
+              <li key={index}>{item.trim()}</li>
+            ))}
+            {hasMore && <li className="text-gray-400">...</li>}
+          </ul>
+        );
+      }
+    }
+    
+    // Если нет маркеров, возвращаем обычный текст с ограничением в 3 строки
+    return <p className="text-xs text-gray-500 line-clamp-3">{description}</p>;
   };
 
   return (
     <div className="product-card-wrapper">
-      <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card">
-        <figure className="relative pt-4 px-4">
-          {/* Replace static image with our new carousel */}
+      <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card h-[420px] flex flex-col">
+        <figure className="relative pt-4 px-6 h-48">
           <ProductImageCarousel 
             images={getProductImages()} 
             productName={product.name}
@@ -243,9 +292,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
           </div>
         </figure>
         
-        <div className="card-body">
-          {/* Rating display - show only if there are reviews */}
-          <div className="flex items-center gap-2 mb-1">
+        <div className="card-body p-6 flex flex-col flex-1">
+          <div className="h-6 flex items-center gap-2">
             <Rating value={product.rating || 0} size="sm" />
             <span className="text-xs text-gray-500">
               {(product.reviewCount && product.reviewCount > 0) ? 
@@ -254,13 +302,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
             </span>
           </div>
           
-          <h2 className="card-title cursor-pointer text-lg font-bold hover:text-primary transition-colors" onClick={handleClick}>
-            {formatProductName(product)}
-          </h2>
+          <div className="min-h-[2.5rem]"> 
+            {formatProductDetails(product)}
+          </div>
           
-          <p className="text-xs text-gray-500 line-clamp-2 mt-1">{product.description}</p>
+          <div className="flex-1 overflow-hidden"> {/* Изменили класс */}
+            {formatDescription(product.description)}
+          </div>
           
-          <div className="flex justify-between items-center mt-4">
+          <div className="mt-2"> {/* Изменили mt-auto на mt-2 */}
             <span className="text-xl font-bold">
               {typeof product.price === 'number' 
                 ? product.price.toFixed(2) 

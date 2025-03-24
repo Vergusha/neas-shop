@@ -100,14 +100,14 @@ const FavoritesPage: React.FC = () => {
       <h1 className="text-2xl font-bold mb-6">My Favorites</h1>
       
       {favorites.length === 0 ? (
-        <div className="text-center">No favorite products found</div>
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <h2 className="text-xl font-semibold mb-4">No favorites yet</h2>
+          <p className="text-gray-600">Items you mark as favorite will appear here</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {favorites.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-            />
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       )}
