@@ -6,6 +6,8 @@ import { ref, get, set, onValue } from 'firebase/database';
 import { database } from '../firebaseConfig';
 import Rating from './Rating'; // Add this import
 import ProductImageCarousel from './ProductImageCarousel';
+import { trackProductInteraction } from '../utils/productTracking';
+import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
 
 interface Product {
   id: string;
@@ -55,33 +57,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   // Check if product is in favorites when component mounts
   useEffect(() => {
     const checkFavoriteStatus = async () => {
-      console.log('Checking favorite status for product:', product.id);
-      
-      if (user) {
-        const favRef = ref(database, `users/${user.uid}/favorites/${product.id}`);
-        const snapshot = await get(favRef);
-        const isFav = snapshot.exists();
-        console.log(`Product ${product.id} favorite status:`, isFav ? 'is favorite' : 'not favorite');
-        setIsFavorite(isFav);
-      } else {
-        // Fallback to localStorage for non-logged in users
-        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-        const isFav = favorites.includes(product.id);
-        console.log(`Product ${product.id} local favorite status:`, isFav ? 'is favorite' : 'not favorite');
-        setIsFavorite(isFav);
-      }
+      const isFav = await getFavoriteStatus(product.id);
+      setIsFavorite(isFav);
     };
 
     checkFavoriteStatus();
     
-    // Also listen for favorites updates from other components
-    const handleFavoritesUpdated = () => {
-      checkFavoriteStatus();
+    const handleFavoritesUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.productId === product.id) {
+        setIsFavorite(customEvent.detail.isFavorite);
+      }
     };
     
     window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
     return () => window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
-  }, [user, product.id]);
+  }, [product.id]);
 
   // Listen for rating updates from Realtime Database
   useEffect(() => {
@@ -126,6 +117,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   }, [product.id]);
 
   const handleClick = () => {
+    // No need to track here as it will be tracked in ProductPage
     navigate(`/product/${product.id}`);
   };
 
@@ -164,6 +156,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
       cart[existingItemIndex].quantity += 1;
     } else {
       cart.push({ ...product, quantity: 1 });
+      
+      // Track adding to cart only for new items
+      trackProductInteraction(product.id, {
+        incrementCart: true,
+        userId: user.uid
+      });
     }
 
     localStorage.setItem(`cart_${user.uid}`, JSON.stringify(cart));
@@ -183,24 +181,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     }
 
     try {
-      const favRef = ref(database, `users/${user.uid}/favorites/${product.id}`);
-      if (isFavorite) {
-        await set(favRef, null);
-      } else {
-        await set(favRef, {
-          addedAt: new Date().toISOString(),
-          productId: product.id,
-          category: product.category || 'uncategorized',
-          name: product.name || 'Product',
-          image: product.image || '',
-          price: product.price || 0
+      const productData = {
+        category: product.category || 'uncategorized',
+        name: product.name || 'Product',
+        image: product.image || '',
+        price: product.price || 0
+      };
+
+      const newIsFavorite = await toggleFavorite(product.id, productData);
+      setIsFavorite(newIsFavorite);
+      
+      if (newIsFavorite) {
+        trackProductInteraction(product.id, {
+          incrementFavorite: true,
+          userId: user.uid
         });
       }
-      setIsFavorite(!isFavorite);
-      window.dispatchEvent(new CustomEvent('favoritesUpdated'));
     } catch (error) {
       console.error('Error updating favorites:', error);
-      alert(`Failed to update favorites: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert('Failed to update favorites');
     }
   };
 

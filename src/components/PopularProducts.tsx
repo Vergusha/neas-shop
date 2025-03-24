@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ref, get } from 'firebase/database';
-import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { database, db } from '../firebaseConfig';
 import ProductCard from './ProductCard';
 
@@ -12,6 +12,7 @@ interface ProductData {
   rating: number;
   reviewCount: number;
   createdAt?: string;
+  popularityScore?: number;
 }
 
 const PopularProducts: React.FC = () => {
@@ -25,75 +26,87 @@ const PopularProducts: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        // Получаем популярные продукты из Realtime Database (не требует авторизации)
-        // вместо получения из Firestore для конкретного пользователя
-        const popularRef = ref(database, 'popularProducts');
-        const snapshot = await get(popularRef);
+        // Get products with highest popularity scores
+        // Using orderByChild and limitToLast with query for better performance
+        const popularProductsRef = ref(database, 'popularProducts');
+        const popularProductsQuery = query(
+          popularProductsRef,
+          orderByChild('score'),
+          limitToLast(20) // Get top 20 products
+        );
+        
+        const snapshot = await get(popularProductsQuery);
         
         if (snapshot.exists()) {
-          const popularIds = Object.keys(snapshot.val());
+          // Convert to array and sort by popularity score (highest first)
+          const popularProducts = Object.entries(snapshot.val())
+            .map(([id, data]: [string, any]) => ({
+              id,
+              score: data.score || 0,
+              lastUpdated: data.lastUpdated || ''
+            }))
+            .sort((a, b) => b.score - a.score);
           
-          if (popularIds.length === 0) {
-            // Если нет популярных продуктов, просто показываем пустой список
-            setProducts([]);
-            setLoading(false);
-            return;
-          }
-          
-          // Получаем данные о продуктах из Firestore или Realtime Database
-          const productPromises = popularIds.map(async (id) => {
+          // Get full product details for each popular product
+          const productPromises = popularProducts.map(async (item) => {
             try {
-              // Сначала пробуем получить из Realtime Database
-              const productRef = ref(database, `products/${id}`);
-              const productSnapshot = await get(productRef);
+              // First try to get basic product info from productStats
+              const statsRef = ref(database, `productStats/${item.id}`);
+              const statsSnapshot = await get(statsRef);
               
-              if (productSnapshot.exists()) {
-                const productData = productSnapshot.val();
-                return {
-                  id,
-                  ...productData
-                };
-              }
-              
-              // Если не нашли в Realtime Database, ищем в Firestore
+              // Then get full product details from multiple collections
               const collections = ['mobile', 'products', 'tv'];
               for (const collectionName of collections) {
                 try {
-                  const docRef = doc(db, collectionName, id);
+                  const docRef = doc(db, collectionName, item.id);
                   const docSnap = await getDoc(docRef);
                   
                   if (docSnap.exists()) {
+                    const productData = docSnap.data();
                     return {
-                      id,
-                      ...docSnap.data()
+                      id: item.id,
+                      ...productData,
+                      popularityScore: statsSnapshot.exists() ? 
+                        statsSnapshot.val().popularityScore || 0 : 0,
+                      clickCount: statsSnapshot.exists() ? 
+                        statsSnapshot.val().clickCount || 0 : 0,
+                      favoriteCount: statsSnapshot.exists() ? 
+                        statsSnapshot.val().favoriteCount || 0 : 0,
+                      cartCount: statsSnapshot.exists() ? 
+                        statsSnapshot.val().cartCount || 0 : 0
                     };
                   }
                 } catch (e) {
-                  // Игнорируем ошибки для отдельных коллекций
-                  console.warn(`Error fetching from ${collectionName}:`, e);
+                  console.warn(`Error fetching product ${item.id} from ${collectionName}:`, e);
                 }
               }
               
-              // Если продукт не найден, возвращаем null
+              // If product not found in any collection
               return null;
             } catch (err) {
-              console.error(`Error fetching product ${id}:`, err);
+              console.error(`Error fetching product ${item.id}:`, err);
               return null;
             }
           });
           
           const fetchedProducts = await Promise.all(productPromises);
-          // Фильтруем null и убираем дубликаты по id
+          // Filter out null values and ensure each product has required fields
           const validProducts = fetchedProducts
             .filter((p): p is ProductData => p !== null)
-            .filter((p, index, self) => 
-              index === self.findIndex((t) => t.id === p.id)
-            );
+            .map(product => ({
+              ...product,
+              // Ensure required fields have default values
+              name: product.name || 'Unnamed Product',
+              price: typeof product.price === 'number' ? product.price : 
+                     typeof product.price === 'string' ? parseFloat(product.price) : 0,
+              image: product.image || '',
+              rating: product.rating || 0,
+              reviewCount: product.reviewCount || 0
+            }));
           
           setProducts(validProducts);
         } else {
-          // Если популярные продукты не найдены, используем запасной вариант:
-          // получаем последние добавленные продукты
+          // Fallback to recent products if no popularity data
           const fallbackProducts = await fetchRecentProducts();
           setProducts(fallbackProducts);
         }
@@ -101,12 +114,12 @@ const PopularProducts: React.FC = () => {
         console.error('Error fetching popular products:', err);
         setError('Failed to load popular products. Please try again later.');
         
-        // Пытаемся загрузить запасной вариант, если основной метод не сработал
+        // Try fallback option
         try {
           const fallbackProducts = await fetchRecentProducts();
           if (fallbackProducts.length > 0) {
             setProducts(fallbackProducts);
-            setError(null); // Сбрасываем ошибку, если запасной вариант сработал
+            setError(null);
           }
         } catch (fallbackErr) {
           console.error('Error fetching fallback products:', fallbackErr);
@@ -119,7 +132,7 @@ const PopularProducts: React.FC = () => {
     fetchPopularProducts();
   }, []);
   
-  // Запасной метод получения продуктов: последние добавленные
+  // Fallback method unchanged
   const fetchRecentProducts = async (): Promise<ProductData[]> => {
     try {
       // Получаем последние добавленные продукты из Firestore
@@ -175,9 +188,15 @@ const PopularProducts: React.FC = () => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
+      {products.length > 0 ? (
+        products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))
+      ) : (
+        <div className="col-span-full text-center py-8 text-gray-500">
+          No popular products found. Check back later!
+        </div>
+      )}
     </div>
   );
 };

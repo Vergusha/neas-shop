@@ -8,6 +8,8 @@ import { Heart, Plus, Minus, ShoppingCart, ChevronLeft, ChevronRight } from 'luc
 import Rating from '../components/Rating';
 import Reviews from '../components/Reviews';
 import ColorVariantSelector from '../components/ColorVariantSelector';
+import { trackProductInteraction } from '../utils/productTracking';
+import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
 
 // Импортируем необходимые модули для авторизации
 import { getAuth } from 'firebase/auth';
@@ -50,6 +52,14 @@ const ProductPage: React.FC = () => {
   const isAuthenticated = Boolean(auth.currentUser);
 
   useEffect(() => {
+    // Track page view when product ID changes
+    if (id) {
+      trackProductInteraction(id, {
+        incrementClick: true,
+        userId: auth.currentUser?.uid || null
+      });
+    }
+    
     // Ensure the page scrolls to top when loaded
     window.scrollTo(0, 0);
   }, [id]); // Re-execute when product ID changes
@@ -126,10 +136,24 @@ const ProductPage: React.FC = () => {
     fetchProduct();
     
     // Check if product is in favorites
-    if (id) {
-      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-      setIsFavorite(favorites.includes(id));
-    }
+    const checkFavoriteStatus = async () => {
+      if (id) {
+        const isFav = await getFavoriteStatus(id);
+        setIsFavorite(isFav);
+      }
+    };
+
+    checkFavoriteStatus();
+
+    const handleFavoritesUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.productId === id) {
+        setIsFavorite(customEvent.detail.isFavorite);
+      }
+    };
+    
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
+    return () => window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
 
     // Listen for updates from Realtime Database
     if (id) {
@@ -255,37 +279,38 @@ const ProductPage: React.FC = () => {
   }, [id]);
 
   // Function to toggle favorite status
-  const toggleFavorite = () => {
-    if (!id) return;
+  const toggleFavoriteStatus = async () => {
+    if (!id || !product) return;
     
-    // Проверяем, авторизован ли пользователь
     if (!isAuthenticated) {
-      // Если пользователь не авторизован, показываем уведомление и перенаправляем на страницу входа
       const confirmLogin = window.confirm('You need to be logged in to add items to favorites. Would you like to log in now?');
       if (confirmLogin) {
-        // Сохраняем текущий URL, чтобы вернуться после авторизации
         sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
         navigate('/login');
       }
       return;
     }
     
-    // Если пользователь авторизован, продолжаем с обычной логикой
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    let updatedFavorites;
-    
-    if (favorites.includes(id)) {
-      // Remove from favorites
-      updatedFavorites = favorites.filter((favId: string) => favId !== id);
-      setIsFavorite(false);
-    } else {
-      // Add to favorites
-      updatedFavorites = [...favorites, id];
-      setIsFavorite(true);
+    try {
+      const productData = {
+        category: product.collection || 'uncategorized',
+        name: product.name,
+        image: product.image,
+        price: product.price
+      };
+
+      const newIsFavorite = await toggleFavorite(id, productData);
+      
+      if (newIsFavorite) {
+        trackProductInteraction(id, {
+          incrementFavorite: true,
+          userId: auth.currentUser?.uid || null
+        });
+      }
+    } catch (error) {
+      console.error('Error updating favorites:', error);
+      alert('Failed to update favorites');
     }
-    
-    // Save updated favorites to localStorage
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
   };
 
   const incrementQuantity = () => {
@@ -329,6 +354,12 @@ const ProductPage: React.FC = () => {
         name: product.name,
         price: product.price,
         image: product.image
+      });
+      
+      // Track adding to cart only for new items (not for increasing quantity)
+      trackProductInteraction(id, {
+        incrementCart: true,
+        userId: auth.currentUser?.uid || null
       });
     }
     
@@ -495,7 +526,7 @@ const ProductPage: React.FC = () => {
               </div>
               <button 
                 className={`p-2 rounded-full transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400'}`}
-                onClick={toggleFavorite}
+                onClick={toggleFavoriteStatus}
                 title={isAuthenticated ? 'Add to favorites' : 'Login required to add to favorites'}
               >
                 <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import CategoryList from '../components/CategoryList';
 import ProductCard from '../components/ProductCard';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db, database } from '../firebaseConfig';
-import { ref, get } from 'firebase/database';
+import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
 
 interface Product {
   id: string;
@@ -25,104 +25,135 @@ const Home = () => {
     const fetchPopularProducts = async () => {
       try {
         setLoading(true);
-        // Array to hold all products from different collections
-        let allProducts: Product[] = [];
         
-        // Collections to fetch products from
-        const collections = ['products', 'mobile', 'tv'];
+        // First try to get top products by popularity score from Realtime Database
+        const popularRef = ref(database, 'popularProducts');
+        const popularQuery = query(
+          popularRef, 
+          orderByChild('score'), 
+          limitToLast(20)
+        );
         
-        // Fetch products from all collections
-        for (const collectionName of collections) {
-          const productsCollection = collection(db, collectionName);
-          const productsSnapshot = await getDocs(productsCollection);
+        const popularSnapshot = await get(popularQuery);
+        let popularIds: string[] = [];
+        
+        if (popularSnapshot.exists()) {
+          // Get IDs of popular products sorted by score
+          popularIds = Object.entries(popularSnapshot.val())
+            .map(([id, data]: [string, any]) => ({
+              id,
+              score: data.score || 0
+            }))
+            .sort((a, b) => b.score - a.score)
+            .map(item => item.id);
+        }
+        
+        // If we have popular IDs, fetch those specific products
+        if (popularIds.length > 0) {
+          // Array to hold all found popular products
+          let allPopularProducts: Product[] = [];
           
-          const products = productsSnapshot.docs.map(doc => {
-            const data = doc.data();
-            // Normalize the product data to ensure all required fields exist and have the correct type
-            return {
-              id: doc.id,
-              name: data.name || 'Unnamed Product',
-              description: data.description || '',
-              image: data.image || '',
-              price: typeof data.price === 'number' ? data.price : 
-                     typeof data.price === 'string' ? parseFloat(data.price) : 0,
-              clickCount: data.clickCount || 0,
-              collection: collectionName // Add source collection for reference
-            };
-          }) as Product[];
+          // Collections to fetch products from
+          const collections = ['products', 'mobile', 'tv'];
           
-          allProducts = [...allProducts, ...products];
-        }
-        
-        // Get favorites data to determine popular items
-        const favoritesRef = ref(database, 'users');
-        const favoritesSnapshot = await get(favoritesRef);
-        
-        // Count times each product has been favorited
-        const favoriteCounts: {[key: string]: number} = {};
-        if (favoritesSnapshot.exists()) {
-          const users = favoritesSnapshot.val();
-          Object.values(users).forEach((user: any) => {
-            if (user.favorites) {
-              Object.keys(user.favorites).forEach(productId => {
-                favoriteCounts[productId] = (favoriteCounts[productId] || 0) + 1;
-              });
-            }
-          });
-        }
-        
-        // Also check localStorage favorites for non-logged in users
-        try {
-          const localFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-          localFavorites.forEach((productId: string) => {
-            favoriteCounts[productId] = (favoriteCounts[productId] || 0) + 1;
-          });
-        } catch (error) {
-          console.error('Error parsing localStorage favorites:', error);
-        }
-        
-        // Get purchase data from orders
-        const ordersCollection = collection(db, 'orders');
-        const ordersSnapshot = await getDocs(ordersCollection);
-        
-        // Count times each product has been purchased
-        const purchaseCounts: {[key: string]: number} = {};
-        ordersSnapshot.docs.forEach(doc => {
-          const orderData = doc.data();
-          if (orderData.items && Array.isArray(orderData.items)) {
-            orderData.items.forEach((item: any) => {
-              if (item.id) {
-                purchaseCounts[item.id] = (purchaseCounts[item.id] || 0) + (item.quantity || 1);
+          // For each popular ID, try to find it in any collection
+          for (const productId of popularIds) {
+            let found = false;
+            
+            for (const collectionName of collections) {
+              if (found) continue;
+              
+              try {
+                const docRef = doc(db, collectionName, productId);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                  const data = docSnap.data();
+                  allPopularProducts.push({
+                    id: productId,
+                    name: data.name || 'Unnamed Product',
+                    description: data.description || '',
+                    image: data.image || '',
+                    price: typeof data.price === 'number' ? data.price : 
+                           typeof data.price === 'string' ? parseFloat(data.price) : 0,
+                    collection: collectionName
+                  });
+                  found = true;
+                }
+              } catch (error) {
+                console.warn(`Error fetching product ${productId} from ${collectionName}:`, error);
               }
-            });
+            }
           }
-        });
-        
-        // Add the counts to the products
-        allProducts = allProducts.map(product => ({
-          ...product,
-          favoriteCount: favoriteCounts[product.id] || 0,
-          purchaseCount: purchaseCounts[product.id] || 0
-        }));
-        
-        // Calculate a popularity score (weight favorites and purchases)
-        allProducts = allProducts.map(product => ({
-          ...product,
-          popularityScore: ((product.favoriteCount || 0) * 2) + 
-                          ((product.purchaseCount || 0) * 3) + 
-                          (product.clickCount || 0)
-        }));
-        
-        // Ensure all products have valid price values before displaying
-        const topProducts = allProducts
-          .filter(product => product && product.id && !isNaN(Number(product.price)))
-          .sort((a: any, b: any) => (b.popularityScore || 0) - (a.popularityScore || 0))
-          .slice(0, 20);
-        
-        setPopularProducts(topProducts);
+          
+          // Set popular products - maintain order from popularity scores
+          setPopularProducts(allPopularProducts);
+        } else {
+          // Fallback to old method if no popularity data
+          // Array to hold all products from different collections
+          let allProducts: Product[] = [];
+          
+          // Collections to fetch products from
+          const collections = ['products', 'mobile', 'tv'];
+          
+          // Fetch products from all collections
+          for (const collectionName of collections) {
+            const productsCollection = collection(db, collectionName);
+            const productsSnapshot = await getDocs(productsCollection);
+            
+            const products = productsSnapshot.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                name: data.name || 'Unnamed Product',
+                description: data.description || '',
+                image: data.image || '',
+                price: typeof data.price === 'number' ? data.price : 
+                       typeof data.price === 'string' ? parseFloat(data.price) : 0,
+                clickCount: data.clickCount || 0,
+                collection: collectionName
+              };
+            }) as Product[];
+            
+            allProducts = [...allProducts, ...products];
+          }
+          
+          // Get stats from Realtime Database to determine popular items
+          const statsRef = ref(database, 'productStats');
+          const statsSnapshot = await get(statsRef);
+          
+          if (statsSnapshot.exists()) {
+            const stats = statsSnapshot.val();
+            
+            // Add stats to products
+            allProducts = allProducts.map(product => ({
+              ...product,
+              popularityScore: stats[product.id]?.popularityScore || 0,
+              clickCount: stats[product.id]?.clickCount || 0,
+              favoriteCount: stats[product.id]?.favoriteCount || 0,
+              cartCount: stats[product.id]?.cartCount || 0
+            }));
+          }
+          
+          // Calculate popularity score if not already present
+          allProducts = allProducts.map(product => ({
+            ...product,
+            popularityScore: product.popularityScore || 
+                            ((product.clickCount || 0) + 
+                             (product.favoriteCount || 0) * 3 + 
+                             (product.cartCount || 0) * 5)
+          }));
+          
+          // Sort by popularity score and take top 20
+          const topProducts = allProducts
+            .filter(product => product && product.id && !isNaN(Number(product.price)))
+            .sort((a, b) => (b.popularityScore || 0) - (a.popularityScore || 0))
+            .slice(0, 20);
+          
+          setPopularProducts(topProducts);
+        }
       } catch (error) {
         console.error('Error fetching popular products:', error);
-        // Set empty array to avoid rendering issues
         setPopularProducts([]);
       } finally {
         setLoading(false);

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
 import { extractFilters, applyFilters } from '../utils/filterUtils';
+import { getDatabase, ref, query, orderByChild, limitToLast, get } from 'firebase/database';
 
 interface Product {
   id: string;
@@ -20,6 +21,7 @@ interface Product {
   updatedAt?: string;
   searchKeywords?: string[];
   clickCount?: number;
+  popularityScore?: number;
 }
 
 interface FilterValue {
@@ -77,14 +79,79 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const fetchPopularProducts = async () => {
       try {
-        const popularCollection = collection(db, 'popularProducts');
-        const popularSnapshot = await getDocs(popularCollection);
-        const popularList = popularSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Product[];
+        setIsPopularLoading(true);
         
-        setPopularProducts(popularList);
+        // Query popular products by score from the Realtime Database
+        const database = getDatabase();
+        const popularRef = ref(database, 'popularProducts');
+        const popularQuery = query(
+          popularRef,
+          orderByChild('score'), 
+          limitToLast(20) // Get top 20 products by score
+        );
+        
+        const snapshot = await get(popularQuery);
+        
+        if (snapshot.exists()) {
+          // Convert to array and sort by score (highest first)
+          const popularItems = Object.entries(snapshot.val())
+            .map(([id, data]: [string, any]) => ({
+              id,
+              score: data.score || 0
+            }))
+            .sort((a, b) => b.score - a.score);
+          
+          // Get product details from various collections
+          const popularProducts: Product[] = [];
+          const collections = ['mobile', 'products', 'tv'];
+          
+          for (const item of popularItems) {
+            // Try to find product in each collection
+            let found = false;
+            
+            for (const collectionName of collections) {
+              if (found) continue;
+              
+              try {
+                const docRef = doc(db, collectionName, item.id);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                  const productData = docSnap.data();
+                  popularProducts.push({
+                    id: item.id,
+                    ...productData,
+                    popularityScore: item.score
+                  } as Product);
+                  found = true;
+                }
+              } catch (error) {
+                console.warn(`Error fetching product ${item.id} from ${collectionName}:`, error);
+              }
+            }
+          }
+          
+          // Filter out any products with missing required fields
+          const validProducts = popularProducts.filter(product => 
+            product && 
+            product.id && 
+            product.name && 
+            !isNaN(Number(product.price)) &&
+            product.image
+          );
+          
+          setPopularProducts(validProducts);
+        } else {
+          // Fallback to existing method if no popularity data
+          const popularCollection = collection(db, 'popularProducts');
+          const popularSnapshot = await getDocs(popularCollection);
+          const popularList = popularSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as Product[];
+          
+          setPopularProducts(popularList);
+        }
       } catch (err) {
         console.error('Error fetching popular products:', err);
       } finally {
