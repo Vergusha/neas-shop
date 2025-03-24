@@ -4,6 +4,7 @@ import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { ref, get, set } from 'firebase/database';
 import { database } from '../firebaseConfig';
 import { createCustomUserId } from '../utils/generateUserId';
+import LoginRedirect from '../components/LoginRedirect';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -56,6 +57,9 @@ const Login: React.FC = () => {
 
   return (
     <div className="container mx-auto py-8">
+      {/* Добавляем компонент перенаправления */}
+      <LoginRedirect />
+      
       <h1 className="text-2xl font-bold mb-4">Login</h1>
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
       

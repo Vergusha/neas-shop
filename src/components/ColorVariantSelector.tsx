@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import '../styles/ColorVariants.css';
 
 interface ColorVariant {
@@ -18,8 +18,27 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
   currentVariantId,
   onSelectVariant
 }) => {
+  // Предзагрузка изображений для улучшения производительности
+  useEffect(() => {
+    // Предзагрузим все изображения вариантов
+    variants.forEach(variant => {
+      if (variant.image) {
+        const img = new Image();
+        img.src = variant.image;
+      }
+    });
+  }, [variants]);
+
   // Показывать только если есть больше одного варианта цвета
   if (variants.length <= 1) return null;
+  
+  // Обработчик клика на вариант
+  const handleVariantClick = (variantId: string) => {
+    if (variantId !== currentVariantId) {
+      // Используем React Router для перехода
+      onSelectVariant(variantId);
+    }
+  };
   
   return (
     <div className="mt-6">
@@ -32,14 +51,16 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
             <div
               key={variant.id}
               className={`product-color-variant ${isCurrentVariant ? 'active' : ''}`}
-              onClick={() => !isCurrentVariant && onSelectVariant(variant.id)}
+              onClick={() => handleVariantClick(variant.id)}
               title={`${variant.color} - Click to view this variant`}
+              data-testid={`color-variant-${variant.color}`}
             >
               <div className="product-color-image">
                 <img 
                   src={variant.image} 
                   alt={variant.color}
                   className="w-full h-full object-contain"
+                  loading="eager" // Приоритетная загрузка
                 />
               </div>
               <span className="product-color-name">{variant.color}</span>
@@ -55,4 +76,4 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
   );
 };
 
-export default ColorVariantSelector;
+export default React.memo(ColorVariantSelector); // Мемоизация для предотвращения лишних рендеров

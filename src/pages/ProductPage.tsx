@@ -9,6 +9,9 @@ import Rating from '../components/Rating';
 import Reviews from '../components/Reviews';
 import ColorVariantSelector from '../components/ColorVariantSelector';
 
+// Импортируем необходимые модули для авторизации
+import { getAuth } from 'firebase/auth';
+
 // Update ProductData to include additional images
 interface ProductData {
   rating: number;
@@ -33,7 +36,6 @@ const ProductPage: React.FC = () => {
   const navigate = useNavigate();
   const [product, setProduct] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -42,6 +44,10 @@ const ProductPage: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [productImages, setProductImages] = useState<string[]>([]);
   const [colorVariants, setColorVariants] = useState<Array<{id: string, color: string, image: string}>>([]);
+
+  // Добавляем проверку состояния авторизации
+  const auth = getAuth();
+  const isAuthenticated = Boolean(auth.currentUser);
 
   useEffect(() => {
     // Ensure the page scrolls to top when loaded
@@ -87,7 +93,6 @@ const ProductPage: React.FC = () => {
         
         if (foundProduct) {
           setProduct(foundProduct);
-          setSelectedColor(foundProduct.color || null);
           
           // Collect all available images
           const images: string[] = [];
@@ -219,8 +224,13 @@ const ProductPage: React.FC = () => {
   // Function to handle color variant selection
   const handleColorVariantSelect = (variantId: string) => {
     if (variantId !== id) {
-      // Navigate to the selected color variant
-      navigate(`/product/${variantId}`, { replace: true });
+      // При переходе к новому цветовому варианту не нужно показывать индикатор загрузки заранее,
+      // так как это вызывает перерисовку и возможную вспышку интерфейса
+      
+      // Используем navigate без опции replace: true для лучшей работы с историей браузера
+      navigate(`/product/${variantId}`);
+      
+      // Не нужно явно вызывать scrollTo, React Router сам обработает это
     }
   };
 
@@ -248,6 +258,19 @@ const ProductPage: React.FC = () => {
   const toggleFavorite = () => {
     if (!id) return;
     
+    // Проверяем, авторизован ли пользователь
+    if (!isAuthenticated) {
+      // Если пользователь не авторизован, показываем уведомление и перенаправляем на страницу входа
+      const confirmLogin = window.confirm('You need to be logged in to add items to favorites. Would you like to log in now?');
+      if (confirmLogin) {
+        // Сохраняем текущий URL, чтобы вернуться после авторизации
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+        navigate('/login');
+      }
+      return;
+    }
+    
+    // Если пользователь авторизован, продолжаем с обычной логикой
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     let updatedFavorites;
     
@@ -277,6 +300,18 @@ const ProductPage: React.FC = () => {
 
   const addToCart = () => {
     if (!product || !id) return;
+
+    // Проверяем, авторизован ли пользователь
+    if (!isAuthenticated) {
+      // Если пользователь не авторизован, показываем уведомление и перенаправляем на страницу входа
+      const confirmLogin = window.confirm('You need to be logged in to add items to cart. Would you like to log in now?');
+      if (confirmLogin) {
+        // Сохраняем текущий URL, чтобы вернуться после авторизации
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+        navigate('/login');
+      }
+      return;
+    }
 
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     
@@ -463,6 +498,7 @@ const ProductPage: React.FC = () => {
               <button 
                 className={`p-2 rounded-full transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400'}`}
                 onClick={toggleFavorite}
+                title={isAuthenticated ? 'Add to favorites' : 'Login required to add to favorites'}
               >
                 <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
               </button>
@@ -501,9 +537,10 @@ const ProductPage: React.FC = () => {
             <button 
               className="btn btn-primary flex items-center justify-center gap-2"
               onClick={addToCart}
+              title={isAuthenticated ? 'Add to cart' : 'Login required to add to cart'}
             >
               <ShoppingCart size={20} />
-              Add to Cart
+              {isAuthenticated ? 'Add to Cart' : 'Login to Add to Cart'}
             </button>
             
             {/* Success message */}

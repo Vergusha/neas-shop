@@ -21,6 +21,7 @@ import { isAdmin } from './utils/constants';
 import { getAuth } from 'firebase/auth';
 import { useEffect } from 'react'; // Add this import
 import { AuthProvider } from './utils/AuthProvider'; // Add this import
+import LoginRedirect from './components/LoginRedirect';
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const auth = getAuth();
@@ -44,6 +45,7 @@ const App = () => {
   return (
     <AuthProvider>
       <Router>
+        <LoginRedirect />
         <div className="min-h-screen flex flex-col">
           <Header />
           <Breadcrumbs />

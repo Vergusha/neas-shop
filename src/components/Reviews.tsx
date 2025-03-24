@@ -7,6 +7,7 @@ import { User, Clock, ThumbsUp, Edit, Trash2 } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { defaultAvatarSVG, handleAvatarError } from '../utils/AvatarHelper';
+import { handleFirestoreError } from '../firebaseConfig';
 
 interface Review {
   id: string;
@@ -44,71 +45,86 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
   useEffect(() => {
     const reviewsRef = ref(database, `productReviews/${productId}`);
     
-    const unsubscribe = onValue(reviewsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const reviewsData = snapshot.val();
-        const reviewKeys = Object.keys(reviewsData);
-        
-        if (reviewKeys.length === 0) {
+    let unsubscribe: () => void;
+    
+    try {
+      unsubscribe = onValue(reviewsRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const reviewsData = snapshot.val();
+          const reviewKeys = Object.keys(reviewsData);
+          
+          if (reviewKeys.length === 0) {
+            setReviews([]);
+            setAverageRating(0);
+            resetProductRating();
+            return;
+          }
+          
+          const reviewsList: Review[] = reviewKeys.map(key => {
+            const review = reviewsData[key];
+            return {
+              id: key,
+              ...review,
+              userAvatar: review.userAvatar || ''
+            };
+          });
+          
+          reviewsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          
+          setReviews(reviewsList);
+          
+          const totalRating = reviewsList.reduce((sum, review) => sum + review.rating, 0);
+          setAverageRating(totalRating / reviewsList.length);
+          
+          if (user) {
+            const userReviewData = reviewsList.find(review => 
+              review.userId === user.uid
+            );
+            
+            if (userReviewData) {
+              setUserReview(userReviewData);
+              setNewReviewText(userReviewData.text);
+              setNewRating(userReviewData.rating);
+            } else {
+              setUserReview(null);
+              setNewReviewText('');
+              setNewRating(5);
+            }
+          }
+        } else {
           setReviews([]);
           setAverageRating(0);
           resetProductRating();
-          return;
+          setUserReview(null);
         }
-        
-        const reviewsList: Review[] = reviewKeys.map(key => {
-          const review = reviewsData[key];
-          return {
-            id: key,
-            ...review,
-            userAvatar: review.userAvatar || ''
-          };
-        });
-        
-        reviewsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        setReviews(reviewsList);
-        
-        const totalRating = reviewsList.reduce((sum, review) => sum + review.rating, 0);
-        setAverageRating(totalRating / reviewsList.length);
-        
-        if (user) {
-          const userReviewData = reviewsList.find(review => 
-            review.userId === user.uid
-          );
-          
-          if (userReviewData) {
-            setUserReview(userReviewData);
-            setNewReviewText(userReviewData.text);
-            setNewRating(userReviewData.rating);
-          } else {
-            setUserReview(null);
-            setNewReviewText('');
-            setNewRating(5);
-          }
-        }
-      } else {
-        setReviews([]);
-        setAverageRating(0);
-        resetProductRating();
-        setUserReview(null);
-      }
-    });
-    
-    if (user) {
-      const helpfulRef = ref(database, `users/${user.uid}/helpfulReviews`);
-      get(helpfulRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          const helpfulData = snapshot.val();
-          const helpfulSet = new Set(Object.keys(helpfulData));
-          setHelpfulReviews(helpfulSet);
-        }
-      }).catch(error => {
-        console.error('Error loading helpful reviews:', error);
+      }, (error) => {
+        console.error('Error listening to reviews:', error);
       });
+      
+      if (user) {
+        const helpfulRef = ref(database, `users/${user.uid}/helpfulReviews`);
+        get(helpfulRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const helpfulData = snapshot.val();
+            const helpfulSet = new Set(Object.keys(helpfulData));
+            setHelpfulReviews(helpfulSet);
+          }
+        }).catch(error => {
+          console.error('Error loading helpful reviews:', error);
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error setting up reviews listener:', error);
     }
     
-    return () => unsubscribe();
+    return () => {
+      try {
+        if (unsubscribe) unsubscribe();
+      } catch (error) {
+        console.warn('Error unsubscribing from reviews:', error);
+      }
+    };
   }, [productId, user]);
 
   const resetProductRating = async () => {
@@ -116,7 +132,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
       await update(ref(database, `products/${productId}`), {
         rating: 0,
         reviewCount: 0
-      });
+      }).catch(err => console.warn('Error updating realtime DB rating:', err));
       
       const collections = ['mobile', 'products', 'tv'];
       for (const collectionName of collections) {
@@ -145,6 +161,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
       }));
     } catch (error) {
       console.error('Error resetting product rating:', error);
+      handleFirestoreError(error);
     }
   };
 
