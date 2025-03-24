@@ -558,40 +558,77 @@ const ProductPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Quantity selector */}
-            <div className="flex items-center mb-6">
-              <span className="mr-4">Quantity:</span>
-              <div className="flex items-center border rounded-md">
+            {/* Quantity selector and Add to cart button in one row */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium text-gray-700">Quantity:</span>
+                <div className="flex items-center">
+                  <button 
+                    className="w-10 h-10 flex items-center justify-center text-[#003D2D] hover:bg-[#003D2D] hover:text-white border-2 border-r-0 border-[#003D2D] rounded-l-lg transition-all duration-200 active:scale-95"
+                    onClick={decrementQuantity}
+                    disabled={quantity <= 1}
+                  >
+                    <Minus size={16} className="stroke-[2.5]" />
+                  </button>
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value.replace(/[^0-9]/g, ''));
+                        if (!isNaN(val) && val > 0) {
+                          setQuantity(val);
+                        } else if (e.target.value === '') {
+                          setQuantity(1);
+                        }
+                      }}
+                      className="w-12 h-10 text-center border-y-2 border-[#003D2D] focus:outline-none text-[#003D2D] font-medium [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      min="1"
+                    />
+                  </div>
+                  <button 
+                    className="w-10 h-10 flex items-center justify-center text-[#003D2D] hover:bg-[#003D2D] hover:text-white border-2 border-l-0 border-[#003D2D] rounded-r-lg transition-all duration-200 active:scale-95"
+                    onClick={incrementQuantity}
+                  >
+                    <Plus size={16} className="stroke-[2.5]" />
+                  </button>
+                </div>
+
                 <button 
-                  className="px-3 py-1 text-gray-600 hover:bg-gray-100"
-                  onClick={decrementQuantity}
+                  onClick={addToCart}
+                  disabled={!isAuthenticated}
+                  className={`
+                    px-6 h-10 rounded-lg transition-all duration-200
+                    flex items-center gap-2 relative overflow-hidden
+                    ${isAuthenticated 
+                      ? 'bg-[#003D2D] hover:bg-[#004D3D] text-white active:scale-95'
+                      : 'bg-gray-200 text-gray-600'
+                    }
+                  `}
+                  title={isAuthenticated ? 'Add to cart' : 'Login required to add to cart'}
                 >
-                  <Minus size={16} />
-                </button>
-                <span className="px-4 py-1 border-l border-r">{quantity}</span>
-                <button 
-                  className="px-3 py-1 text-gray-600 hover:bg-gray-100"
-                  onClick={incrementQuantity}
-                >
-                  <Plus size={16} />
+                  <ShoppingCart size={18} />
+                  <span className="text-sm font-medium">
+                    {isAuthenticated ? 'Add to Cart' : 'Login'}
+                  </span>
+                  {addedToCart && (
+                    <span className="absolute inset-0 bg-green-500/20 animate-ping rounded-lg"></span>
+                  )}
                 </button>
               </div>
             </div>
             
-            {/* Add to cart button */}
-            <button 
-              className="btn btn-primary flex items-center justify-center gap-2"
-              onClick={addToCart}
-              title={isAuthenticated ? 'Add to cart' : 'Login required to add to cart'}
-            >
-              <ShoppingCart size={20} />
-              {isAuthenticated ? 'Add to Cart' : 'Login to Add to Cart'}
-            </button>
-            
-            {/* Success message */}
+            {/* Success message with animation */}
             {addedToCart && (
-              <div className="mt-4 p-2 bg-green-100 text-green-700 rounded-md">
-                Product added to cart!
+              <div className="animate-fade-in-down rounded-lg bg-green-100 border border-green-200 p-3 text-green-700 text-center mb-6">
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Added to cart successfully!</span>
+                </div>
               </div>
             )}
           </div>
