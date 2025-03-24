@@ -105,11 +105,11 @@ const SearchResultsPage: React.FC = () => {
       {products.length === 0 ? (
         <div className="text-center">No products found</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 p-4">
           {products.map((product) => (
             <ProductCard
-            key={product.id || product.name}
-            product={product}
+              key={product.id || product.name}
+              product={product}
             />
           ))}
         </div>

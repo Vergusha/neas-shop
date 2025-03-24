@@ -185,11 +185,11 @@ const MobilePage: React.FC = () => {
 
         <div className={`${showFilters ? 'md:col-span-3' : 'md:col-span-4'}`}>
           {filteredProducts.length > 0 ? (
-            <div className="px-12 sm:px-16 overflow-x-hidden">
-              <div className="flex flex-row flex-wrap">
+            <div className="p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className="w-full sm:w-1/2 lg:w-1/3 mb-6">
-                    <ProductCard key={product.id} product={product} />
+                  <div key={product.id}>
+                    <ProductCard product={product} />
                   </div>
                 ))}
               </div>

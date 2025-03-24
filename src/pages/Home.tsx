@@ -156,18 +156,17 @@ const Home = () => {
               <span className="loading loading-spinner loading-lg"></span>
             </div>
           ) : (
-            <div className="px-12 sm:px-16 md:px-20 overflow-x-hidden">
-              <div className="flex flex-row flex-nowrap overflow-x-auto pb-4 product-row">
+            <div className="px-4 sm:px-6 md:px-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {popularProducts.length > 0 ? (
                   popularProducts.map(product => (
-                    <div key={product.id} className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 flex-shrink-0">
-                      <ProductCard
-                        product={product}
-                      />
-                    </div>
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                    />
                   ))
                 ) : (
-                  <div className="w-full text-center py-8">
+                  <div className="col-span-full text-center py-8">
                     <p className="text-gray-500">No popular products found</p>
                   </div>
                 )}
