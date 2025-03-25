@@ -17,28 +17,19 @@ const Navbar: React.FC = () => {
 
   useEffect(() => {
     const updateCartCount = () => {
-      if (user) {
-        // Используем согласованный ключ для корзины
-        const cartKey = `cart_${user.uid}`;
-        const cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
-        
-        // Убедимся, что обрабатываем ситуацию, когда элементы могут не иметь поля quantity
-        setCartCount(cart.reduce((count: number, item: any) => count + (item.quantity || 1), 0));
-      } else {
-        setCartCount(0); // Если пользователь не авторизован, корзина пуста
-      }
+      // Используем единый ключ для корзины
+      const cartKey = 'cart';
+      const cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
+      
+      // Подсчитываем общее количество товаров
+      setCartCount(cart.reduce((count: number, item: any) => count + (item.quantity || 1), 0));
     };
 
     updateCartCount();
     window.addEventListener('cartUpdated', updateCartCount);
     
-    // При изменении пользователя также обновляем корзину
-    auth.onAuthStateChanged(() => {
-      updateCartCount();
-    });
-    
     return () => window.removeEventListener('cartUpdated', updateCartCount);
-  }, [user]);
+  }, []);
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) {

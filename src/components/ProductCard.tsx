@@ -130,37 +130,33 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
       return;
     }
 
-    // Используем согласованный ключ для корзины - cart_${user.uid}
-    const userId = user.uid;
-    const cartKey = `cart_${userId}`;
+    // Используем единый ключ для корзины
+    const cartKey = 'cart';
     
-    // Проверяем наличие корзины в localStorage
+    // Получаем текущую корзину
     const cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
     const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
 
     if (existingItemIndex >= 0) {
       cart[existingItemIndex].quantity += 1;
     } else {
-      // Убедимся, что передаем все необходимые поля
-      cart.push({ 
+      cart.push({
         id: product.id,
-        name: product.name, 
-        price: product.price, 
+        name: product.name,
+        price: product.price,
         image: product.image,
         quantity: 1,
-        // Добавим поле category или collection для идентификации типа продукта
-        category: product.category || 'gaming',
-        collection: product.collection || 'gaming'
+        collection: product.collection || 'uncategorized'
       });
       
-      // Track adding to cart only for new items
+      // Отслеживаем добавление в корзину только для новых товаров
       trackProductInteraction(product.id, {
         incrementCart: true,
         userId: user.uid
       });
     }
 
-    // Сохраняем обновленную корзину
+    // Сохраняем корзину в localStorage
     localStorage.setItem(cartKey, JSON.stringify(cart));
     setIsInCart(true);
     setCartButtonFlash(true);

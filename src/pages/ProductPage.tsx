@@ -338,45 +338,45 @@ const ProductPage: React.FC = () => {
       return;
     }
   
-    // Обратите внимание здесь - мы используем 'cart' везде, но для authenticated users 
-    // должны использовать 'cart_userId'
-    const userId = auth.currentUser?.uid;
-    const cartKey = userId ? `cart_${userId}` : 'cart';
+    // Используем единый ключ для корзины
+    const cartKey = 'cart';
     
+    // Получаем текущую корзину
     const cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
     
-    // Check if the product is already in the cart
+    // Проверяем, есть ли товар уже в корзине
     const existingItemIndex = cart.findIndex((item: any) => item.id === id);
     
     if (existingItemIndex >= 0) {
-      // Update quantity if the product is already in cart
+      // Обновляем количество, если товар уже в корзине
       cart[existingItemIndex].quantity += quantity;
     } else {
-      // Add new item to cart
+      // Добавляем новый товар в корзину
       cart.push({
         id,
         quantity,
         name: product.name,
         price: product.price,
-        image: product.image
+        image: product.image,
+        collection: product.collection || 'uncategorized'
       });
       
-      // Track adding to cart only for new items (not for increasing quantity)
+      // Отслеживаем добавление в корзину только для новых товаров
       trackProductInteraction(id, {
         incrementCart: true,
         userId: auth.currentUser?.uid || null
       });
     }
     
+    // Сохраняем корзину в localStorage
     localStorage.setItem(cartKey, JSON.stringify(cart));
     
-    // Dispatch custom event to update cart count in header with product name
-    const event = new CustomEvent('cartUpdated', { 
+    // Уведомляем о добавлении товара в корзину
+    window.dispatchEvent(new CustomEvent('cartUpdated', { 
       detail: { item: product.name } 
-    });
-    window.dispatchEvent(event);
+    }));
     
-    // Show success message
+    // Показываем сообщение об успешном добавлении
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 3000);
   };
