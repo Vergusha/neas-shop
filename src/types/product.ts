@@ -73,3 +73,20 @@ export interface Product {
   batteryLife?: string;
   weight?: string;
 }
+
+// Расширяем интерфейс ProductSearchResult для включения всех нужных полей
+export interface ProductSearchResult {
+  id: string;
+  name: string;
+  brand: string;
+  price: number;
+  image: string;
+  collection?: string;
+  deviceType?: string;
+  description?: string;   // Добавлено для полной информации
+  model?: string;         // Добавлено для полной информации
+  memory?: string;        // Добавлено для полной информации
+  color?: string;         // Добавлено для полной информации
+  connectivity?: string;  // Добавлено для полной информации
+  modelNumber?: string;   // Добавлено для полной информации
+}

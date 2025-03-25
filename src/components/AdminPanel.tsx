@@ -5,6 +5,9 @@ import { db } from '../firebaseConfig';
 import { ProductForm, NewProductForm } from '../types/product';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { updateAllProductsSearchKeywords } from '../utils/updateSearchKeywords';
+import { updatePopularProducts } from '../utils/updatePopularProducts';
+import { updateGamingKeywords } from '../utils/updateGamingKeywords';
+import { Link } from 'react-router-dom';
 
 const AdminPanel: React.FC = () => {
   const [product, setProduct] = useState<NewProductForm>({
@@ -272,6 +275,36 @@ const handleSubmit = async (e: React.FormEvent) => {
     } catch (error) {
       console.error('Error updating search keywords:', error);
       alert('Failed to update search keywords');
+    }
+  };
+
+  const handleUpdatePopularProducts = async () => {
+    try {
+      if (window.confirm('Are you sure you want to update popular products?')) {
+        setIsLoading(true);
+        await updatePopularProducts();
+        alert('Popular products updated successfully!');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error updating popular products:', error);
+      alert('Failed to update popular products');
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateGamingKeywords = async () => {
+    try {
+      if (window.confirm('Are you sure you want to update keywords for gaming products?')) {
+        setIsLoading(true);
+        await updateGamingKeywords();
+        alert('Gaming product keywords updated successfully!');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error updating gaming keywords:', error);
+      alert('Failed to update gaming keywords');
+      setIsLoading(false);
     }
   };
 
@@ -707,10 +740,28 @@ const handleSubmit = async (e: React.FormEvent) => {
       <div className="mb-4">
         <button
           onClick={handleUpdateSearchKeywords}
-          className="btn btn-warning btn-sm"
+          className="btn btn-warning btn-sm mr-2"
         >
           Update All Search Keywords
         </button>
+        <button
+          onClick={handleUpdatePopularProducts}
+          className="btn btn-info btn-sm mr-2"
+        >
+          Update Popular Products
+        </button>
+        <button
+          onClick={handleUpdateGamingKeywords}
+          className="btn btn-secondary btn-sm mr-2"
+        >
+          Update Gaming Keywords
+        </button>
+        <Link 
+          to="/admin/debug-keywords"
+          className="btn btn-outline btn-sm"
+        >
+          Debug Keywords
+        </Link>
       </div>
 
       <div className="flex items-center justify-between mb-4 cursor-pointer" 

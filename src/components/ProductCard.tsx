@@ -24,6 +24,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     name: initialProduct.name || 'Unnamed Product',
     description: initialProduct.description || '',
     image: initialProduct.image || '',
+    brand: initialProduct.brand || '',
+    model: initialProduct.model || '',
+    deviceType: initialProduct.deviceType || '',
+    color: initialProduct.color || '',
+    connectivity: initialProduct.connectivity || '',
+    memory: initialProduct.memory || ''
   };
   
   const [product, setProduct] = useState<Product>(normalizedProduct);
@@ -213,15 +219,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
       <span key="deviceType" className="font-medium">{product.deviceType}</span>
     );
     
-    // Полностью убираем отображение connectivity
-    // Комментарий ниже оставлен для справки
-    /* 
-    if (product.connectivity) {
-      details.push(
-        <span key="connectivity" className="text-sm text-gray-600">{product.connectivity}</span>
-      );
-    }
-    */
+    // Добавляем connectivity, если оно есть
+    if (product.connectivity) details.push(
+      <span key="connectivity" className="text-sm text-gray-600">{product.connectivity}</span>
+    );
     
     if (product.modelNumber) details.push(
       <span key="modelNumber" className="font-medium">{product.modelNumber}</span>

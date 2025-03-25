@@ -22,6 +22,7 @@ import { getAuth } from 'firebase/auth';
 import { useEffect } from 'react'; // Add this import
 import { AuthProvider } from './utils/AuthProvider'; // Add this import
 import LoginRedirect from './components/LoginRedirect';
+import KeywordDebugger from './utils/KeywordDebugger'; // Добавляем импорт компонента KeywordDebugger
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const auth = getAuth();
@@ -68,6 +69,34 @@ const App = () => {
               <Route path="/admin" element={
                 <AdminRoute>
                   <AdminPanel />
+                </AdminRoute>
+              } />
+              {/* Обновляем маршруты для поиска, поддерживая оба параметра */}
+              <Route path="/search" element={<SearchResultsPage />} />
+              
+              {/* Добавляем прямой маршрут для конкретного продукта */}
+              <Route 
+                path="/product/razer-deathadder" 
+                element={<Navigate to="/product/razer-deathadder-wiredwireless-2022-black" replace />} 
+              />
+              
+              {/* Добавляем прямые маршруты для продуктов Razer V3 Pro */}
+              <Route 
+                path="/product/razer-v3" 
+                element={<Navigate to="/product/razer-viper-v3-pro-wireless-2023-black" replace />} 
+              />
+              <Route 
+                path="/product/razer-viper-v3" 
+                element={<Navigate to="/product/razer-viper-v3-pro-wireless-2023-black" replace />} 
+              />
+              <Route 
+                path="/product/razer-viper-pro" 
+                element={<Navigate to="/product/razer-viper-v3-pro-wireless-2023-black" replace />} 
+              />
+              {/* Добавляем маршрут для отладки ключевых слов */}
+              <Route path="/admin/debug-keywords" element={
+                <AdminRoute>
+                  <KeywordDebugger />
                 </AdminRoute>
               } />
             </Routes>

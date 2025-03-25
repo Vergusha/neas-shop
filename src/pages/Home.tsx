@@ -13,144 +13,69 @@ const Home = () => {
   useEffect(() => {
     const fetchPopularProducts = async () => {
       try {
-        setLoading(true);
+        // Используем правильно индексированный путь
+        const popularProductsRef = ref(database, 'popularProducts');
+        const query = query(popularProductsRef, orderByChild('score'), limitToLast(6));
         
-        // First try to get top products by popularity score from Realtime Database
-        const popularRef = ref(database, 'popularProducts');
-        const popularQuery = query(
-          popularRef, 
-          orderByChild('score'), 
-          limitToLast(20)
-        );
+        const snapshot = await get(query);
         
-        const popularSnapshot = await get(popularQuery);
-        let popularIds: string[] = [];
-        
-        if (popularSnapshot.exists()) {
-          // Get IDs of popular products sorted by score
-          popularIds = Object.entries(popularSnapshot.val())
-            .map(([id, data]: [string, any]) => ({
-              id,
-              score: data.score || 0
+        if (snapshot.exists()) {
+          const productsData = snapshot.val();
+          // Преобразуем объект в массив и сортируем по убыванию score
+          const productsArray = Object.entries(productsData)
+            .map(([key, value]: [string, any]) => ({
+              id: key,
+              ...value
             }))
             .sort((a, b) => b.score - a.score)
-            .map(item => item.id);
-        }
-        
-        // If we have popular IDs, fetch those specific products
-        if (popularIds.length > 0) {
-          // Array to hold all found popular products
-          let allPopularProducts: Product[] = [];
+            .slice(0, 6);
           
-          // Collections to fetch products from
-          const collections = ['products', 'mobile', 'tv'];
-          
-          // For each popular ID, try to find it in any collection
-          for (const productId of popularIds) {
-            let found = false;
+          // Загружаем полные данные продуктов из Firestore
+          const productsPromises = productsArray.map(async (item) => {
+            // Проверяем все коллекции продуктов
+            const collections = ['products', 'mobile', 'tv', 'gaming'];
             
             for (const collectionName of collections) {
-              if (found) continue;
-              
               try {
-                const docRef = doc(db, collectionName, productId);
-                const docSnap = await getDoc(docRef);
-                
-                if (docSnap.exists()) {
-                  const productData = docSnap.data();
-                  allPopularProducts.push({
-                    id: productId,
-                    name: productData?.name || 'Unnamed Product',
-                    description: productData?.description || '',
-                    image: productData?.image || '',
-                    price: typeof productData?.price === 'number' ? productData.price : 
-                           typeof productData?.price === 'string' ? parseFloat(productData.price) : 0,
-                    collection: collectionName,
-                    clickCount: 0,
-                    favoriteCount: 0,
-                    cartCount: 0,
-                    popularityScore: 0,
-                    ...productData
-                  } as Product);
-                  found = true;
+                const productDoc = await getDoc(doc(db, collectionName, item.id));
+                if (productDoc.exists()) {
+                  return {
+                    ...productDoc.data(),
+                    id: item.id,
+                    score: item.score
+                  };
                 }
-              } catch (error) {
-                console.warn(`Error fetching product ${productId} from ${collectionName}:`, error);
+              } catch (err) {
+                console.error(`Error fetching product ${item.id} from ${collectionName}:`, err);
               }
             }
-          }
+            
+            // Возвращаем базовую информацию, если полные данные не найдены
+            return {
+              id: item.id,
+              name: 'Product not found',
+              price: 0,
+              image: '',
+              score: item.score
+            };
+          });
           
-          // Set popular products - maintain order from popularity scores
-          setPopularProducts(allPopularProducts);
+          const resolvedProducts = await Promise.all(productsPromises);
+          setPopularProducts(resolvedProducts);
         } else {
-          // Fallback to old method if no popularity data
-          // Array to hold all products from different collections
-          let allProducts: Product[] = [];
-          
-          // Collections to fetch products from
-          const collections = ['products', 'mobile', 'tv'];
-          
-          // Fetch products from all collections
-          for (const collectionName of collections) {
-            const productsCollection = collection(db, collectionName);
-            const productsSnapshot = await getDocs(productsCollection);
-            
-            const products = productsSnapshot.docs.map(doc => {
-              const data = doc.data();
-              return {
-                id: doc.id,
-                name: data.name || 'Unnamed Product',
-                description: data.description || '',
-                image: data.image || '',
-                price: typeof data.price === 'number' ? data.price : 
-                       typeof data.price === 'string' ? parseFloat(data.price) : 0,
-                clickCount: data.clickCount || 0,
-                collection: collectionName
-              };
-            }) as Product[];
-            
-            allProducts = [...allProducts, ...products];
-          }
-          
-          // Get stats from Realtime Database to determine popular items
-          const statsRef = ref(database, 'productStats');
-          const statsSnapshot = await get(statsRef);
-          
-          if (statsSnapshot.exists()) {
-            const stats = statsSnapshot.val();
-            
-            // Add stats to products
-            allProducts = allProducts.map(product => ({
-              ...product,
-              popularityScore: stats[product.id]?.popularityScore || 0,
-              clickCount: stats[product.id]?.clickCount || 0,
-              favoriteCount: stats[product.id]?.favoriteCount || 0,
-              cartCount: stats[product.id]?.cartCount || 0
-            }));
-          }
-          
-          // Calculate popularity score if not already present
-          allProducts = allProducts.map(product => ({
-            ...product,
-            popularityScore: product.popularityScore || 
-                            ((product.clickCount || 0) + 
-                             (product.favoriteCount || 0) * 3 + 
-                             (product.cartCount || 0) * 5)
-          }));
-          
-          // Sort by popularity score and take top 20
-          const topProducts = allProducts
-            .filter(product => product && product.id && !isNaN(Number(product.price)))
-            .sort((a, b) => (b.popularityScore || 0) - (a.popularityScore || 0))
-            .slice(0, 20);
-          
-          setPopularProducts(topProducts);
+          console.log('No popular products found');
+          setPopularProducts([]);
         }
       } catch (error) {
         console.error('Error fetching popular products:', error);
-        setPopularProducts([]);
-      } finally {
-        setLoading(false);
+        // В случае ошибки, попробуем загрузить последние добавленные продукты как запасной вариант
+        try {
+          const fallbackProducts = await fetchLatestProducts();
+          setPopularProducts(fallbackProducts);
+        } catch (fallbackError) {
+          console.error('Error fetching fallback products:', fallbackError);
+          setPopularProducts([]);
+        }
       }
     };
 

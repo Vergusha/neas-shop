@@ -4,6 +4,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import { Product } from '../types/product';
+import DirectRazerLink from '../components/DirectRazerLink';
 
 const GamingPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
@@ -166,6 +167,11 @@ const GamingPage: React.FC = () => {
               </select>
             </div>
           )}
+          
+          {/* Добавляем компонент прямого доступа к Razer продуктам */}
+          <div className="mt-6">
+            <DirectRazerLink />
+          </div>
         </aside>
 
         {/* Main Content */}

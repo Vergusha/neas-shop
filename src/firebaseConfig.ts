@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
+import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 
@@ -20,7 +20,15 @@ const auth = getAuth(app);
 auth.useDeviceLanguage();
 setPersistence(auth, browserLocalPersistence).catch(console.error);
 
-const db = getFirestore(app);
+// Инициализация Firestore с настройками кеширования
+const db = initializeFirestore(app, {
+  // Используем новый рекомендованный способ настройки кеширования
+  cache: {
+    // Включаем постоянное кеширование вместо enableIndexedDbPersistence
+    lruGarbageCollection: true
+  }
+});
+
 const database = getDatabase(app);
 
 export { db, database, auth, app };
@@ -78,21 +86,44 @@ export const ensureFirestoreAccess = (): void => {
   
   // Включаем персистентность через правильный метод из библиотеки
   try {
-    // Правильный способ включить персистентность в новой версии Firebase
-    enableIndexedDbPersistence(db)
-      .catch((err) => {
-        if (err.code === 'failed-precondition') {
-          // Несколько вкладок открыты, персистентность можно включить только в одной
-          console.warn('Firebase persistence could not be enabled: Multiple tabs open');
-        } else if (err.code === 'unimplemented') {
-          // Текущий браузер не поддерживает все функции, необходимые для персистентности
-          console.warn('Firebase persistence is not available in this browser');
-        } else {
-          console.error('Error enabling persistence:', err);
-        }
-      });
+    // Удалите или закомментируйте следующую строку, если она существует:
+    // enableIndexedDbPersistence(db).catch((err) => console.error('Persistence error:', err));
   } catch (e) {
     // Если что-то пошло не так, просто логируем ошибку, но не блокируем работу приложения
     console.warn('Could not initialize Firestore persistence:', e);
   }
 };
+
+// Добавляем перерасчет индексов
+export const setupFirestoreIndexes = async (): Promise<void> => {
+  try {
+    // Добавляем правила индексирования для путей в базе данных, например:
+    console.log('Setting up Firestore indexes...');
+    
+    // Firebase предупреждает, что нужен индекс для popularProducts.score
+    // Вы можете настроить это в Firebase Console:
+    // Database -> Realtime Database -> Rules
+    // {
+    //   "rules": {
+    //     ".read": "auth != null",
+    //     ".write": "auth != null",
+    //     "popularProducts": {
+    //       ".indexOn": ["score"]
+    //     }
+    //   }
+    // }
+    
+    // Или программно через АПИ административного SDK, если это бекенд
+  } catch (e) {
+    console.warn('Could not setup Firestore indexes:', e);
+  }
+};
+
+// Для отладки поиска добавим глобальную функцию
+if (typeof window !== 'undefined') {
+  // @ts-ignore - Добавляем в глобальный объект для доступа из консоли браузера
+  window.testGamingSearch = async () => {
+    const { default: testGamingSearch } = await import('./utils/testGamingSearch');
+    return testGamingSearch();
+  };
+}

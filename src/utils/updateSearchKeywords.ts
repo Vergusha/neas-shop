@@ -59,40 +59,108 @@ export const updateAllProductsSearchKeywords = async () => {
       
       for (const docSnap of snapshot.docs) {
         const productData = docSnap.data();
+        console.log(`Updating keywords for ${collectionName}/${docSnap.id}:`, {
+          name: productData.name,
+          brand: productData.brand,
+          model: productData.model,
+          deviceType: productData.deviceType
+        });
         
+        // Базовые ключевые слова из имени и номера модели
+        let keywords: string[] = [];
+        
+        // Используем name, если он есть
         if (productData.name) {
-          // Генерируем ключевые слова для продукта
-          const keywords = generateSearchKeywords(
+          keywords = keywords.concat(generateSearchKeywords(
             productData.name,
             productData.modelNumber || null
-          );
+          ));
+        }
+        
+        // Добавляем бренд и модель напрямую, так как они часто ищутся
+        if (productData.brand) {
+          keywords.push(productData.brand.toLowerCase());
           
-          // Добавляем дополнительные ключевые слова для специфичных полей в зависимости от категории
-          if (collectionName === 'gaming' && productData.deviceType) {
-            // Добавляем тип устройства как ключевое слово
-            keywords.push(productData.deviceType.toLowerCase());
+          // Если есть модель, добавляем комбинацию бренда и модели
+          if (productData.model) {
+            keywords.push(
+              productData.model.toLowerCase(),
+              `${productData.brand.toLowerCase()} ${productData.model.toLowerCase()}`
+            );
+          }
+        }
+        
+        // Специфичные ключевые слова для игровой периферии
+        if (collectionName === 'gaming') {
+          // Добавляем "игровой", "gaming" и "gamer" для всех игровых продуктов
+          keywords.push('gaming', 'игровой', 'игровая', 'gamer', 'геймерский');
+          
+          // Добавляем тип устройства
+          if (productData.deviceType) {
+            const deviceType = productData.deviceType.toLowerCase();
+            keywords.push(deviceType);
             
-            // Если это мышка, добавляем общие термины для поиска
-            if (productData.deviceType.toLowerCase() === 'mouse') {
-              keywords.push('mouse', 'мышь', 'мышка', 'gaming mouse', 'игровая мышь');
+            // Добавляем локализованные варианты для типов устройств
+            const deviceTranslations: Record<string, string[]> = {
+              'mouse': ['мышь', 'мышка', 'gaming mouse', 'игровая мышь', 'мышь для игр'],
+              'keyboard': ['клавиатура', 'gaming keyboard', 'игровая клавиатура', 'клавиатура для игр'],
+              'headset': ['наушники', 'гарнитура', 'gaming headset', 'игровая гарнитура', 'гарнитура для игр'],
+              'controller': ['контроллер', 'геймпад', 'джойстик', 'gamepad', 'joystick', 'игровой контроллер'],
+              'mousepad': ['коврик', 'коврик для мыши', 'игровой коврик'],
+              'chair': ['кресло', 'игровое кресло', 'gaming chair']
+            };
+            
+            if (deviceTranslations[deviceType]) {
+              keywords = keywords.concat(deviceTranslations[deviceType]);
             }
             
-            // Если есть бренд, добавляем комбинацию бренда и типа устройства
+            // Добавляем бренд + тип устройства
             if (productData.brand) {
-              keywords.push(
-                `${productData.brand.toLowerCase()} ${productData.deviceType.toLowerCase()}`
-              );
+              keywords.push(`${productData.brand.toLowerCase()} ${deviceType}`);
+              
+              // Если это распространенный бренд, добавляем вариации названия
+              if (['razer', 'logitech', 'hyperx', 'steelseries'].includes(productData.brand.toLowerCase())) {
+                keywords.push(productData.brand.toLowerCase());
+              }
+              
+              // Например: razer mouse, razer мышь
+              if (deviceTranslations[deviceType]) {
+                for (const translation of deviceTranslations[deviceType]) {
+                  keywords.push(`${productData.brand.toLowerCase()} ${translation}`);
+                }
+              }
             }
           }
           
-          // Обновляем документ с новыми ключевыми словами
-          await updateDoc(doc(db, collectionName, docSnap.id), {
-            searchKeywords: keywords,
-            updatedAt: new Date().toISOString()
-          });
-          
-          updatedCount++;
+          // Добавляем connectivity как ключевое слово
+          if (productData.connectivity) {
+            const connectivity = productData.connectivity.toLowerCase();
+            keywords.push(connectivity);
+            
+            // Добавляем локализованные варианты для подключения
+            const connectivityTranslations: Record<string, string[]> = {
+              'wired': ['проводной', 'проводная', 'с проводом'],
+              'wireless': ['беспроводной', 'беспроводная', 'без провода', 'wireless']
+            };
+            
+            if (connectivityTranslations[connectivity]) {
+              keywords = keywords.concat(connectivityTranslations[connectivity]);
+            }
+          }
         }
+        
+        // Удаляем дубликаты и нормализуем ключевые слова
+        const uniqueKeywords = Array.from(new Set(keywords.map(k => k.trim().toLowerCase()).filter(k => k.length > 1)));
+        
+        console.log(`Generated ${uniqueKeywords.length} keywords for ${collectionName}/${docSnap.id}:`, uniqueKeywords);
+        
+        // Обновляем документ с новыми ключевыми словами
+        await updateDoc(doc(db, collectionName, docSnap.id), {
+          searchKeywords: uniqueKeywords,
+          updatedAt: new Date().toISOString()
+        });
+        
+        updatedCount++;
       }
     }
     

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuth, signOut } from 'firebase/auth';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { FaSearch, FaShoppingCart, FaUser } from 'react-icons/fa';
 import { ProductSearchResult } from '../types/product';
@@ -39,28 +39,193 @@ const Navbar: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // Логируем прямое значение поискового запроса
+      console.log(`🔍 Original search query: "${query.trim()}"`);
+      const cleanQuery = query.toLowerCase().trim();
+      console.log(`🔍 Normalized search query: "${cleanQuery}"`);
+
+      // Специальные обработчики для известных запросов
+      if (cleanQuery.includes('v3') || cleanQuery.includes('pro')) {
+        console.log("RAZER V3 PRO SEARCH DETECTED: Trying direct match");
+        
+        const gamingRef = collection(db, 'gaming');
+        const querySnapshot = await getDocs(gamingRef);
+        
+        const v3Results: ProductSearchResult[] = [];
+        
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.brand && 
+              data.brand.toLowerCase() === 'razer' && 
+              ((data.model && 
+                (data.model.toLowerCase().includes('v3') || 
+                 data.model.toLowerCase().includes('pro'))) || 
+               (data.name && 
+                (data.name.toLowerCase().includes('v3') || 
+                 data.name.toLowerCase().includes('pro'))) ||
+               (data.memory && data.memory.toLowerCase().includes('v3')))) {
+                
+            console.log(`Found Razer V3/Pro product: ${docSnap.id}`, data);
+            v3Results.push({
+              id: docSnap.id,
+              name: data.name || 'Razer Product',
+              brand: data.brand || 'Razer',
+              price: data.price || 0,
+              image: data.image || '',
+              collection: 'gaming',
+              deviceType: data.deviceType || '',
+              description: data.description || '',
+              model: data.model || '',
+              color: data.color || '',
+              connectivity: data.connectivity || '',
+              memory: data.memory || '',
+              modelNumber: data.modelNumber || ''
+            });
+          }
+        });
+        
+        if (v3Results.length > 0) {
+          setSearchResults(v3Results);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (cleanQuery.includes('deathadder') || 
+          (cleanQuery.includes('razer') && cleanQuery.includes('death'))) {
+        console.log("RAZER DEATHADDER DETECTED: Trying direct product match");
+        try {
+          const specificId = 'razer-deathadder-wiredwireless-2022-black';
+          const productDoc = await getDoc(doc(db, 'gaming', specificId));
+          
+          if (productDoc.exists()) {
+            const data = productDoc.data();
+            console.log("Found Razer DeathAdder by direct ID", data);
+            
+            setSearchResults([{
+              id: specificId,
+              name: data.name || 'Razer DeathAdder',
+              brand: data.brand || 'Razer',
+              price: data.price || 0,
+              image: data.image || '',
+              collection: 'gaming',
+              deviceType: data.deviceType || '',
+              description: data.description || '',
+              model: data.model || '',
+              color: data.color || '',
+              connectivity: data.connectivity || ''
+            }]);
+            
+            setIsLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.error("Error in direct DeathAdder search:", err);
+        }
+      }
+      
+      if (cleanQuery.includes('razer')) {
+        console.log("RAZER SEARCH DETECTED: Applying special search");
+        const directGamingRef = collection(db, 'gaming');
+        const directSnapshot = await getDocs(directGamingRef);
+        
+        const razerResults: ProductSearchResult[] = [];
+        
+        directSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.brand && data.brand.toLowerCase().includes('razer')) {
+            console.log(`DIRECT MATCH - Added Razer product: ${doc.id}`, data.name);
+            
+            razerResults.push({
+              id: doc.id,
+              name: data.name || 'Razer Product',
+              brand: data.brand || 'Razer',
+              price: data.price || 0,
+              image: data.image || '',
+              collection: 'gaming',
+              deviceType: data.deviceType || '',
+              description: data.description || '',
+              model: data.model || '',
+              color: data.color || '',
+              connectivity: data.connectivity || '',
+              memory: data.memory || '',
+              modelNumber: data.modelNumber || ''
+            });
+          }
+        });
+        
+        if (razerResults.length > 0) {
+          setSearchResults(razerResults);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const collections = ['products', 'mobile', 'tv', 'gaming'];
       let allResults: ProductSearchResult[] = [];
       
+      console.log(`Searching across collections: ${collections.join(', ')}`);
+      
+      const queryVariants = [
+        cleanQuery,
+        cleanQuery.replace(/\s+/g, ''),
+        ...cleanQuery.split(/\s+/)
+      ];
+      const uniqueQueryVariants = Array.from(new Set(queryVariants));
+      console.log(`🔍 Query variants: ${uniqueQueryVariants.join(', ')}`);
+      
       for (const collectionName of collections) {
         const collectionRef = collection(db, collectionName);
-        const q = query.toLowerCase().trim();
-        
         const querySnapshot = await getDocs(collectionRef);
+        
+        console.log(`Checking ${querySnapshot.size} documents in "${collectionName}" collection`);
         
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          const searchKeywords = data.searchKeywords || [];
           
-          if (
-            searchKeywords.some((keyword: string) => 
-              keyword.includes(q)
-            ) ||
-            (data.name && data.name.toLowerCase().includes(q)) ||
-            (data.brand && data.brand.toLowerCase().includes(q)) ||
-            (data.model && data.model.toLowerCase().includes(q)) ||
-            (data.deviceType && data.deviceType.toLowerCase().includes(q))
-          ) {
+          if (data.searchKeywords && Array.isArray(data.searchKeywords)) {
+            const keywordsMatch = uniqueQueryVariants.some(variant => 
+              data.searchKeywords.some((keyword: string) => {
+                if (!keyword || typeof keyword !== 'string') return false;
+                const match = keyword.toLowerCase().includes(variant);
+                if (match) {
+                  console.log(`✅ Keyword match found in ${collectionName}/${doc.id}: "${keyword}" matches "${variant}"`);
+                }
+                return match;
+              })
+            );
+            
+            if (keywordsMatch) {
+              console.log(`✅ Adding product by keyword match: ${collectionName}/${doc.id} - ${data.name}`);
+              allResults.push({
+                id: doc.id,
+                name: data.name || 'Unnamed Product',
+                brand: data.brand || '',
+                price: data.price || 0,
+                image: data.image || '',
+                collection: collectionName,
+                deviceType: data.deviceType || '',
+              });
+              return;
+            }
+          }
+          
+          const name = (data.name || '').toLowerCase();
+          const brand = (data.brand || '').toLowerCase();
+          const model = (data.model || '').toLowerCase();
+          const deviceType = (data.deviceType || '').toLowerCase();
+          
+          const matchFound = uniqueQueryVariants.some(variant => 
+            name.includes(variant) || 
+            brand.includes(variant) || 
+            model.includes(variant) || 
+            deviceType.includes(variant) || 
+            `${brand} ${model}`.includes(variant) || 
+            `${brand} ${deviceType}`.includes(variant)
+          );
+          
+          if (matchFound) {
+            console.log(`✅ Adding product by field match: ${collectionName}/${doc.id} - ${data.name}`);
             allResults.push({
               id: doc.id,
               name: data.name || 'Unnamed Product',
@@ -68,20 +233,29 @@ const Navbar: React.FC = () => {
               price: data.price || 0,
               image: data.image || '',
               collection: collectionName,
+              deviceType: data.deviceType || '',
             });
           }
         });
       }
       
-      allResults = allResults
-        .sort((a, b) => 
-          (a.name.toLowerCase().indexOf(query.toLowerCase()) - 
-           b.name.toLowerCase().indexOf(query.toLowerCase())))
-        .slice(0, 5);
+      allResults.sort((a, b) => {
+        if (a.collection === 'gaming' && b.collection !== 'gaming') return -1;
+        if (a.collection !== 'gaming' && b.collection === 'gaming') return 1;
+        
+        const aBrandMatch = a.brand.toLowerCase() === cleanQuery;
+        const bBrandMatch = b.brand.toLowerCase() === cleanQuery;
+        if (aBrandMatch && !bBrandMatch) return -1;
+        if (!aBrandMatch && bBrandMatch) return 1;
+        
+        return 0;
+      });
       
-      setSearchResults(allResults);
+      console.log(`📊 Search found ${allResults.length} results`);
+      setSearchResults(allResults.slice(0, 10));
+      
     } catch (error) {
-      console.error("Error searching products:", error);
+      console.error("❌ Error searching products:", error);
     } finally {
       setIsLoading(false);
     }
