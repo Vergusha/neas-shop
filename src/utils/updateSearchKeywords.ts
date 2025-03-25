@@ -1,5 +1,5 @@
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 
 interface Product {
   id: string;
@@ -10,120 +10,96 @@ interface Product {
   searchKeywords?: string[];
 }
 
-const generateSearchKeywords = (name: string, modelNumber?: string): string[] => {
+// Функция для генерации поисковых ключевых слов из названия продукта
+export const generateSearchKeywords = (name: string, modelNumber?: string): string[] => {
   const keywords: string[] = [];
   
-  // Process name
+  // Обработка основного названия
   const words = name.toLowerCase().split(' ');
   
-  // Add individual words and their combinations
-  for (let i = 0; i < words.length; i++) {
-    // Add individual word
-    if (words[i].length > 1) {
-      keywords.push(words[i]);
+  // Добавляем отдельные слова
+  for (const word of words) {
+    if (word.length > 2) {
+      keywords.push(word);
     }
-    
-    // Add word combinations
-    let combined = words[i];
-    keywords.push(combined);
-    
-    for (let j = i + 1; j < words.length; j++) {
-      combined += ' ' + words[j];
-      keywords.push(combined);
-      
-      // Add version without spaces
-      keywords.push(combined.replace(/\s+/g, ''));
+  }
+  
+  // Добавляем комбинации слов
+  for (let i = 0; i < words.length; i++) {
+    let combined = '';
+    for (let j = i; j < words.length; j++) {
+      combined += words[j] + ' ';
+      keywords.push(combined.trim());
     }
   }
 
-  // Add model number variations if provided
+  // Добавляем вариации номера модели, если он указан
   if (modelNumber) {
-    // Add original model number
     keywords.push(modelNumber.toLowerCase());
-    
-    // Add version without spaces and hyphens
+    // Удаляем пробелы и дефисы для альтернативного поиска
     const cleanModelNumber = modelNumber.toLowerCase().replace(/[\s-]/g, '');
     if (cleanModelNumber !== modelNumber.toLowerCase()) {
       keywords.push(cleanModelNumber);
     }
-
-    // Add combinations with brand/model and model number
-    words.forEach((word) => {
-      keywords.push(`${word} ${modelNumber}`.toLowerCase());
-      keywords.push(`${word}${modelNumber}`.toLowerCase());
-    });
   }
-
-  // Add special combinations for phones
-  if (name.toLowerCase().includes('iphone')) {
-    // Add variations like "iphone15", "iphone 15", "15"
-    const matches = name.match(/iphone\s*(\d+)/i);
-    if (matches && matches[1]) {
-      const number = matches[1];
-      keywords.push(`iphone${number}`);
-      keywords.push(`iphone ${number}`);
-      keywords.push(number);
-      
-      // Add variations with "pro", "plus", "max" if present
-      ['pro', 'plus', 'max'].forEach(variant => {
-        if (name.toLowerCase().includes(variant)) {
-          keywords.push(`iphone${number}${variant}`);
-          keywords.push(`iphone ${number} ${variant}`);
-          keywords.push(`iphone${number} ${variant}`);
-          keywords.push(`${number}${variant}`);
-          keywords.push(`${number} ${variant}`);
-        }
-      });
-    }
-  }
-
-  // Add numeric-only versions for all numbers in the name
-  name.match(/\d+/g)?.forEach(num => {
-    keywords.push(num);
-  });
-
-  // Remove duplicates and empty strings
-  return Array.from(new Set(keywords.filter(k => k.length > 0)));
+  
+  return Array.from(new Set(keywords)); // удаляем дубликаты
 };
 
+// Функция для обновления ключевых слов для всех продуктов
 export const updateAllProductsSearchKeywords = async () => {
-  const categories = ['mobile', 'tv']; // Add all your product categories
-  let updatedCount = 0;
-  let errorCount = 0;
-
   try {
-    for (const category of categories) {
-      console.log(`Processing ${category} category...`);
-      const querySnapshot = await getDocs(collection(db, category));
+    // Получаем все коллекции, включая gaming
+    const collectionNames = ['products', 'mobile', 'tv', 'gaming'];
+    let updatedCount = 0;
+    
+    for (const collectionName of collectionNames) {
+      const productsRef = collection(db, collectionName);
+      const snapshot = await getDocs(productsRef);
       
-      for (const document of querySnapshot.docs) {
-        const product = document.data() as Product;
+      for (const docSnap of snapshot.docs) {
+        const productData = docSnap.data();
         
-        try {
-          // Generate new keywords including model number
-          const newKeywords = generateSearchKeywords(
-            `${product.brand} ${product.model}`, 
-            product.modelNumber
+        if (productData.name) {
+          // Генерируем ключевые слова для продукта
+          const keywords = generateSearchKeywords(
+            productData.name,
+            productData.modelNumber || null
           );
           
-          // Update the document
-          const productRef = doc(db, category, document.id);
-          await updateDoc(productRef, {
-            searchKeywords: newKeywords
+          // Добавляем дополнительные ключевые слова для специфичных полей в зависимости от категории
+          if (collectionName === 'gaming' && productData.deviceType) {
+            // Добавляем тип устройства как ключевое слово
+            keywords.push(productData.deviceType.toLowerCase());
+            
+            // Если это мышка, добавляем общие термины для поиска
+            if (productData.deviceType.toLowerCase() === 'mouse') {
+              keywords.push('mouse', 'мышь', 'мышка', 'gaming mouse', 'игровая мышь');
+            }
+            
+            // Если есть бренд, добавляем комбинацию бренда и типа устройства
+            if (productData.brand) {
+              keywords.push(
+                `${productData.brand.toLowerCase()} ${productData.deviceType.toLowerCase()}`
+              );
+            }
+          }
+          
+          // Обновляем документ с новыми ключевыми словами
+          await updateDoc(doc(db, collectionName, docSnap.id), {
+            searchKeywords: keywords,
+            updatedAt: new Date().toISOString()
           });
           
           updatedCount++;
-          console.log(`Updated ${product.name} (${document.id}) with new keywords`);
-        } catch (error) {
-          errorCount++;
-          console.error(`Failed to update ${product.name} (${document.id}):`, error);
         }
       }
     }
     
-    console.log(`Update complete. Successfully updated ${updatedCount} products. Failed: ${errorCount}`);
+    console.log(`Successfully updated search keywords for ${updatedCount} products`);
+    return updatedCount;
   } catch (error) {
-    console.error('Error updating products:', error);
+    console.error('Error updating search keywords:', error);
     throw error;
   }
 };

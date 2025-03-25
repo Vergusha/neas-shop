@@ -34,7 +34,7 @@ const ProductsPage: React.FC = () => {
     const fetchProducts = async () => {
       try {
         // Get products from Firebase collections
-        const collections = ['products', 'mobile', 'tv'];
+        const collections = ['products', 'mobile', 'tv', 'gaming']; // Добавляем 'gaming'
         let allProducts: Product[] = [];
         
         for (const collectionName of collections) {

@@ -17,6 +17,15 @@ export interface BaseProductForm {
   // TV specific
   screenDiagonal?: string;
   screenFormat?: string;
+  // Gaming peripherals specific
+  deviceType?: string;
+  connectivity?: string;
+  compatibleWith?: string;
+  rgbLighting?: boolean;
+  switchType?: string;
+  dpi?: string;
+  batteryLife?: string;
+  weight?: string;
 }
 
 export interface ProductForm extends BaseProductForm {
@@ -54,4 +63,13 @@ export interface Product {
   image3?: string;
   image4?: string;
   image5?: string;
+  // Gaming peripherals specific
+  deviceType?: string;
+  connectivity?: string;
+  compatibleWith?: string;
+  rgbLighting?: boolean;
+  switchType?: string;
+  dpi?: string;
+  batteryLife?: string;
+  weight?: string;
 }

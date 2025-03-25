@@ -130,13 +130,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
       return;
     }
 
-    const cart = JSON.parse(localStorage.getItem(`cart_${user.uid}`) || '[]');
+    // Используем согласованный ключ для корзины - cart_${user.uid}
+    const userId = user.uid;
+    const cartKey = `cart_${userId}`;
+    
+    // Проверяем наличие корзины в localStorage
+    const cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
     const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
 
     if (existingItemIndex >= 0) {
       cart[existingItemIndex].quantity += 1;
     } else {
-      cart.push({ ...product, quantity: 1 });
+      // Убедимся, что передаем все необходимые поля
+      cart.push({ 
+        id: product.id,
+        name: product.name, 
+        price: product.price, 
+        image: product.image,
+        quantity: 1,
+        // Добавим поле category или collection для идентификации типа продукта
+        category: product.category || 'gaming',
+        collection: product.collection || 'gaming'
+      });
       
       // Track adding to cart only for new items
       trackProductInteraction(product.id, {
@@ -145,11 +160,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
       });
     }
 
-    localStorage.setItem(`cart_${user.uid}`, JSON.stringify(cart));
+    // Сохраняем обновленную корзину
+    localStorage.setItem(cartKey, JSON.stringify(cart));
     setIsInCart(true);
     setCartButtonFlash(true);
     setTimeout(() => setCartButtonFlash(false), 500);
     
+    // Уведомляем приложение об обновлении корзины
     window.dispatchEvent(new CustomEvent('cartUpdated'));
   };
 
@@ -194,6 +211,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     if (product.model) details.push(
       <span key="model" className="font-medium">{product.model}</span>
     );
+    
+    // Добавляем deviceType для игровых товаров
+    if (product.deviceType) details.push(
+      <span key="deviceType" className="font-medium">{product.deviceType}</span>
+    );
+    
+    // Полностью убираем отображение connectivity
+    // Комментарий ниже оставлен для справки
+    /* 
+    if (product.connectivity) {
+      details.push(
+        <span key="connectivity" className="text-sm text-gray-600">{product.connectivity}</span>
+      );
+    }
+    */
     
     if (product.modelNumber) details.push(
       <span key="modelNumber" className="font-medium">{product.modelNumber}</span>

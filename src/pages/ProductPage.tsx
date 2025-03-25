@@ -76,7 +76,7 @@ const ProductPage: React.FC = () => {
         console.log(`Fetching product with ID: ${id}`);
         
         // Try to get product from each collection until we find it
-        const collections = ['mobile', 'products', 'tv'];
+        const collections = ['mobile', 'products', 'tv', 'gaming']; // Добавляем 'gaming'
         let foundProduct: ProductData | null = null;
         
         for (const collectionName of collections) {
@@ -325,7 +325,7 @@ const ProductPage: React.FC = () => {
 
   const addToCart = () => {
     if (!product || !id) return;
-
+  
     // Проверяем, авторизован ли пользователь
     if (!isAuthenticated) {
       // Если пользователь не авторизован, показываем уведомление и перенаправляем на страницу входа
@@ -337,8 +337,13 @@ const ProductPage: React.FC = () => {
       }
       return;
     }
-
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  
+    // Обратите внимание здесь - мы используем 'cart' везде, но для authenticated users 
+    // должны использовать 'cart_userId'
+    const userId = auth.currentUser?.uid;
+    const cartKey = userId ? `cart_${userId}` : 'cart';
+    
+    const cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
     
     // Check if the product is already in the cart
     const existingItemIndex = cart.findIndex((item: any) => item.id === id);
@@ -363,7 +368,7 @@ const ProductPage: React.FC = () => {
       });
     }
     
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem(cartKey, JSON.stringify(cart));
     
     // Dispatch custom event to update cart count in header with product name
     const event = new CustomEvent('cartUpdated', { 
@@ -398,6 +403,10 @@ const ProductPage: React.FC = () => {
     const parts = [];
     if (product.brand) parts.push(product.brand);
     if (product.model) parts.push(product.model);
+    
+    // Для игровой периферии добавляем deviceType
+    if (product.deviceType) parts.push(product.deviceType);
+    
     if (product.modelNumber) parts.push(product.modelNumber);
     if (product.memory) parts.push(product.memory);
     if (product.color) parts.push(product.color);
