@@ -1,6 +1,19 @@
 import { ref, set, get } from 'firebase/database';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { database, db } from '../firebaseConfig';
+
+interface Product {
+  id: string;
+  score: number;
+  lastUpdated?: string;
+}
+
+interface PopularProductsData {
+  [id: string]: {
+    score: number;
+    lastUpdated: string;
+  };
+}
 
 export const updatePopularProducts = async () => {
   try {
@@ -41,7 +54,7 @@ export const updatePopularProducts = async () => {
       .slice(0, 20); // Ограничиваем количество популярных продуктов
     
     // Проверяем существование продуктов в Firestore (некоторые могли быть удалены)
-    const validProducts = [];
+    const validProducts: Product[] = [];
     const collections = ['products', 'mobile', 'tv', 'gaming'];
     
     for (const product of productsWithScore) {
@@ -66,13 +79,14 @@ export const updatePopularProducts = async () => {
     const popularProductsRef = ref(database, 'popularProducts');
     
     // Преобразуем массив в объект, где ключами являются ID продуктов
-    const popularProductsData = validProducts.reduce((acc, product) => {
-      acc[product.id] = {
+    const popularProductsData: PopularProductsData = {};
+    
+    validProducts.forEach(product => {
+      popularProductsData[product.id] = {
         score: product.score,
         lastUpdated: new Date().toISOString()
       };
-      return acc;
-    }, {});
+    });
     
     await set(popularProductsRef, popularProductsData);
     

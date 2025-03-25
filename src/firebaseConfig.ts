@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, initializeFirestore } from "firebase/firestore";
+import { initializeFirestore, FirestoreSettings } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 
@@ -21,13 +21,14 @@ auth.useDeviceLanguage();
 setPersistence(auth, browserLocalPersistence).catch(console.error);
 
 // Инициализация Firestore с настройками кеширования
-const db = initializeFirestore(app, {
-  // Используем новый рекомендованный способ настройки кеширования
-  cache: {
-    // Включаем постоянное кеширование вместо enableIndexedDbPersistence
-    lruGarbageCollection: true
-  }
-});
+// Создаем типизированный объект настроек
+const firestoreSettings: FirestoreSettings = {
+  // Используем любые другие настройки, которые позволяет FirestoreSettings
+  // Например, можно установить настройки кэширования через localCache
+  ignoreUndefinedProperties: true
+};
+
+const db = initializeFirestore(app, firestoreSettings);
 
 const database = getDatabase(app);
 

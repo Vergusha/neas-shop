@@ -1,13 +1,22 @@
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
+interface TestResults {
+  total: number;
+  withKeywords: number;
+  withoutKeywords: number;
+  keywords: Record<string, number>;
+  brands: Record<string, number>;
+  deviceTypes: Record<string, number>;
+}
+
 /**
  * Утилита для диагностики проблем с поиском игровых товаров
  * Вызывайте эту функцию в консоли браузера, чтобы проверить ключевые слова
  * для товаров из коллекции gaming
  */
-export const testGamingSearch = async () => {
-  const results = {
+export const testGamingSearch = async (): Promise<TestResults> => {
+  const results: TestResults = {
     total: 0,
     withKeywords: 0,
     withoutKeywords: 0,
@@ -33,10 +42,16 @@ export const testGamingSearch = async () => {
       const deviceType = data.deviceType?.toLowerCase() || 'unknown';
       
       // Count products by brand
-      results.brands[brand] = (results.brands[brand] || 0) + 1;
+      if (!results.brands[brand]) {
+        results.brands[brand] = 0;
+      }
+      results.brands[brand] += 1;
       
       // Count products by device type
-      results.deviceTypes[deviceType] = (results.deviceTypes[deviceType] || 0) + 1;
+      if (!results.deviceTypes[deviceType]) {
+        results.deviceTypes[deviceType] = 0;
+      }
+      results.deviceTypes[deviceType] += 1;
       
       if (Array.isArray(searchKeywords) && searchKeywords.length > 0) {
         results.withKeywords++;
@@ -46,13 +61,25 @@ export const testGamingSearch = async () => {
           if (typeof keyword === 'string') {
             // Categorize keywords
             if (keyword === brand) {
-              results.keywords['brand'] = (results.keywords['brand'] || 0) + 1;
+              if (!results.keywords['brand']) {
+                results.keywords['brand'] = 0;
+              }
+              results.keywords['brand'] += 1;
             } else if (keyword === deviceType) {
-              results.keywords['deviceType'] = (results.keywords['deviceType'] || 0) + 1;
+              if (!results.keywords['deviceType']) {
+                results.keywords['deviceType'] = 0;
+              }
+              results.keywords['deviceType'] += 1;
             } else if (keyword === 'gaming') {
-              results.keywords['gaming'] = (results.keywords['gaming'] || 0) + 1;
+              if (!results.keywords['gaming']) {
+                results.keywords['gaming'] = 0;
+              }
+              results.keywords['gaming'] += 1;
             } else if (keyword.includes(brand)) {
-              results.keywords['includes-brand'] = (results.keywords['includes-brand'] || 0) + 1;
+              if (!results.keywords['includes-brand']) {
+                results.keywords['includes-brand'] = 0;
+              }
+              results.keywords['includes-brand'] += 1;
             }
           }
         });
@@ -67,7 +94,7 @@ export const testGamingSearch = async () => {
     console.log('Testing complete. Results:', results);
     
     // Проверка наличия Razer продуктов
-    if (results.brands['razer']) {
+    if (results.brands['razer'] && results.brands['razer'] > 0) {
       console.log(`Found ${results.brands['razer']} Razer products`);
       
       // Дополнительно проверим каждый Razer продукт

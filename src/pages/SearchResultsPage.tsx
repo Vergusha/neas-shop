@@ -1,34 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
+import { Product as ProductType } from '../types/product'; // Переименуем импорт для ясности
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  brand?: string;
-  deviceType?: string;
-  collection?: string;
-  description?: string;
-  model?: string;
-  color?: string;
-  connectivity?: string;
-  modelNumber?: string;
-  memory?: string;
+// Интерфейс Product в этом файле должен соответствовать интерфейсу Product из types/product.ts
+interface Product extends ProductType {
+  // Добавляем любые дополнительные поля, если нужно
 }
 
 const SearchResultsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
 
+  // Обновляем типизацию продуктов, чтобы они точно соответствовали интерфейсу Product
+  const ensureRequiredFields = (data: any, docId: string, collectionName: string): Product => {
+    return {
+      ...data,
+      id: docId,
+      name: data.name || 'Unnamed Product',
+      price: data.price || 0,
+      image: data.image || '',
+      description: data.description || '', // Обязательное поле
+      brand: data.brand || '',
+      deviceType: data.deviceType || '',
+      collection: collectionName
+    };
+  };
+
   useEffect(() => {
-    // Исправляем получение параметра запроса - проверяем оба варианта 'q' и 'query'
     const searchQuery = searchParams.get('q') || searchParams.get('query') || '';
     setQuery(searchQuery);
 
@@ -76,15 +79,7 @@ const SearchResultsPage: React.FC = () => {
                  (data.memory && data.memory.toLowerCase().includes('v3')))) {
               
               console.log(`Found Razer V3/Pro match: ${doc.id} - ${data.name}`);
-              razerV3Products.push({
-                ...data,
-                id: doc.id,
-                name: data.name || 'Unnamed Product',
-                price: data.price || 0,
-                image: data.image || '',
-                brand: data.brand || '',
-                collection: 'gaming'
-              });
+              razerV3Products.push(ensureRequiredFields(data, doc.id, 'gaming'));
             }
           });
           
@@ -107,21 +102,7 @@ const SearchResultsPage: React.FC = () => {
             if (specificDoc.exists()) {
               const data = specificDoc.data();
               console.log(`Found specific product by ID: ${specificId}`, data);
-              setProducts([{
-                id: specificId,
-                name: data.name || 'Razer DeathAdder',
-                price: data.price || 0,
-                image: data.image || '',
-                brand: data.brand || 'Razer',
-                deviceType: data.deviceType || '',
-                collection: 'gaming',
-                description: data.description || '',
-                model: data.model || '',
-                color: data.color || '',
-                connectivity: data.connectivity || '',
-                modelNumber: data.modelNumber || '',
-                memory: data.memory || ''
-              }]);
+              setProducts([ensureRequiredFields(data, specificId, 'gaming')]);
               setLoading(false);
               return;
             } else {
@@ -148,15 +129,7 @@ const SearchResultsPage: React.FC = () => {
             
             // Находим все продукты Razer в gaming коллекции
             if (brand.includes('razer')) {
-              razerProducts.push({
-                ...data, // Включаем все поля из документа
-                id: doc.id,
-                name: data.name || 'Unnamed Product',
-                price: data.price || 0,
-                image: data.image || '',
-                brand: data.brand || '',
-                collection: 'gaming'
-              });
+              razerProducts.push(ensureRequiredFields(data, doc.id, 'gaming'));
             }
           });
           
@@ -196,16 +169,7 @@ const SearchResultsPage: React.FC = () => {
               
               if (keywordsMatch) {
                 console.log(`✅ Adding product by keyword match: ${collectionName}/${doc.id} - ${data.name}`);
-                allResults.push({
-                  ...data,
-                  id: doc.id,
-                  name: data.name || 'Unnamed Product',
-                  price: data.price || 0,
-                  image: data.image || '',
-                  brand: data.brand || '',
-                  deviceType: data.deviceType || '',
-                  collection: collectionName
-                });
+                allResults.push(ensureRequiredFields(data, doc.id, collectionName));
                 return; // продолжаем проверку других документов
               }
             }
@@ -228,16 +192,7 @@ const SearchResultsPage: React.FC = () => {
             
             if (matchFound) {
               console.log(`✅ Adding product by field match: ${collectionName}/${doc.id} - ${data.name}`);
-              allResults.push({
-                ...data,
-                id: doc.id,
-                name: data.name || 'Unnamed Product',
-                price: data.price || 0,
-                image: data.image || '',
-                brand: data.brand || '',
-                deviceType: data.deviceType || '',
-                collection: collectionName
-              });
+              allResults.push(ensureRequiredFields(data, doc.id, collectionName));
             }
           });
         }

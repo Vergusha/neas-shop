@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import CategoryList from '../components/CategoryList';
 import ProductCard from '../components/ProductCard';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db, database } from '../firebaseConfig';
 import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
 import { Product } from '../types/product';
@@ -13,11 +13,17 @@ const Home = () => {
   useEffect(() => {
     const fetchPopularProducts = async () => {
       try {
-        // Используем правильно индексированный путь
+        // Правильно используем ref, query и ограничение в Firebase Realtime Database
         const popularProductsRef = ref(database, 'popularProducts');
-        const query = query(popularProductsRef, orderByChild('score'), limitToLast(6));
+        // Используем query для создания запроса с ограничением
+        const popularProductsDbQuery = query(
+          popularProductsRef,
+          orderByChild('score'),
+          limitToLast(6)
+        );
         
-        const snapshot = await get(query);
+        // Получаем данные из базы
+        const snapshot = await get(popularProductsDbQuery);
         
         if (snapshot.exists()) {
           const productsData = snapshot.val();
@@ -39,25 +45,32 @@ const Home = () => {
               try {
                 const productDoc = await getDoc(doc(db, collectionName, item.id));
                 if (productDoc.exists()) {
+                  const data = productDoc.data();
                   return {
-                    ...productDoc.data(),
+                    ...data,
                     id: item.id,
-                    score: item.score
-                  };
+                    score: item.score,
+                    // Добавляем обязательные поля из интерфейса Product
+                    description: data.description || '',
+                    name: data.name || 'Product not found',
+                    price: data.price || 0,
+                    image: data.image || ''
+                  } as Product;
                 }
               } catch (err) {
                 console.error(`Error fetching product ${item.id} from ${collectionName}:`, err);
               }
             }
             
-            // Возвращаем базовую информацию, если полные данные не найдены
+            // Если продукт не найден, возвращаем минимальное представление с обязательными полями
             return {
               id: item.id,
               name: 'Product not found',
               price: 0,
               image: '',
+              description: 'Not available',
               score: item.score
-            };
+            } as Product;
           });
           
           const resolvedProducts = await Promise.all(productsPromises);
@@ -68,14 +81,10 @@ const Home = () => {
         }
       } catch (error) {
         console.error('Error fetching popular products:', error);
-        // В случае ошибки, попробуем загрузить последние добавленные продукты как запасной вариант
-        try {
-          const fallbackProducts = await fetchLatestProducts();
-          setPopularProducts(fallbackProducts);
-        } catch (fallbackError) {
-          console.error('Error fetching fallback products:', fallbackError);
-          setPopularProducts([]);
-        }
+        // В случае ошибки, используем пустой массив вместо запасного варианта
+        setPopularProducts([]);
+      } finally {
+        setLoading(false);
       }
     };
 

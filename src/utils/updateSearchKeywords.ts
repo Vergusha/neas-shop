@@ -1,15 +1,6 @@
 import { db } from '../firebaseConfig';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 
-interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  model: string;
-  modelNumber?: string;
-  searchKeywords?: string[];
-}
-
 // Функция для генерации поисковых ключевых слов из названия продукта
 export const generateSearchKeywords = (name: string, modelNumber?: string): string[] => {
   const keywords: string[] = [];

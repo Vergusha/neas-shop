@@ -1,6 +1,10 @@
 import { db } from '../firebaseConfig';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 
+interface DeviceTypeMap {
+  [key: string]: string[];
+}
+
 // Функция для обновления ключевых слов только для игровых продуктов
 export const updateGamingKeywords = async () => {
   try {
@@ -71,7 +75,7 @@ export const updateGamingKeywords = async () => {
         
         // Ограниченный набор переводов для поддержки локализованного поиска
         // без создания слишком большого количества вариантов
-        const deviceTypeMap = {
+        const deviceTypeMap: DeviceTypeMap = {
           'mouse': ['мышь', 'игровая мышь'],
           'keyboard': ['клавиатура', 'игровая клавиатура'],
           'headset': ['наушники', 'гарнитура'],
@@ -80,7 +84,7 @@ export const updateGamingKeywords = async () => {
           'chair': ['кресло']
         };
         
-        if (deviceTypeMap[deviceType]) {
+        if (deviceType in deviceTypeMap) {
           keywords.push(...deviceTypeMap[deviceType]);
         }
         

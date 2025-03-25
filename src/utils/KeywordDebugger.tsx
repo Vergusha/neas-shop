@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+
+interface MatchedProduct {
+  id: string;
+  name: string;
+  brand: string;
+  collection: string;
+  keywords: string[];
+  matchedKeywords: string[];
+}
 
 const KeywordDebugger: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<MatchedProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -17,7 +26,7 @@ const KeywordDebugger: React.FC = () => {
     
     try {
       const collections = ['products', 'mobile', 'tv', 'gaming'];
-      const matchedProducts = [];
+      const matchedProducts: MatchedProduct[] = [];
       
       for (const collectionName of collections) {
         const collectionRef = collection(db, collectionName);
