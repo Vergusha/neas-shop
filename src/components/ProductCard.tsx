@@ -129,7 +129,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.preventDefault(); // Add this
+    e.stopPropagation(); // Add this
     
     if (!user) {
       navigate('/login');
@@ -173,7 +174,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   };
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.preventDefault(); // Add this
+    e.stopPropagation(); // Add this
     
     if (!user) {
       navigate('/login');
@@ -284,7 +286,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
               productName={product.name}
               onClick={handleClick}
             />
-            <div className="absolute top-6 left-6 flex gap-2 card-actions">
+            <div className="absolute top-6 left-6 flex gap-2 card-actions" onClick={e => e.stopPropagation()}> {/* Add onClick handler here */}
               <button
                 onClick={handleAddToCart}
                 className={`btn btn-circle btn-primary ${!user ? 'opacity-50' : ''} ${isInCart ? 'btn-success' : ''} ${cartButtonFlash ? 'cart-flash' : ''}`}
