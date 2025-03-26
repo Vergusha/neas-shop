@@ -49,7 +49,7 @@ const FavoritesPage: React.FC = () => {
         }
 
         // Fetch products from all collections
-        const collections = ['mobile', 'tv', 'gaming', 'smart-home', 'data'];
+        const collections = ['mobile', 'tv', 'gaming', 'laptops', 'smart-home', 'data']; // Added 'laptops'
         const favoriteProducts: Product[] = [];
 
         for (const collectionName of collections) {
