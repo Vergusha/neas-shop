@@ -28,14 +28,15 @@ export interface BaseProductForm {
   weight?: string;
 }
 
-export interface ProductForm extends BaseProductForm {
-  id: string;
+export interface ProductForm extends Omit<Product, 'id'> {
+  id?: string;
 }
 
 export interface NewProductForm extends BaseProductForm {
   id?: string;
 }
 
+// Обновляем интерфейс Product, добавляя все необходимые поля для ноутбуков
 export interface Product {
   id: string;
   name: string;
@@ -44,34 +45,33 @@ export interface Product {
   image: string;
   brand?: string;
   model?: string;
-  memory?: string;
-  color?: string;
   modelNumber?: string;
   category?: string;
   collection?: string;
+  memory?: string;
+  color?: string;
   createdAt?: string;
-  // Rating related
+  updatedAt?: string;
+  searchKeywords?: string[];
+  clickCount?: number;
   rating?: number;
   reviewCount?: number;
-  // Stats
-  clickCount?: number;
-  favoriteCount?: number;
-  cartCount?: number;
-  popularityScore?: number;
-  // Additional images
+  // Laptop specific fields
+  processor?: string;
+  graphicsCard?: string;
+  screenSize?: string;
+  storageType?: string;
+  ram?: string;
+  operatingSystem?: string;
+  // Other device types
+  deviceType?: string;
+  connectivity?: string;
+  // Additional image fields
   image2?: string;
   image3?: string;
   image4?: string;
   image5?: string;
-  // Gaming peripherals specific
-  deviceType?: string;
-  connectivity?: string;
-  compatibleWith?: string;
-  rgbLighting?: boolean;
-  switchType?: string;
-  dpi?: string;
-  batteryLife?: string;
-  weight?: string;
+  [key: string]: any; // Для поддержки дополнительных изображений image6, image7 и т.д.
 }
 
 // Расширяем интерфейс ProductSearchResult для включения всех нужных полей

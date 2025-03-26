@@ -23,6 +23,7 @@ import { useEffect } from 'react'; // Add this import
 import { AuthProvider } from './utils/AuthProvider'; // Add this import
 import LoginRedirect from './components/LoginRedirect';
 import KeywordDebugger from './utils/KeywordDebugger'; // Добавляем импорт компонента KeywordDebugger
+import LaptopsPage from './pages/LaptopsPage'; // Add this import
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const auth = getAuth();
@@ -99,6 +100,7 @@ const App = () => {
                   <KeywordDebugger />
                 </AdminRoute>
               } />
+              <Route path="/products/laptops" element={<LaptopsPage />} />
             </Routes>
           </main>
           <Footer />

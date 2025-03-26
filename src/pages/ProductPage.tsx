@@ -76,7 +76,7 @@ const ProductPage: React.FC = () => {
         console.log(`Fetching product with ID: ${id}`);
         
         // Try to get product from each collection until we find it
-        const collections = ['mobile', 'products', 'tv', 'gaming']; // Добавляем 'gaming'
+        const collections = ['mobile', 'products', 'tv', 'gaming', 'laptops']; // Добавляем 'laptops' в список коллекций
         let foundProduct: ProductData | null = null;
         
         for (const collectionName of collections) {
@@ -427,7 +427,7 @@ const ProductPage: React.FC = () => {
       
       if (listItems.length > 0) {
         return (
-          <ul className="list-disc pl-5 space-y-1 mt-2">
+          <ul className="pl-5 mt-2 space-y-1 list-disc">
             {listItems.map((item, index) => (
               <li key={index} className="text-gray-700">{item.trim()}</li>
             ))}
@@ -440,8 +440,65 @@ const ProductPage: React.FC = () => {
     return <p className="mt-2 text-gray-700">{description}</p>;
   };
 
+  // Добавьте функцию для рендеринга спецификаций ноутбука
+  const renderLaptopSpecs = (product: ProductData) => {
+    // Проверяем, является ли продукт ноутбуком - используем collection вместо category
+    if (product.collection !== 'laptops') return null;
+  
+    const isMac = product.brand === 'Apple';
+  
+    return (
+      <div className="mt-6">
+        <h3 className="mb-3 text-lg font-semibold">Характеристики ноутбука</h3>
+        <div className="grid grid-cols-1 gap-4 p-4 rounded-lg md:grid-cols-2 bg-gray-50">
+          {/* Процессор */}
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-500">{isMac ? 'Чип' : 'Процессор'}</span>
+            <span className="font-medium">{product.processor || 'Не указано'}</span>
+          </div>
+          
+          {/* Оперативная память */}
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-500">Оперативная память</span>
+            <span className="font-medium">{product.ram || 'Не указано'}</span>
+          </div>
+          
+          {/* Накопитель */}
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-500">Накопитель</span>
+            <span className="font-medium">{product.storageType || 'Не указано'}</span>
+          </div>
+          
+          {/* Видеокарта */}
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-500">Видеокарта</span>
+            <span className="font-medium">{product.graphicsCard || 'Встроенная графика'}</span>
+          </div>
+          
+          {/* Экран */}
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-500">Экран</span>
+            <span className="font-medium">{product.screenSize || 'Не указано'}</span>
+          </div>
+          
+          {/* ОС */}
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-500">Операционная система</span>
+            <span className="font-medium">{product.operatingSystem || 'Не указано'}</span>
+          </div>
+          
+          {/* Цвет */}
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-500">Цвет</span>
+            <span className="font-medium">{product.color || 'Не указано'}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
-    return <div className="flex justify-center items-center h-screen"><span className="loading loading-spinner loading-lg"></span></div>;
+    return <div className="flex items-center justify-center h-screen"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   if (!product) {
@@ -449,7 +506,7 @@ const ProductPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container py-8 mx-auto">
       {/* Pass collection info to session storage for breadcrumbs to use */}
       {product?.collection && (
         <div style={{ display: 'none' }}>
@@ -459,9 +516,9 @@ const ProductPage: React.FC = () => {
           })()}
         </div>
       )}
-      <div className="bg-white p-4 rounded-lg shadow-md">
+      <div className="p-4 bg-white rounded-lg shadow-md">
         <div className="flex flex-col md:flex-row">
-          <div className="w-full md:w-2/5 mb-4 md:mb-0">
+          <div className="w-full mb-4 md:w-2/5 md:mb-0">
             {/* Image carousel */}
             <div className="relative">
               {/* Main image */}
@@ -470,7 +527,7 @@ const ProductPage: React.FC = () => {
                   <img 
                     src={productImages[currentImageIndex]} 
                     alt={`${product?.name} - Image ${currentImageIndex + 1}`} 
-                    className="w-full h-full object-contain"
+                    className="object-contain w-full h-full"
                   />
                 )}
                 
@@ -479,13 +536,13 @@ const ProductPage: React.FC = () => {
                   <>
                     <button 
                       onClick={prevImage}
-                      className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md"
+                      className="absolute p-2 transform -translate-y-1/2 rounded-full shadow-md left-2 top-1/2 bg-white/80 hover:bg-white"
                     >
                       <ChevronLeft size={20} />
                     </button>
                     <button 
                       onClick={nextImage}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md"
+                      className="absolute p-2 transform -translate-y-1/2 rounded-full shadow-md right-2 top-1/2 bg-white/80 hover:bg-white"
                     >
                       <ChevronRight size={20} />
                     </button>
@@ -507,7 +564,7 @@ const ProductPage: React.FC = () => {
                       <img 
                         src={image} 
                         alt={`Thumbnail ${idx + 1}`} 
-                        className="w-full h-full object-contain"
+                        className="object-contain w-full h-full"
                       />
                     </button>
                   ))}
@@ -543,10 +600,10 @@ const ProductPage: React.FC = () => {
             </div>
             
             {/* Заголовок продукта теперь без кнопки избранного */}
-            <h1 className="text-2xl font-bold mb-4">{formatProductName(product)}</h1>
+            <h1 className="mb-4 text-2xl font-bold">{formatProductName(product)}</h1>
             
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">Description</h3>
+              <h3 className="mb-2 text-lg font-semibold">Description</h3>
               {formatDescription(product?.description || '')}
             </div>
 
@@ -560,7 +617,7 @@ const ProductPage: React.FC = () => {
                   {Number(product?.price).toFixed(2)} <span className="text-[#003D2D]">NOK</span>
                 </p>
                 {product?.price > 1000 && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="mt-1 text-xs text-gray-500">
                     or {(product.price / 12).toFixed(2)} NOK/month with 12-month payment plan
                   </p>
                 )}
@@ -623,7 +680,7 @@ const ProductPage: React.FC = () => {
                     {isAuthenticated ? 'Add to Cart' : 'Login'}
                   </span>
                   {addedToCart && (
-                    <span className="absolute inset-0 bg-green-500/20 animate-ping rounded-lg"></span>
+                    <span className="absolute inset-0 rounded-lg bg-green-500/20 animate-ping"></span>
                   )}
                 </button>
               </div>
@@ -631,7 +688,7 @@ const ProductPage: React.FC = () => {
             
             {/* Success message with animation */}
             {addedToCart && (
-              <div className="animate-fade-in-down rounded-lg bg-green-100 border border-green-200 p-3 text-green-700 text-center mb-6">
+              <div className="p-3 mb-6 text-center text-green-700 bg-green-100 border border-green-200 rounded-lg animate-fade-in-down">
                 <div className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
@@ -642,6 +699,21 @@ const ProductPage: React.FC = () => {
             )}
           </div>
         </div>
+      </div>
+      
+      {/* Подробная информация о продукте */}
+      <div className="mt-6">
+        <h2 className="mb-2 text-xl font-bold">О товаре</h2>
+        <p className="text-gray-700">{product.description}</p>
+        
+        {/* Характеристики ноутбука */}
+        {renderLaptopSpecs(product)}
+        
+        {/* Игровые характеристики, если это игровой продукт */}
+        {renderGamingSpecs(product)}
+        
+        {/* Мобильные характеристики, если это мобильный телефон */}
+        {renderMobileSpecs(product)}
       </div>
       
       {/* Reviews section - pass the ID explicitly */}

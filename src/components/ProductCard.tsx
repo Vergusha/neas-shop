@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaHeart, FaShoppingCart } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { ref, onValue } from 'firebase/database';
 import { database } from '../firebaseConfig';
@@ -274,61 +274,91 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     return <p className="text-xs text-gray-500 line-clamp-3">{description}</p>;
   };
 
+  const renderProductSpecs = (product: Product) => {
+    if (product.category === 'mobile') {
+      return (
+        <div className="text-sm text-gray-600 mt-1">
+          <span>{product.memory || ''}</span>
+          {product.color && <span> • {product.color}</span>}
+        </div>
+      );
+    } else if (product.category === 'gaming') {
+      return (
+        <div className="text-sm text-gray-600 mt-1">
+          <span>{product.deviceType || ''}</span>
+          {product.connectivity && <span> • {product.connectivity}</span>}
+        </div>
+      );
+    } else if (product.category === 'laptops') {
+      return (
+        <div className="text-sm text-gray-600 mt-1">
+          <span>{product.processor || ''}</span>
+          {product.ram && <span> • {product.ram}</span>}
+          {product.storageType && <span> • {product.storageType}</span>}
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   return (
-    <div className="product-card-wrapper">
-      <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card h-[420px] flex flex-col">
-        <figure className="relative pt-4 px-6 h-48">
-          <ProductImageCarousel 
-            images={getProductImages()} 
-            productName={product.name}
-            onClick={handleClick}
-          />
-          <div className="absolute top-6 left-6 flex gap-2 card-actions">
-            <button
-              onClick={handleAddToCart}
-              className={`btn btn-circle btn-primary ${!user ? 'opacity-50' : ''} ${isInCart ? 'btn-success' : ''} ${cartButtonFlash ? 'cart-flash' : ''}`}
-              title={!user ? 'Please login to add to cart' : 'Add to cart'}
-            >
-              <FaShoppingCart className={`w-5 h-5 ${cartButtonFlash ? 'text-[#F0E965]' : ''}`} />
-            </button>
-            <button
-              onClick={handleFavoriteClick}
-              className={`p-2 hover:scale-110 transition-all ${!user ? 'opacity-50' : ''}`}
-              title={!user ? 'Please login to add to favorites' : isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <FaHeart className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} />
-            </button>
-          </div>
-        </figure>
-        
-        <div className="card-body p-6 flex flex-col flex-1">
-          <div className="h-6 flex items-center gap-2">
-            <Rating value={product.rating || 0} size="sm" />
-            <span className="text-xs text-gray-500">
-              {(product.reviewCount && product.reviewCount > 0) ? 
-                `${(product.rating || 0).toFixed(1)} (${product.reviewCount})` : 
-                "No reviews"}
-            </span>
-          </div>
+    <Link to={`/product/${product.id}`} className="block h-full">
+      <div className="product-card-wrapper">
+        <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card h-[420px] flex flex-col">
+          <figure className="relative pt-4 px-6 h-48">
+            <ProductImageCarousel 
+              images={getProductImages()} 
+              productName={product.name}
+              onClick={handleClick}
+            />
+            <div className="absolute top-6 left-6 flex gap-2 card-actions">
+              <button
+                onClick={handleAddToCart}
+                className={`btn btn-circle btn-primary ${!user ? 'opacity-50' : ''} ${isInCart ? 'btn-success' : ''} ${cartButtonFlash ? 'cart-flash' : ''}`}
+                title={!user ? 'Please login to add to cart' : 'Add to cart'}
+              >
+                <FaShoppingCart className={`w-5 h-5 ${cartButtonFlash ? 'text-[#F0E965]' : ''}`} />
+              </button>
+              <button
+                onClick={handleFavoriteClick}
+                className={`p-2 hover:scale-110 transition-all ${!user ? 'opacity-50' : ''}`}
+                title={!user ? 'Please login to add to favorites' : isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                <FaHeart className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} />
+              </button>
+            </div>
+          </figure>
           
-          <div className="min-h-[2.5rem]"> 
-            {formatProductDetails(product)}
-          </div>
-          
-          <div className="flex-1 overflow-hidden"> {/* Изменили класс */}
-            {formatDescription(product.description)}
-          </div>
-          
-          <div className="mt-2"> {/* Изменили mt-auto на mt-2 */}
-            <span className="text-xl font-bold">
-              {typeof product.price === 'number' 
-                ? product.price.toFixed(2) 
-                : Number(product.price).toFixed(2)} NOK
-            </span>
+          <div className="card-body p-6 flex flex-col flex-1">
+            <div className="h-6 flex items-center gap-2">
+              <Rating value={product.rating || 0} size="sm" />
+              <span className="text-xs text-gray-500">
+                {(product.reviewCount && product.reviewCount > 0) ? 
+                  `${(product.rating || 0).toFixed(1)} (${product.reviewCount})` : 
+                  "No reviews"}
+              </span>
+            </div>
+            
+            <div className="min-h-[2.5rem]"> 
+              {formatProductDetails(product)}
+            </div>
+            
+            <div className="flex-1 overflow-hidden"> {/* Изменили класс */}
+              {formatDescription(product.description)}
+            </div>
+            
+            <div className="mt-2"> {/* Изменили mt-auto на mt-2 */}
+              <span className="text-xl font-bold">
+                {typeof product.price === 'number' 
+                  ? product.price.toFixed(2) 
+                  : Number(product.price).toFixed(2)} NOK
+              </span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

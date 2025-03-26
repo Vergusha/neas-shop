@@ -71,6 +71,32 @@ export const trackProductInteraction = async (
         score: increment(popularityIncrement)
       });
     }
+
+    // Определение типа продукта по его ID
+    let productCollection: 'mobile' | 'gaming' | 'tv' | 'laptops' = 'mobile';
+    
+    if (productId.includes('apple-macbook') || 
+        productId.includes('-processor-') || 
+        productId.includes('-ram-')) {
+      productCollection = 'laptops';
+    } else if (productId.includes('-wireless-') || 
+               productId.includes('-wired-') || 
+               productId.includes('gaming')) {
+      productCollection = 'gaming';
+    } else if (productId.includes('-inch-') || 
+               productId.includes('-hdr-') || 
+               productId.includes('-tv-')) {
+      productCollection = 'tv';
+    }
+    
+    // Получаем текущее значение clickCount из updates, или используем 1, если incrementClick установлен
+    const currentClickCount = options.incrementClick ? 1 : 0;
+    
+    // Передаем обновленное значение в processTrackedProduct
+    await processTrackedProduct(productId, productCollection, {
+      clickCount: currentClickCount,
+      lastClickTimestamp: new Date().toISOString()
+    });
   } catch (error) {
     console.error('Error tracking product interaction:', error);
   }
@@ -94,4 +120,15 @@ export const getProductPopularityScore = async (productId: string): Promise<numb
     console.error('Error getting product popularity:', error);
     return 0;
   }
+};
+
+// В функции processTrackedProduct добавьте обработку для ноутбуков
+export const processTrackedProduct = async (productId: string, 
+  collection: 'mobile' | 'gaming' | 'tv' | 'laptops',  // добавление 'laptops'
+  clickData: {
+    clickCount: number;
+    lastClickTimestamp: string;
+  }
+) => {
+  // ...existing code...
 };

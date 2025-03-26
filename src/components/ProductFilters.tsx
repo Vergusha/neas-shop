@@ -103,6 +103,54 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     }
   };
 
+  // Обновите рендеринг фильтров, чтобы корректно обрабатывать фильтры для ноутбуков
+  const renderFilterOptions = (filter: FilterOption) => {
+    // Переводим названия фильтров для ноутбуков
+    const getFilterLabel = (key: string, value: string | number) => {
+      if (key === 'processor' && typeof value === 'string') {
+        if (value.includes('Apple M')) return value; // Для чипов Apple сохраняем оригинальное название
+        if (value.includes('Intel')) return value; // Для Intel процессоров сохраняем оригинальное название
+        if (value.includes('AMD')) return value; // Для AMD процессоров сохраняем оригинальное название
+        return value;
+      }
+      
+      if (key === 'ram' && typeof value === 'string') {
+        return value; // Оставляем оригинальное значение RAM
+      }
+      
+      if (key === 'storageType' && typeof value === 'string') {
+        return value; // Оставляем оригинальное значение типа хранилища
+      }
+      
+      if (key === 'operatingSystem' && typeof value === 'string') {
+        return value; // Оставляем оригинальное значение ОС
+      }
+      
+      return value;
+    };
+
+    return (
+      <div key={filter.key} className="mb-6">
+        <h3 className="font-medium mb-2">{filter.name}</h3>
+        
+        {filter.values.map(option => (
+          <div key={option.value} className="flex items-center mt-1">
+            <input
+              type="checkbox"
+              id={`${filter.key}-${option.value}`}
+              className="checkbox checkbox-sm"
+              checked={isValueSelected(filter.key, option.value)}
+              onChange={() => handleFilterChange(filter.key, option.value, !isValueSelected(filter.key, option.value))}
+            />
+            <label htmlFor={`${filter.key}-${option.value}`} className="ml-2 text-sm cursor-pointer">
+              {getFilterLabel(filter.key, option.value)} ({option.count})
+            </label>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg shadow-md">
       <h3 className="text-lg font-semibold mb-4">Filters</h3>
@@ -237,31 +285,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           );
         }
 
-        return (
-          <div key={filterId} className="mb-4">
-            <h4 className="font-medium mb-2">{filter.name}</h4>
-            <div className="space-y-2">
-              {filter.values.map((item) => {
-                const isFilterValue = typeof item !== 'string';
-                const value = isFilterValue ? (item as FilterValue).value : item;
-                const count = isFilterValue ? (item as FilterValue).count : undefined;
-                
-                return (
-                  <label key={String(value)} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary mr-2"
-                      checked={isValueSelected(filterId, value)}
-                      onChange={(e) => handleFilterChange(filterId, value, e.target.checked)}
-                    />
-                    <span className="text-sm">{value}</span>
-                    {count !== undefined && <span className="text-xs text-gray-500 ml-1">({count})</span>}
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-        );
+        return renderFilterOptions(filter);
       })}
     </div>
   );
