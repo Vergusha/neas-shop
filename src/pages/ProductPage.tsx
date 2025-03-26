@@ -10,6 +10,7 @@ import Reviews from '../components/Reviews';
 import ColorVariantSelector from '../components/ColorVariantSelector';
 import { trackProductInteraction } from '../utils/productTracking';
 import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
+import { formatMacBookName } from '../utils/productFormatting';
 
 // Импортируем необходимые модули для авторизации
 import { getAuth } from 'firebase/auth';
@@ -82,59 +83,80 @@ const ProductPage: React.FC = () => {
       try {
         console.log(`Fetching product with ID: ${id}`);
         
-        // Try to get product from each collection until we find it
-        const collections = ['mobile', 'products', 'tv', 'gaming', 'laptops']; // Remove 'data-accessories' if it was here
-        let foundProduct: ProductData | null = null;
-        
-        for (const collectionName of collections) {
-          const docRef = doc(db, collectionName, id);
-          const docSnap = await getDoc(docRef);
-          
-          if (docSnap.exists()) {
-            console.log(`Found product in ${collectionName} collection:`, docSnap.data());
-            foundProduct = {
-              ...docSnap.data(),
-              id: id, // Explicitly add the ID to the product data
-              collection: collectionName // Store the collection name
-            } as ProductData;
-            
-            // Clear any previous collection
-            sessionStorage.removeItem('lastProductCollection');
-            // Set the new collection
-            sessionStorage.setItem('lastProductCollection', collectionName);
-            console.log('Saved collection to sessionStorage:', collectionName);
-            
-            break;
-          }
+        // Try to determine collection from ID first
+        let targetCollection = 'laptops';
+        if (id.includes('apple-macbook')) {
+          targetCollection = 'laptops';
+        } else if (id.includes('-wireless-') || id.includes('-gaming-')) {
+          targetCollection = 'gaming';
+        } else if (id.includes('-tv-')) {
+          targetCollection = 'tv';
+        } else if (id.includes('-mobile-')) {
+          targetCollection = 'mobile';
         }
+
+        // Try specific collection first
+        const docRef = doc(db, targetCollection, id);
+        const docSnap = await getDoc(docRef);
         
-        if (foundProduct) {
-          setProduct(foundProduct);
+        if (docSnap.exists()) {
+          const foundProduct = {
+            ...docSnap.data(),
+            id: id,
+            collection: targetCollection
+          } as ProductData;
           
-          // Collect all available images
-          const images: string[] = [];
-          if (foundProduct.image) images.push(foundProduct.image);
+          setProduct(foundProduct);
+          sessionStorage.setItem('lastProductCollection', targetCollection);
+          
+          // Set up images array
+          const images = [foundProduct.image];
           if (foundProduct.image2) images.push(foundProduct.image2);
           if (foundProduct.image3) images.push(foundProduct.image3);
           
-          // Check if there are any other numbered image fields
-          for (let i = 4; i <= 10; i++) {
-            const imageKey = `image${i}` as keyof typeof foundProduct;
-            if (foundProduct[imageKey]) {
-              images.push(foundProduct[imageKey] as string);
+          setProductImages(images);
+          setCurrentImageIndex(0);
+          
+          await fetchColorVariants(foundProduct);
+        } else {
+          // Fallback to searching other collections
+          const collections = ['mobile', 'products', 'tv', 'gaming', 'laptops'];
+          let foundProduct: ProductData | null = null;
+          
+          for (const collectionName of collections) {
+            if (collectionName === targetCollection) continue;
+            
+            const alternateDocRef = doc(db, collectionName, id);
+            const alternateDocSnap = await getDoc(alternateDocRef);
+            
+            if (alternateDocSnap.exists()) {
+              foundProduct = {
+                ...alternateDocSnap.data(),
+                id: id,
+                collection: collectionName
+              } as ProductData;
+              break;
             }
           }
           
-          setProductImages(images);
-          setCurrentImageIndex(0); // Reset to first image
-          
-          // Fetch color variants for this product
-          await fetchColorVariants(foundProduct);
-        } else {
-          console.error("Product not found in any collection");
+          if (foundProduct) {
+            setProduct(foundProduct);
+            sessionStorage.setItem('lastProductCollection', foundProduct.collection || '');
+            
+            const images = [foundProduct.image];
+            if (foundProduct.image2) images.push(foundProduct.image2);
+            if (foundProduct.image3) images.push(foundProduct.image3);
+            
+            setProductImages(images);
+            setCurrentImageIndex(0);
+            
+            await fetchColorVariants(foundProduct);
+          } else {
+            console.error("Product not found in any collection");
+          }
         }
       } catch (error) {
-        console.error("Error fetching product: ", error);
+        console.error("Error fetching product:", error);
       } finally {
         setLoading(false);
       }
@@ -187,66 +209,58 @@ const ProductPage: React.FC = () => {
 
   // Function to fetch color variants
   const fetchColorVariants = async (currentProduct: ProductData) => {
-    if (!currentProduct.brand || !currentProduct.model || !currentProduct.modelNumber) {
-      console.log("Missing brand, model, or modelNumber - cannot fetch color variants");
+    if (!currentProduct.brand || !currentProduct.model) {
+      console.log("Missing brand or model - cannot fetch color variants");
       return;
     }
     
     try {
-      // We'll look for products with the same brand, model, AND modelNumber but different colors
-      const collections = ['mobile', 'products', 'tv'];
+      console.log('Fetching color variants for:', {
+        brand: currentProduct.brand,
+        model: currentProduct.model,
+        modelNumber: currentProduct.modelNumber,
+        processor: currentProduct.processor
+      });
+
+      const collectionRef = collection(db, 'laptops');
+      
+      // For MacBooks, use minimal where clauses
+      const q = query(
+        collectionRef,
+        where('brand', '==', currentProduct.brand),
+        where('model', '==', currentProduct.model),
+        where('processor', '==', currentProduct.processor),
+        where('modelNumber', '==', currentProduct.modelNumber)
+      );
+
+      const querySnapshot = await getDocs(q);
       const variants: Array<{id: string, color: string, image: string}> = [];
-      
-      // First add current product to variants
-      if (currentProduct.color) {
-        variants.push({
-          id: currentProduct.id,
-          color: currentProduct.color,
-          image: currentProduct.image
-        });
-      }
-      
-      for (const collectionName of collections) {
-        const collectionRef = collection(db, collectionName);
-        // Create a composite query that matches exact brand, model, AND modelNumber
-        const q = query(
-          collectionRef,
-          where('brand', '==', currentProduct.brand),
-          where('model', '==', currentProduct.model),
-          where('modelNumber', '==', currentProduct.modelNumber)
-        );
+
+      console.log(`Found ${querySnapshot.size} potential variants`);
+
+      querySnapshot.forEach((docSnapshot) => {
+        const data = docSnapshot.data();
         
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((docSnapshot) => {
-          // Skip if this is the current product
-          if (docSnapshot.id === id) return;
-          
-          const data = docSnapshot.data();
-          if (data.color) {
-            // Check if we already have this color in our variants
-            const existingVariant = variants.find(v => 
-              v.color.toLowerCase() === data.color.toLowerCase()
-            );
-            
-            if (!existingVariant) {
-              console.log(`Found variant: ${data.color} (${docSnapshot.id})`);
-              variants.push({
-                id: docSnapshot.id,
-                color: data.color,
-                image: data.image || ''
-              });
-            }
-          }
-        });
-      }
-      
-      // Sort variants alphabetically by color name
+        // Check if this is a valid variant with matching specs
+        const isMatchingVariant = 
+          data.ram === currentProduct.ram &&
+          data.storageType === currentProduct.storageType &&
+          data.screenSize === currentProduct.screenSize;
+
+        if (isMatchingVariant) {
+          console.log(`Found matching variant: ${data.color}`);
+          variants.push({
+            id: docSnapshot.id,
+            color: data.color || '',
+            image: data.image || ''
+          });
+        }
+      });
+
       variants.sort((a, b) => a.color.localeCompare(b.color));
-      
-      console.log(`Found ${variants.length} color variants for product ${currentProduct.id}:`, 
-        variants.map(v => v.color).join(', '));
-        
+      console.log('Final variants:', variants);
       setColorVariants(variants);
+
     } catch (error) {
       console.error("Error fetching color variants:", error);
     }
@@ -447,6 +461,13 @@ const ProductPage: React.FC = () => {
     return <p className="mt-2 text-gray-700">{description}</p>;
   };
 
+  const formatTitle = (product: ProductData): string => {
+    if (product.category === 'laptops' && product.brand === 'Apple') {
+      return formatMacBookName(product);
+    }
+    return product.name;
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-screen"><span className="loading loading-spinner loading-lg"></span></div>;
   }
@@ -550,7 +571,7 @@ const ProductPage: React.FC = () => {
             </div>
             
             {/* Заголовок продукта теперь без кнопки избранного */}
-            <h1 className="mb-4 text-2xl font-bold">{formatProductName(product)}</h1>
+            <h1 className="mb-4 text-2xl font-bold">{formatTitle(product)}</h1>
             
             <div className="mb-6">
               <h3 className="mb-2 text-lg font-semibold">Description</h3>
@@ -623,7 +644,7 @@ const ProductPage: React.FC = () => {
                       : 'bg-gray-200 text-gray-600'
                     }
                   `}
-                  title={isAuthenticated ? 'Add to cart' : 'Login required to add to cart'}
+                  title={isAuthenticated ? 'Add to cart' : 'Login'}
                 >
                   <ShoppingCart size={18} />
                   <span className="text-sm font-medium">

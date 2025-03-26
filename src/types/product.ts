@@ -53,7 +53,7 @@ export interface Product {
   model?: string;
   modelNumber?: string;
   category?: string;
-  collection?: string;
+  collection?: string; // Add collection property
   memory?: string;
   color?: string;
   createdAt?: string;

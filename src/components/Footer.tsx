@@ -3,7 +3,7 @@ import React from 'react';
 const Footer: React.FC = () => {
   return (
     <footer className="bg-[#003D2D] text-white py-8">
-      <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="container grid grid-cols-1 gap-8 mx-auto md:grid-cols-4">
         <div>
           <h3 className="font-bold">NEAS AS</h3>
           <p>Industriveien 1</p>
@@ -52,8 +52,13 @@ const Footer: React.FC = () => {
         </div>
       </div>
       <div className="container mx-auto mt-8 text-center">
-        <img src="/assets/logo.svg" alt="NEAS Logo" className="mx-auto h-8" />
-        <p className="mt-4">We are part of the NEAS GROUP</p>
+        <img 
+          src="/logo.svg" 
+          alt="NEAS Logo" 
+          className="h-8 mx-auto bg-transparent" 
+          style={{ filter: 'brightness(1.2)' }} // Добавляем немного яркости для лучшей видимости на тёмном фоне
+        />
+        <p className="mt-4 text-gray-300">We are part of the NEAS GROUP</p>
       </div>
     </footer>
   );

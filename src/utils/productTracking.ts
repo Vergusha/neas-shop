@@ -123,12 +123,14 @@ export const getProductPopularityScore = async (productId: string): Promise<numb
 };
 
 // В функции processTrackedProduct добавьте обработку для ноутбуков
-export const processTrackedProduct = async (productId: string, 
-  collection: 'mobile' | 'gaming' | 'tv' | 'laptops',  // добавление 'laptops'
-  clickData: {
+export const processTrackedProduct = async (
+  _productId: string, // Add underscore to indicate unused parameter
+  _collection: 'mobile' | 'gaming' | 'tv' | 'laptops',
+  _clickData: {
     clickCount: number;
     lastClickTimestamp: string;
   }
 ) => {
-  // ...existing code...
+  // Implementation will be added later
+  return;
 };

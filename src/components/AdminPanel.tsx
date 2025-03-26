@@ -266,15 +266,16 @@ const handleSubmit = async (e: React.FormEvent) => {
         const storage = formatForUrl(product.storageType || '');
         const screenSize = formatForUrl(product.screenSize || '');
         const color = formatForUrl(product.color || '');
+        const year = product.modelNumber || ''; // Using modelNumber field for year
         
-        return `apple-${model}-${processor}-${ram}-${storage}-${screenSize}-${color}`;
+        return `apple-${model}-${year}-${processor}-${ram}-${storage}-${screenSize}-${color}`;
       }
       
       // Обычный ID для других ноутбуков
-      const processor = formatForUrl(product.processor);
-      const ram = formatForUrl(product.ram);
-      const storageType = formatForUrl(product.storageType);
-      const color = formatForUrl(product.color);
+      const processor = formatForUrl(product.processor || '');
+      const ram = formatForUrl(product.ram || '');
+      const storageType = formatForUrl(product.storageType || '');
+      const color = formatForUrl(product.color || '');
 
       return `${brand}-${model}-${processor}-${ram}-${storageType}-${color}`;
     }
@@ -749,9 +750,32 @@ const handleSubmit = async (e: React.FormEvent) => {
               <option value="Apple M3 Pro">Apple M3 Pro</option>
               <option value="Apple M3 Max">Apple M3 Max</option>
               <option value="Apple M3 Ultra">Apple M3 Ultra</option>
+              <option value="Apple M4">Apple M4</option>
+              <option value="Apple M4 Pro">Apple M4 Pro</option>
+              <option value="Apple M4 Max">Apple M4 Max</option>
+              <option value="Apple M4 Ultra">Apple M4 Ultra</option>
               <option value="Intel Core i5">Intel Core i5</option>
               <option value="Intel Core i7">Intel Core i7</option>
               <option value="Intel Core i9">Intel Core i9</option>
+            </select>
+          </div>
+
+          {/* Add Model Year field for MacBooks */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 required">Model Year</label>
+            <select
+              value={product.modelNumber || ''}
+              onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
+              className="w-full select select-bordered"
+              required
+            >
+              <option value="">Select Year</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+              <option value="2021">2021</option>
+              <option value="2020">2020</option>
             </select>
           </div>
           

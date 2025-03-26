@@ -9,6 +9,7 @@ import ProductImageCarousel from './ProductImageCarousel';
 import { trackProductInteraction } from '../utils/productTracking';
 import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
 import { Product } from '../types/product';
+import { formatMacBookName } from '../utils/productFormatting';
 
 interface ProductCardProps {
   product: Product;
@@ -206,6 +207,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   };
 
   const formatProductDetails = (product: Product) => {
+    // Special formatting for MacBooks
+    if (product.category === 'laptops' && product.brand === 'Apple') {
+      const macBookName = formatMacBookName(product);
+      return <span className="font-medium">{macBookName}</span>;
+    }
+
     const details = [];
     
     if (product.brand) details.push(

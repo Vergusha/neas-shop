@@ -33,20 +33,40 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
       try {
         setLoading(true);
         
-        // Определяем коллекцию на основе данных о продукте
-        let productCollection = product.category || product.collection || 'mobile';
-        
-        // Создаем запрос для получения похожих продуктов
-        const q = query(
-          collection(db, productCollection),
-          where('brand', '==', product.brand),
-          limit(6)
-        );
+        let productCollection = product.category || 'laptops';
+        let q;
+
+        // For MacBooks, use only essential filters to avoid Firestore limitations
+        if (productCollection === 'laptops' && product.brand === 'Apple') {
+          q = query(
+            collection(db, productCollection),
+            where('brand', '==', 'Apple'),
+            where('model', '==', product.model),
+            where('modelNumber', '==', product.modelNumber), // year
+            limit(6)
+          );
+        } else {
+          q = query(
+            collection(db, productCollection),
+            where('brand', '==', product.brand),
+            limit(6)
+          );
+        }
         
         const relatedSnapshot = await getDocs(q);
         const relatedList = relatedSnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as Product))
-          .filter(p => p.id !== product.id); // Исключаем текущий продукт
+          .filter(p => p.id !== product.id)
+          // Post-query filtering for MacBooks
+          .filter(p => {
+            if (productCollection === 'laptops' && product.brand === 'Apple') {
+              return p.processor === product.processor &&
+                     p.ram === product.ram &&
+                     p.storageType === product.storageType &&
+                     p.screenSize === product.screenSize;
+            }
+            return true;
+          });
         
         // Если получили менее 3 продуктов, попробуем получить другие продукты той же категории
         if (relatedList.length < 3) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
-import { FaFilter, FaApple, FaWindows } from 'react-icons/fa';
+import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
 import { trackProductInteraction } from '../utils/productTracking';
 
@@ -42,7 +42,7 @@ const LaptopsPage: React.FC = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> | [number, number] }>({});
   const [availableFilters, setAvailableFilters] = useState<FilterOption[]>([]);
-  const [filterOsType, setFilterOsType] = useState<'all' | 'mac' | 'windows'>('all');
+  const [filterOsType] = useState<'all' | 'mac' | 'windows'>('all');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -187,12 +187,12 @@ const LaptopsPage: React.FC = () => {
     const newActiveFilters = { ...activeFilters };
     
     if (filterKey === 'price' && Array.isArray(values) && values.length === 2) {
-      newActiveFilters[filterKey] = values;
+      newActiveFilters[filterKey] = values as [number, number];
     } else if (Array.isArray(values)) {
       if (values.length === 0) {
         delete newActiveFilters[filterKey];
       } else {
-        newActiveFilters[filterKey] = new Set(values);
+        newActiveFilters[filterKey] = new Set(values.map(String));
       }
     }
     

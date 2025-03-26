@@ -1,5 +1,5 @@
 import React, { JSX } from 'react';
-import { FaMobileAlt, FaLaptopCode, FaGamepad, FaTv, FaHome, FaWrench, FaLaptop } from 'react-icons/fa';
+import { FaMobileAlt, FaGamepad, FaTv, FaHome, FaWrench, FaLaptop } from 'react-icons/fa';
 
 interface Category {
   name: string;
