@@ -10,7 +10,6 @@ interface Category {
 const categories: Category[] = [
   { name: 'Mobile', icon: <FaMobileAlt />, link: '/products/mobile' },
   { name: 'Laptops', icon: <FaLaptop />, link: '/products/laptops' }, // Added Laptops category
-  { name: 'Data and Accessories', icon: <FaLaptopCode />, link: '/products/data-accessories' },
   { name: 'Gaming', icon: <FaGamepad />, link: '/products/gaming' },
   { name: 'TV and Sound', icon: <FaTv />, link: '/products/tv-audio' },
   { name: 'Smart Home', icon: <FaHome />, link: '/products/smart-home' },
@@ -26,12 +25,12 @@ const CategoryList: React.FC = () => {
         <a
           key={category.name}
           href={category.link}
-          className="flex flex-col items-center p-4 border rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 category-animation"
+          className="flex flex-col items-center p-4 transition-shadow duration-300 border rounded-lg shadow-md hover:shadow-lg category-animation"
           style={{ color: 'inherit', transition: 'color 0.3s' }}
           onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
           onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}
         >
-          <div className="text-3xl mb-2">{category.icon}</div>
+          <div className="mb-2 text-3xl">{category.icon}</div>
           <span className="text-sm font-medium">{category.name}</span>
         </a>
       ))}

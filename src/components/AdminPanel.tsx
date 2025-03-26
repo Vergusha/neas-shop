@@ -290,10 +290,12 @@ const handleSubmit = async (e: React.FormEvent) => {
   };
 
   const handleDeleteProduct = async () => {
-    if (!productToDelete) return;
+    if (!productToDelete || !productToDelete.id) return;
     
     try {
-      const productRef = doc(db, selectedCategory, productToDelete.id);
+      // Use proper type checking
+      const productId = productToDelete.id;
+      const productRef = doc(db, selectedCategory, productId);
       await deleteDoc(productRef);
       
       // Update products list
@@ -1332,9 +1334,9 @@ const handleSubmit = async (e: React.FormEvent) => {
           )}
 
           {/* Edit Modal */}
-          {selectedProduct && (
+          {selectedProduct && selectedProduct.id && (
             <EditProductModal
-              product={selectedProduct}
+              product={{...selectedProduct, id: selectedProduct.id}}
               isOpen={isEditModalOpen}
               onClose={() => {
                 setIsEditModalOpen(false);

@@ -78,29 +78,40 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   };
 
   // Helper function to check if a value is selected
-  const isValueSelected = (filterId: string, value: string | number): boolean => {
+  const isValueSelected = (filterId: string, value: string | number | FilterValue): boolean => {
+    const stringValue = typeof value === 'object' ? String(value.value) : String(value);
+    
     if (selectedFilters && filterId in selectedFilters) {
-      // Handle array type (MobilePage)
       return Array.isArray(selectedFilters[filterId]) && 
-             selectedFilters[filterId].includes(String(value));
+             selectedFilters[filterId].includes(stringValue);
     }
     if (activeFilters && filterId in activeFilters) {
-      // Handle Set type (TvPage)
       const filterValue = activeFilters[filterId];
       if (filterValue instanceof Set) {
-        return filterValue.has(value);
+        return filterValue.has(typeof value === 'object' ? value.value : value);
       }
     }
     return false;
   };
 
   // Helper function to handle filter change for checkbox filters
-  const handleFilterChange = (filterId: string, value: string | number, checked: boolean) => {
+  const handleFilterChange = (filterId: string, value: string | number | FilterValue, checked: boolean) => {
+    const stringValue = typeof value === 'object' ? String(value.value) : String(value);
+    
     if (checked) {
-      onFilterChange(filterId, [...(selectedFilters[filterId] || []), String(value)]);
+      onFilterChange(filterId, [...(selectedFilters[filterId] || []), stringValue]);
     } else {
-      onFilterChange(filterId, (selectedFilters[filterId] || []).filter(v => v !== String(value)));
+      onFilterChange(filterId, (selectedFilters[filterId] || []).filter(v => v !== stringValue));
     }
+  };
+
+  // Helper function to get value and count from option
+  const getOptionValue = (option: string | FilterValue): string | number => {
+    return typeof option === 'object' ? option.value : option;
+  };
+
+  const getOptionCount = (option: string | FilterValue): number => {
+    return typeof option === 'object' ? option.count : 0;
   };
 
   // Обновите рендеринг фильтров, чтобы корректно обрабатывать фильтры для ноутбуков
@@ -129,31 +140,46 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       return value;
     };
 
+    // Skip rendering the entire filter group if it's the category filter
+    if (filter.key === 'category' || filter.name === 'Category') {
+      return null;
+    }
+
     return (
       <div key={filter.key} className="mb-6">
-        <h3 className="font-medium mb-2">{filter.name}</h3>
+        <h3 className="mb-2 font-medium">{filter.name}</h3>
         
-        {filter.values.map(option => (
-          <div key={option.value} className="flex items-center mt-1">
-            <input
-              type="checkbox"
-              id={`${filter.key}-${option.value}`}
-              className="checkbox checkbox-sm"
-              checked={isValueSelected(filter.key, option.value)}
-              onChange={() => handleFilterChange(filter.key, option.value, !isValueSelected(filter.key, option.value))}
-            />
-            <label htmlFor={`${filter.key}-${option.value}`} className="ml-2 text-sm cursor-pointer">
-              {getFilterLabel(filter.key, option.value)} ({option.count})
-            </label>
-          </div>
-        ))}
+        {filter.values.map(option => {
+          const optionValue = getOptionValue(option);
+          const filterLabel = getFilterLabel(filter.key || '', optionValue);
+          
+          return (
+            <div key={optionValue} className="flex items-center mt-1">
+              <input
+                type="checkbox"
+                id={`${filter.key}-${optionValue}`}
+                className="checkbox checkbox-sm"
+                checked={isValueSelected(filter.key || '', optionValue)}
+                onChange={() => handleFilterChange(
+                  filter.key || '', 
+                  optionValue, 
+                  !isValueSelected(filter.key || '', optionValue)
+                )}
+              />
+              <label htmlFor={`${filter.key}-${optionValue}`} className="ml-2 text-sm cursor-pointer">
+                {filterLabel} 
+                ({getOptionCount(option)})
+              </label>
+            </div>
+          );
+        })}
       </div>
     );
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold mb-4">Filters</h3>
+    <div className="p-4 bg-white rounded-lg shadow-md">
+      <h3 className="mb-4 text-lg font-semibold">Filters</h3>
       
       {filters.map((filter) => {
         const filterId = filter.id || filter.key || '';
@@ -161,9 +187,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         if (filter.type === 'range' && filter.min !== undefined && filter.max !== undefined) {
           return (
             <div key={filterId} className="mb-6">
-              <h4 className="font-medium mb-2">{filter.name}</h4>
+              <h4 className="mb-2 font-medium">{filter.name}</h4>
               
-              <div className="flex items-center mb-3 gap-2">
+              <div className="flex items-center gap-2 mb-3">
                 <input
                   type="number"
                   min={priceRange.min}
@@ -172,7 +198,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   onChange={handleMinPriceInput}
                   onBlur={applyPriceInputs}
                   onKeyDown={(e) => e.key === 'Enter' && applyPriceInputs()}
-                  className="input input-bordered input-sm w-full"
+                  className="w-full input input-bordered input-sm"
                   placeholder="Min"
                 />
                 <span className="text-gray-500">-</span>
@@ -184,18 +210,18 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   onChange={handleMaxPriceInput}
                   onBlur={applyPriceInputs}
                   onKeyDown={(e) => e.key === 'Enter' && applyPriceInputs()}
-                  className="input input-bordered input-sm w-full"
+                  className="w-full input input-bordered input-sm"
                   placeholder="Max"
                 />
               </div>
               
               {/* YELLOW range slider with proper styling */}
-              <div className="relative mt-4 mb-6 px-1">
+              <div className="relative px-1 mt-4 mb-6">
                 {/* Base track */}
-                <div className="w-full h-3 bg-gray-300 rounded-lg relative">
+                <div className="relative w-full h-3 bg-gray-300 rounded-lg">
                   {/* Active track - FULLY YELLOW */}
                   <div 
-                    className="h-full bg-yellow-400 absolute top-0 rounded-lg"
+                    className="absolute top-0 h-full bg-yellow-400 rounded-lg"
                     style={{
                       left: `${((priceRange.current[0] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
                       width: `${((priceRange.current[1] - priceRange.current[0]) / (priceRange.max - priceRange.min)) * 100}%`
@@ -204,7 +230,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   
                   {/* Min handle - BRIGHT YELLOW with white border */}
                   <div 
-                    className="w-6 h-6 bg-yellow-400 rounded-full absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer shadow-md border-2 border-white z-20"
+                    className="absolute z-20 w-6 h-6 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-400 border-2 border-white rounded-full shadow-md cursor-pointer top-1/2"
                     style={{ left: `${((priceRange.current[0] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%` }}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -240,7 +266,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   
                   {/* Max handle - BRIGHT YELLOW with white border */}
                   <div 
-                    className="w-6 h-6 bg-yellow-400 rounded-full absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer shadow-md border-2 border-white z-10"
+                    className="absolute z-10 w-6 h-6 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-400 border-2 border-white rounded-full shadow-md cursor-pointer top-1/2"
                     style={{ left: `${((priceRange.current[1] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%` }}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -276,7 +302,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 </div>
                 
                 {/* Price labels */}
-                <div className="flex justify-between px-1 text-sm font-medium mt-4">
+                <div className="flex justify-between px-1 mt-4 text-sm font-medium">
                   <span>{priceRange.current[0]} NOK</span>
                   <span>{priceRange.current[1]} NOK</span>
                 </div>

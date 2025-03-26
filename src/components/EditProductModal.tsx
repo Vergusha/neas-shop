@@ -40,7 +40,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       };
 
       await updateDoc(productRef, updatedData);
-      onUpdate({ ...updatedData, id } as ProductForm);
+      onUpdate({ ...updatedData, id } as ProductForm & { id: string });
       onClose();
     } catch (error) {
       console.error('Error updating product:', error);
@@ -50,7 +50,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     if (name === 'price') {
       setEditedProduct({

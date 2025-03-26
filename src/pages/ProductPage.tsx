@@ -31,6 +31,13 @@ interface ProductData {
   model?: string;
   modelNumber?: string;
   memory?: string;
+  // Laptop specific
+  processor?: string;
+  graphicsCard?: string;
+  screenSize?: string;
+  storageType?: string;
+  ram?: string;
+  operatingSystem?: string;
 }
 
 const ProductPage: React.FC = () => {
@@ -76,7 +83,7 @@ const ProductPage: React.FC = () => {
         console.log(`Fetching product with ID: ${id}`);
         
         // Try to get product from each collection until we find it
-        const collections = ['mobile', 'products', 'tv', 'gaming', 'laptops']; // Добавляем 'laptops' в список коллекций
+        const collections = ['mobile', 'products', 'tv', 'gaming', 'laptops']; // Remove 'data-accessories' if it was here
         let foundProduct: ProductData | null = null;
         
         for (const collectionName of collections) {
@@ -440,63 +447,6 @@ const ProductPage: React.FC = () => {
     return <p className="mt-2 text-gray-700">{description}</p>;
   };
 
-  // Добавьте функцию для рендеринга спецификаций ноутбука
-  const renderLaptopSpecs = (product: ProductData) => {
-    // Проверяем, является ли продукт ноутбуком - используем collection вместо category
-    if (product.collection !== 'laptops') return null;
-  
-    const isMac = product.brand === 'Apple';
-  
-    return (
-      <div className="mt-6">
-        <h3 className="mb-3 text-lg font-semibold">Характеристики ноутбука</h3>
-        <div className="grid grid-cols-1 gap-4 p-4 rounded-lg md:grid-cols-2 bg-gray-50">
-          {/* Процессор */}
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-500">{isMac ? 'Чип' : 'Процессор'}</span>
-            <span className="font-medium">{product.processor || 'Не указано'}</span>
-          </div>
-          
-          {/* Оперативная память */}
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-500">Оперативная память</span>
-            <span className="font-medium">{product.ram || 'Не указано'}</span>
-          </div>
-          
-          {/* Накопитель */}
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-500">Накопитель</span>
-            <span className="font-medium">{product.storageType || 'Не указано'}</span>
-          </div>
-          
-          {/* Видеокарта */}
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-500">Видеокарта</span>
-            <span className="font-medium">{product.graphicsCard || 'Встроенная графика'}</span>
-          </div>
-          
-          {/* Экран */}
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-500">Экран</span>
-            <span className="font-medium">{product.screenSize || 'Не указано'}</span>
-          </div>
-          
-          {/* ОС */}
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-500">Операционная система</span>
-            <span className="font-medium">{product.operatingSystem || 'Не указано'}</span>
-          </div>
-          
-          {/* Цвет */}
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-500">Цвет</span>
-            <span className="font-medium">{product.color || 'Не указано'}</span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   if (loading) {
     return <div className="flex items-center justify-center h-screen"><span className="loading loading-spinner loading-lg"></span></div>;
   }
@@ -699,21 +649,6 @@ const ProductPage: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
-      
-      {/* Подробная информация о продукте */}
-      <div className="mt-6">
-        <h2 className="mb-2 text-xl font-bold">О товаре</h2>
-        <p className="text-gray-700">{product.description}</p>
-        
-        {/* Характеристики ноутбука */}
-        {renderLaptopSpecs(product)}
-        
-        {/* Игровые характеристики, если это игровой продукт */}
-        {renderGamingSpecs(product)}
-        
-        {/* Мобильные характеристики, если это мобильный телефон */}
-        {renderMobileSpecs(product)}
       </div>
       
       {/* Reviews section - pass the ID explicitly */}

@@ -274,34 +274,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     return <p className="text-xs text-gray-500 line-clamp-3">{description}</p>;
   };
 
-  const renderProductSpecs = (product: Product) => {
-    if (product.category === 'mobile') {
-      return (
-        <div className="text-sm text-gray-600 mt-1">
-          <span>{product.memory || ''}</span>
-          {product.color && <span> • {product.color}</span>}
-        </div>
-      );
-    } else if (product.category === 'gaming') {
-      return (
-        <div className="text-sm text-gray-600 mt-1">
-          <span>{product.deviceType || ''}</span>
-          {product.connectivity && <span> • {product.connectivity}</span>}
-        </div>
-      );
-    } else if (product.category === 'laptops') {
-      return (
-        <div className="text-sm text-gray-600 mt-1">
-          <span>{product.processor || ''}</span>
-          {product.ram && <span> • {product.ram}</span>}
-          {product.storageType && <span> • {product.storageType}</span>}
-        </div>
-      );
-    }
-    
-    return null;
-  };
-
   return (
     <Link to={`/product/${product.id}`} className="block h-full">
       <div className="product-card-wrapper">

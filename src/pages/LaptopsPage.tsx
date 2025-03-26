@@ -224,24 +224,7 @@ const LaptopsPage: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Laptops</h1>
         <div className="flex gap-2">
-          <button 
-            onClick={() => setFilterOsType('all')} 
-            className={`btn btn-sm ${filterOsType === 'all' ? 'btn-primary' : 'btn-outline'}`}
-          >
-            All Laptops
-          </button>
-          <button 
-            onClick={() => setFilterOsType('mac')} 
-            className={`btn btn-sm ${filterOsType === 'mac' ? 'btn-primary' : 'btn-outline'}`}
-          >
-            <FaApple className="mr-1" /> MacBook
-          </button>
-          <button 
-            onClick={() => setFilterOsType('windows')} 
-            className={`btn btn-sm ${filterOsType === 'windows' ? 'btn-primary' : 'btn-outline'}`}
-          >
-            <FaWindows className="mr-1" /> Windows
-          </button>
+          {/* Removed the buttons for All Laptops, MacBook, and Windows */}
           <button 
             onClick={() => setShowFilters(!showFilters)}
             className="btn btn-primary btn-sm flex items-center gap-2"

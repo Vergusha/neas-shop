@@ -26,6 +26,12 @@ export interface BaseProductForm {
   dpi?: string;
   batteryLife?: string;
   weight?: string;
+  // Laptop specific
+  processor?: string;
+  graphicsCard?: string;
+  storageType?: string;
+  ram?: string;
+  operatingSystem?: string;
 }
 
 export interface ProductForm extends Omit<Product, 'id'> {
