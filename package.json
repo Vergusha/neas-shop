@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "^4.0.13",
+    "@tailwindcss/postcss": "^4.0.17",
     "@tailwindcss/vite": "^4.0.13",
     "@types/react-avatar-editor": "^13.0.4",
     "@vitejs/plugin-react": "^4.3.4",

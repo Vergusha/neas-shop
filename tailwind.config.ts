@@ -2,15 +2,16 @@ import type { Config } from 'tailwindcss'
 import daisyui from 'daisyui'
 
 const config: Config = {
-  content: ["./src/**/*.{js,jsx,ts,tsx}"],
-  daisyui: {
-    themes: ["light"],
-  },
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
       colors: {
-        primary: "#003D2D",
-        accent: "#F0E965"
+        'primary': '#3498db',
+        'secondary': '#2ecc71',
+        'accent': '#f1c40f',
       },
       animation: {
         'shake': 'shake 0.3s',
@@ -36,9 +37,12 @@ const config: Config = {
       maxWidth: {
         'card-w': 'calc(100% - 2.5rem)', // Максимальная ширина контента карточки
       }
-    }
+    },
   },
-  plugins: [daisyui]
+  plugins: [daisyui],
+  daisyui: {
+    themes: ["light", "dark"],
+  },
 } 
 
 export default config
