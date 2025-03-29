@@ -327,10 +327,10 @@ const Navbar: React.FC = () => {
         </div>
       </div>
       <ul className="menu">
-        <li><Link to="/products/mobile">Mobile Phones</Link></li>
-        <li><Link to="/products/tv">TVs</Link></li>
-        <li><Link to="/products/gaming">Gaming</Link></li>
-        <li><Link to="/products/laptops">Laptops</Link></li>
+        <li><Link to="/mobile">Mobile Phones</Link></li>
+        <li><Link to="/tv-audio">TVs</Link></li>
+        <li><Link to="/gaming">Gaming</Link></li>
+        <li><Link to="/laptops">Laptops</Link></li>
       </ul>
     </nav>
   );

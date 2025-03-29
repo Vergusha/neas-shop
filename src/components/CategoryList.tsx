@@ -1,38 +1,31 @@
-import React, { JSX } from 'react';
-import { FaMobileAlt, FaGamepad, FaTv, FaWrench, FaLaptop } from 'react-icons/fa';
-
-interface Category {
-  name: string;
-  icon: JSX.Element;
-  link: string;
-}
-
-const categories: Category[] = [
-  { name: 'Mobile', icon: <FaMobileAlt />, link: '/products/mobile' },
-  { name: 'Laptops', icon: <FaLaptop />, link: '/products/laptops' },
-  { name: 'Gaming', icon: <FaGamepad />, link: '/products/gaming' },
-  { name: 'TV and Sound', icon: <FaTv />, link: '/products/tv-audio' },
-  { name: 'NEAS Support', icon: <FaWrench />, link: '/products/support' },
-];
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { FaMobileAlt, FaLaptop, FaGamepad, FaTv, FaWrench } from 'react-icons/fa';
 
 const logoColor = '#F0E965'; // Цвет логотипа
 
 const CategoryList: React.FC = () => {
   return (
-    <div className="flex flex-wrap justify-center gap-4 mt-8">
-      {categories.map((category) => (
-        <a
-          key={category.name}
-          href={category.link}
-          className="flex flex-col items-center p-4 transition-shadow duration-300 border rounded-lg shadow-md hover:shadow-lg category-animation"
-          style={{ color: 'inherit', transition: 'color 0.3s' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = logoColor)}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}
-        >
-          <div className="mb-2 text-3xl">{category.icon}</div>
-          <span className="text-sm font-medium">{category.name}</span>
-        </a>
-      ))}
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <Link to="/mobile" className="flex flex-col items-center p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+        <FaMobileAlt className="text-3xl text-primary mb-2" />
+        <span className="text-center">Mobile Phones</span>
+      </Link>
+      
+      <Link to="/laptops" className="flex flex-col items-center p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+        <FaLaptop className="text-3xl text-primary mb-2" />
+        <span className="text-center">Laptops</span>
+      </Link>
+      
+      <Link to="/gaming" className="flex flex-col items-center p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+        <FaGamepad className="text-3xl text-primary mb-2" />
+        <span className="text-center">Gaming</span>
+      </Link>
+      
+      <Link to="/tv-audio" className="flex flex-col items-center p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+        <FaTv className="text-3xl text-primary mb-2" />
+        <span className="text-center">TV & Audio</span>
+      </Link>
     </div>
   );
 };

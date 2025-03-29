@@ -1,47 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
-// Maps route segments to readable names
+// Соответствие названий маршрутов читабельным именам
 const routeNameMap: Record<string, string> = {
   'product': 'Product',
   'mobile': 'Mobile Phones',
-  'tv': 'TV & Audio',
-  'products': 'Products',
-  'mobil': 'Mobile Phones',
-  'data-accessories': 'Data & Accessories',
-  'data-og-tilbehor': 'Data & Accessories',
-  'gaming': 'Gaming',
   'tv-audio': 'TV & Audio',
-  'tv-og-lyd': 'TV & Audio',
-  'smart-home': 'Smart Home',
-  'smarte-hjem': 'Smart Home',
-  'power-support': 'Support',
+  'gaming': 'Gaming',
+  'laptops': 'Laptops',
+  'data-accessories': 'Data & Accessories',
   'support': 'Support',
   'search': 'Search Results',
   'cart': 'Shopping Cart',
   'favorites': 'Favorites',
   'profile': 'My Profile',
   'login': 'Login',
-  'register': 'Register'
+  'register': 'Register',
+  'admin': 'Admin Panel'
 };
 
-// Fix the collection to route path mapping with EXACT routes
+// Соответствие коллекций Firebase маршрутам в приложении
 const collectionToRoutePath: Record<string, string> = {
-  'mobile': '/products/mobile',  // Make sure this matches App.tsx routes
-  'tv': '/products/tv-audio',    // Make sure this matches App.tsx routes
-  'products': '/products',
-  'gaming': '/products/gaming',
-  'smart-home': '/products/smart-home',
-};
-
-// Define exact display names for breadcrumbs based on collection
-const collectionDisplayNames: Record<string, string> = {
-  'mobile': 'Mobile Phones',
-  'tv': 'TV & Audio',
-  'products': 'Products',
-  'gaming': 'Gaming',
-  'smart-home': 'Smart Home'
+  'mobile': 'mobile',
+  'tv': 'tv-audio',
+  'audio': 'tv-audio',
+  'gaming': 'gaming',
+  'laptops': 'laptops',
+  'data-accessories': 'data-accessories'
 };
 
 interface BreadcrumbItem {
@@ -54,70 +42,75 @@ const Breadcrumbs: React.FC = () => {
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
   
   useEffect(() => {
-    const pathSegments = location.pathname.split('/').filter(segment => segment);
-    
-    // Always start with Home
-    const breadcrumbItems: BreadcrumbItem[] = [
-      { name: 'Home', path: '/' }
-    ];
-    
-    // Build up the breadcrumb path
-    let currentPath = '';
-    
-    // Check if we're on a product detail page
-    if (pathSegments[0] === 'product' && pathSegments.length > 1) {
-      // Get collection directly from session storage
-      const productCollection = sessionStorage.getItem('lastProductCollection');
-      console.log('Product collection from session:', productCollection);
+    const fetchBreadcrumbs = async () => {
+      const pathSegments = location.pathname.split('/').filter(segment => segment);
       
-      if (productCollection && collectionToRoutePath[productCollection]) {
-        // Use exact predefined path and name to avoid mismatches
-        const routePath = collectionToRoutePath[productCollection];
-        const categoryName = collectionDisplayNames[productCollection] || 
-                            productCollection.charAt(0).toUpperCase() + productCollection.slice(1);
+      // Всегда начинаем с Home
+      const breadcrumbItems: BreadcrumbItem[] = [
+        { name: 'Home', path: '/' }
+      ];
+      
+      // Проверяем, находимся ли мы на странице товара
+      if (pathSegments[0] === 'product' && pathSegments.length > 1) {
+        const productId = pathSegments[1];
         
-        // Add correct category link to breadcrumbs
+        // Пытаемся получить данные о товаре из всех возможных коллекций
+        const collections = ['mobile', 'tv', 'audio', 'gaming', 'laptops', 'data-accessories'];
+        let productData = null;
+        let productCollection = null;
+        
+        // Поиск товара в разных коллекциях
+        for (const collection of collections) {
+          const docRef = doc(db, collection, productId);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            productData = docSnap.data();
+            productCollection = collection;
+            break;
+          }
+        }
+        
+        if (productCollection && collectionToRoutePath[productCollection]) {
+          // Если коллекция найдена, добавляем соответствующую категорию
+          const routePath = collectionToRoutePath[productCollection];
+          const categoryName = routeNameMap[routePath] || productCollection.charAt(0).toUpperCase() + productCollection.slice(1);
+          
+          breadcrumbItems.push({
+            name: categoryName,
+            path: `/${routePath}`
+          });
+        }
+        
+        // Добавляем страницу товара
         breadcrumbItems.push({
-          name: categoryName,
-          path: routePath
+          name: productData?.name || 'Product Details',
+          path: location.pathname
         });
       } else {
-        // Fallback to generic Products path
-        breadcrumbItems.push({
-          name: 'Products',
-          path: '/products'
+        // Обработка обычных путей (не страниц товаров)
+        let currentPath = '';
+        
+        pathSegments.forEach((segment, index) => {
+          currentPath += `/${segment}`;
+          
+          // Используем карту маршрутов для отображаемых имен
+          const displayName = routeNameMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+          
+          breadcrumbItems.push({
+            name: displayName,
+            path: currentPath
+          });
         });
       }
       
-      // Add the product page
-      breadcrumbItems.push({
-        name: 'Product Details',
-        path: `/${pathSegments[0]}/${pathSegments[1]}`
-      });
-    } else {
-      // Handle regular paths
-      pathSegments.forEach((segment, index) => {
-        currentPath += `/${segment}`;
-        
-        // Skip adding "products" segment alone to breadcrumbs
-        if (segment === 'products' && index === 0 && pathSegments.length > 1) {
-          return;
-        }
-        
-        // Use route name map for display names
-        const displayName = routeNameMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
-        
-        breadcrumbItems.push({
-          name: displayName,
-          path: currentPath
-        });
-      });
-    }
+      setBreadcrumbs(breadcrumbItems);
+    };
     
-    setBreadcrumbs(breadcrumbItems);
+    fetchBreadcrumbs();
   }, [location.pathname]);
   
-  // Don't render breadcrumbs on home page
+  // Не рендерим хлебные крошки на главной странице
   if (location.pathname === '/') {
     return null;
   }

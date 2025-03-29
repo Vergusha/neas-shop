@@ -53,12 +53,12 @@ const App = () => {
           <main className="flex-grow">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/products/mobile" element={<MobilePage />} />
+              <Route path="/mobile" element={<MobilePage />} />
               <Route path="/product/:id" element={<ProductPage />} />
-              <Route path="/products/data-accessories" element={<DataPage />} />
-              <Route path="/products/gaming" element={<GamingPage />} />
-              <Route path="/products/tv-audio" element={<TvPage />} />
-              <Route path="/products/support" element={<SupportPage />} />
+              <Route path="/data-accessories" element={<DataPage />} />
+              <Route path="/gaming" element={<GamingPage />} />
+              <Route path="/tv-audio" element={<TvPage />} />
+              <Route path="/support" element={<SupportPage />} />
               <Route path="/search" element={<SearchResultsPage />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
@@ -98,7 +98,7 @@ const App = () => {
                   <KeywordDebugger />
                 </AdminRoute>
               } />
-              <Route path="/products/laptops" element={<LaptopsPage />} />
+              <Route path="/laptops" element={<LaptopsPage />} />
             </Routes>
           </main>
           <Footer />
