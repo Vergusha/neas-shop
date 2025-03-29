@@ -1140,42 +1140,28 @@ const AdminPanel: React.FC = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">HDR</label>
+        <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
         <input
-          type="text"
-          value={product.hdr || ''}
-          onChange={(e) => setProduct({...product, hdr: e.target.value})}
+          type="number"
+          value={product.price}
+          onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
           className="w-full input input-bordered"
-          placeholder="e.g. HDR10+, Dolby Vision"
+          placeholder="e.g. 12999"
+          min="0"
+          step="1"
+          required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">HDMI Ports</label>
-        <select
-          value={product.hdmi || ''}
-          onChange={(e) => setProduct({...product, hdmi: e.target.value})}
-          className="w-full select select-bordered"
+        <label className="block text-sm font-medium text-gray-700 required">Description</label>
+        <textarea
+          value={product.description}
+          onChange={(e) => setProduct({...product, description: e.target.value})}
+          className="w-full textarea textarea-bordered"
+          placeholder="Product description"
           required
-        >
-          <option value="">Select HDMI Ports</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-        </select>
-      </div>
-
-      <div className="flex items-center gap-2 mt-2">
-        <input
-          type="checkbox"
-          id="smartTV"
-          checked={product.smartTV || false}
-          onChange={(e) => setProduct({...product, smartTV: e.target.checked})}
-          className="checkbox"
         />
-        <label htmlFor="smartTV" className="text-sm font-medium text-gray-700">
-          Smart TV
-        </label>
       </div>
 
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
@@ -1282,13 +1268,26 @@ const AdminPanel: React.FC = () => {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Frequency Response</label>
+        <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
         <input
-          type="text"
-          value={product.frequency || ''}
-          onChange={(e) => setProduct({...product, frequency: e.target.value})}
+          type="number"
+          value={product.price}
+          onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
           className="w-full input input-bordered"
-          placeholder="e.g. 20Hz - 20kHz"
+          placeholder="e.g. 1299"
+          min="0"
+          step="1"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Description</label>
+        <textarea
+          value={product.description}
+          onChange={(e) => setProduct({...product, description: e.target.value})}
+          className="w-full textarea textarea-bordered"
+          placeholder="Product description"
           required
         />
       </div>

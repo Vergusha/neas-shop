@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { ProductForm } from '../types/product';
 
@@ -28,23 +28,42 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     setIsLoading(true);
 
     try {
-      if (!editedProduct.id || !editedProduct.category) {
-        throw new Error('Invalid product data');
+      if (!editedProduct.id) {
+        throw new Error('Product ID is required');
       }
 
-      const productRef = doc(db, editedProduct.category, editedProduct.id);
-      const { id, ...updateData } = editedProduct;
+      // Try to find the correct collection for this product
+      const collections = ['laptops', 'gaming', 'tv', 'audio', 'mobile'];
+      let foundDoc = null;
+      let foundCollection = '';
+
+      for (const collection of collections) {
+        const docRef = doc(db, collection, editedProduct.id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          foundDoc = docSnap;
+          foundCollection = collection;
+          break;
+        }
+      }
+
+      if (!foundDoc) {
+        throw new Error('Product not found in any collection');
+      }
+
+      const { id, category, ...updateData } = editedProduct;
       const updatedData = {
         ...updateData,
         updatedAt: new Date().toISOString(),
       };
 
+      const productRef = doc(db, foundCollection, id);
       await updateDoc(productRef, updatedData);
-      onUpdate({ ...updatedData, id } as ProductForm & { id: string });
+      onUpdate({ ...updatedData, id, category: foundCollection } as ProductForm & { id: string });
       onClose();
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Failed to update product');
+      alert(error instanceof Error ? error.message : 'Failed to update product');
     } finally {
       setIsLoading(false);
     }
@@ -54,17 +73,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    if (name === 'price') {
-      setEditedProduct({
-        ...editedProduct,
-        [name]: parseFloat(value) || 0
-      });
-    } else {
-      setEditedProduct({
-        ...editedProduct,
-        [name]: value
-      });
-    }
+    setEditedProduct(prev => ({
+      ...prev,
+      [name]: value === null ? '' : name === 'price' ? parseFloat(value) || 0 : value
+    }));
   };
 
   if (!isOpen) return null;
@@ -73,9 +85,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const isLaptop = editedProduct.category === 'laptops';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
-      <div className="bg-white p-6 rounded-lg w-full max-w-2xl m-4">
-        <h3 className="text-xl font-bold mb-4">Edit Product: {editedProduct.name}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
+      <div className="w-full max-w-2xl p-6 m-4 bg-white rounded-lg">
+        <h3 className="mb-4 text-xl font-bold">Edit Product: {editedProduct.name}</h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-4">
@@ -85,9 +97,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <input
                 type="text"
                 name="brand"
-                value={editedProduct.brand}
+                value={editedProduct.brand || ''}
                 onChange={handleInputChange}
-                className="input input-bordered w-full"
+                className="w-full input input-bordered"
                 placeholder="e.g. Motorola"
                 required
               />
@@ -98,9 +110,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <input
                 type="text"
                 name="model"
-                value={editedProduct.model}
+                value={editedProduct.model || ''}
                 onChange={handleInputChange}
-                className="input input-bordered w-full"
+                className="w-full input input-bordered"
                 placeholder="e.g. Moto G24"
                 required
               />
@@ -111,9 +123,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <input
                 type="text"
                 name="modelNumber"
-                value={editedProduct.modelNumber}
+                value={editedProduct.modelNumber || ''}
                 onChange={handleInputChange}
-                className="input input-bordered w-full"
+                className="w-full input input-bordered"
                 placeholder="e.g. XT2341-1"
               />
             </div>
@@ -124,7 +136,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 name="modelNumber"
                 value={editedProduct.modelNumber || ''}
                 onChange={handleInputChange}
-                className="select select-bordered w-full"
+                className="w-full select select-bordered"
               >
                 <option value="">Select Year</option>
                 <option value="2025">2025</option>
@@ -143,9 +155,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 <input
                   type="text"
                   name="memory"
-                  value={editedProduct.memory}
+                  value={editedProduct.memory || ''}
                   onChange={handleInputChange}
-                  className="input input-bordered w-full"
+                  className="w-full input input-bordered"
                   placeholder="e.g. 128GB"
                 />
               </div>
@@ -156,9 +168,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <input
                 type="text"
                 name="color"
-                value={editedProduct.color}
+                value={editedProduct.color || ''}
                 onChange={handleInputChange}
-                className="input input-bordered w-full"
+                className="w-full input input-bordered"
                 placeholder="e.g. Steel Gray"
                 required
               />
@@ -169,9 +181,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <input
                 type="number"
                 name="price"
-                value={editedProduct.price}
+                value={editedProduct.price || ''}
                 onChange={handleInputChange}
-                className="input input-bordered w-full"
+                className="w-full input input-bordered"
                 placeholder="e.g. 4999"
                 min="0"
                 step="1"
@@ -183,9 +195,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <label className="block text-sm font-medium required">Description</label>
               <textarea
                 name="description"
-                value={editedProduct.description}
+                value={editedProduct.description || ''}
                 onChange={handleInputChange}
-                className="textarea textarea-bordered w-full"
+                className="w-full textarea textarea-bordered"
                 rows={4}
                 placeholder="Product description"
                 required
@@ -197,7 +209,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <div className="space-y-4">
                 <h4 className="font-medium">Laptop Specifications</h4>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {/* Особые поля для MacBook */}
                   {editedProduct.brand === 'Apple' ? (
                     <>
@@ -207,7 +219,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                           name="processor"
                           value={editedProduct.processor || ''}
                           onChange={handleInputChange}
-                          className="select select-bordered w-full"
+                          className="w-full select select-bordered"
                         >
                           <option value="">Select Chip</option>
                           <option value="Apple M1">Apple M1</option>
@@ -236,7 +248,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                         name="processor"
                         value={editedProduct.processor || ''}
                         onChange={handleInputChange}
-                        className="input input-bordered w-full"
+                        className="w-full input input-bordered"
                         placeholder="e.g. Intel Core i7-11800H"
                       />
                     </div>
@@ -249,7 +261,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       name="ram"
                       value={editedProduct.ram || ''}
                       onChange={handleInputChange}
-                      className="input input-bordered w-full"
+                      className="w-full input input-bordered"
                       placeholder="e.g. 16GB DDR4"
                     />
                   </div>
@@ -261,7 +273,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       name="storageType"
                       value={editedProduct.storageType || ''}
                       onChange={handleInputChange}
-                      className="input input-bordered w-full"
+                      className="w-full input input-bordered"
                       placeholder="e.g. 512GB SSD"
                     />
                   </div>
@@ -273,7 +285,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       name="graphicsCard"
                       value={editedProduct.graphicsCard || ''}
                       onChange={handleInputChange}
-                      className="input input-bordered w-full"
+                      className="w-full input input-bordered"
                       placeholder={editedProduct.brand === 'Apple' ? "e.g. Apple Integrated Graphics" : "e.g. NVIDIA RTX 3060"}
                     />
                   </div>
@@ -285,7 +297,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       name="screenSize"
                       value={editedProduct.screenSize || ''}
                       onChange={handleInputChange}
-                      className="input input-bordered w-full"
+                      className="w-full input input-bordered"
                       placeholder="e.g. 15.6 inch"
                     />
                   </div>
@@ -297,7 +309,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                         name="operatingSystem"
                         value={editedProduct.operatingSystem || ''}
                         onChange={handleInputChange}
-                        className="select select-bordered w-full"
+                        className="w-full select select-bordered"
                       >
                         <option value="">Select OS</option>
                         <option value="macOS Monterey">macOS Monterey</option>
@@ -311,7 +323,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                         name="operatingSystem"
                         value={editedProduct.operatingSystem || ''}
                         onChange={handleInputChange}
-                        className="input input-bordered w-full"
+                        className="w-full input input-bordered"
                         placeholder="e.g. Windows 11 Home"
                       />
                     )}
@@ -325,17 +337,17 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <label className="block text-sm font-medium">Current Image</label>
               <div className="mb-4">
                 <img 
-                  src={editedProduct.image} 
-                  alt={editedProduct.name} 
-                  className="w-32 h-32 object-contain border rounded"
+                  src={editedProduct.image || ''} 
+                  alt={editedProduct.name || ''} 
+                  className="object-contain w-32 h-32 border rounded"
                 />
               </div>
               <input
                 type="url"
                 name="image"
-                value={editedProduct.image}
+                value={editedProduct.image || ''}
                 onChange={handleInputChange}
-                className="input input-bordered w-full"
+                className="w-full input input-bordered"
                 placeholder="Image URL"
                 required
               />
