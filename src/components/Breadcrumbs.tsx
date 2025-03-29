@@ -85,13 +85,59 @@ const Breadcrumbs: React.FC = () => {
         // Форматируем название продукта для отображения в хлебных крошках
         let formattedProductName = productData?.name || 'Product Details';
         
-        // Для мобильных устройств отображаем полное название (как в ProductPage)
-        if (productCollection === 'mobile' && productData) {
+        // Для мобильных устройств и игровых консолей отображаем полное название
+        if ((productCollection === 'mobile' || productCollection === 'gaming') && productData) {
           const nameComponents = [
             productData.brand || '', 
             productData.model || '', 
             productData.modelNumber || '', 
             productData.memory || '', 
+            productData.color || ''
+          ]
+            .filter(component => component && component.trim() !== '')
+            .join(' ');
+          
+          formattedProductName = nameComponents || productData.name;
+        }
+        
+        // Форматирование для телевизоров: "Samsung 55" 4K UHD LED TV TU55DU7105KXXC"
+        else if (productCollection === 'tv' && productData) {
+          const nameComponents = [
+            productData.brand || '',                  // Samsung
+            productData.screenSize ? `${productData.screenSize}"` : '', // 55"
+            productData.model || '',                  // 4K UHD LED TV
+            productData.modelNumber || ''             // TU55DU7105KXXC
+          ]
+            .filter(component => component && component.trim() !== '')
+            .join(' ');
+          
+          formattedProductName = nameComponents || productData.name;
+        }
+        
+        // Форматирование для аудио: "JBL Tune 520BT Bluetooth headphones, white"
+        else if (productCollection === 'audio' && productData) {
+          const nameComponents = [
+            productData.brand || '',                  // JBL
+            productData.model || '',                  // Tune 520BT
+            // Используем только тип устройства, без дополнительной информации
+            productData.description?.split(',')[0]?.split('•')[0]?.trim() || '', // Bluetooth headphones
+            productData.color ? `, ${productData.color}` : '' // , white
+          ]
+            .filter(component => component && component.trim() !== '')
+            .join(' ');
+          
+          formattedProductName = nameComponents || productData.name;
+        }
+        
+        // Для ноутбуков (не Apple) формируем полное название
+        else if (productCollection === 'laptops' && productData && productData.brand !== 'Apple') {
+          const nameComponents = [
+            productData.brand || '', 
+            productData.model || '', 
+            productData.modelNumber || '', 
+            productData.processor || '',
+            productData.ram || '',
+            productData.storageType || '',
             productData.color || ''
           ]
             .filter(component => component && component.trim() !== '')

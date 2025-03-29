@@ -411,25 +411,70 @@ const ProductPage: React.FC = () => {
     // Логируем данные продукта для отладки
     console.log('Formatting title for product:', product);
 
-    // Существующий код для форматирования MacBook
+    // Форматирование для MacBook остается прежним
     if (product.category === 'laptops' && product.brand === 'Apple') {
       return formatMacBookName(product);
     }
 
-    // Существующий код для форматирования аудио
-    if (product.collection === 'audio') {
-      return formatAudioName(product);
+    // Для ноутбуков (не Apple) формируем полное название
+    if (product.category === 'laptops' && product.brand !== 'Apple') {
+      const nameComponents = [
+        product.brand || '', // Бренд (например, Dell, HP)
+        product.model || '', // Модель (например, XPS, Envy)
+        product.modelNumber || '', // Номер модели
+        product.processor || '', // Процессор
+        product.ram || '', // Оперативная память
+        product.storageType || '', // Тип хранилища
+        product.color || '' // Цвет
+      ]
+        .filter(component => component && component.trim() !== '')
+        .join(' ');
+      
+      console.log('Generated laptop product full name:', nameComponents);
+      return nameComponents || product.name;
     }
 
-    // Для мобильных устройств формируем полное название в определенном порядке
-    if (product.collection === 'mobile') {
+    // Форматирование для телевизоров: "Samsung 55" 4K UHD LED TV TU55DU7105KXXC"
+    if (product.collection === 'tv') {
+      const nameComponents = [
+        product.brand || '',                  // Samsung
+        product.screenSize ? `${product.screenSize}"` : '', // 55"
+        product.model || '',                  // 4K UHD LED TV
+        product.modelNumber || ''             // TU55DU7105KXXC
+      ]
+        .filter(component => component && component.trim() !== '')
+        .join(' ');
+      
+      console.log('Generated TV product full name:', nameComponents);
+      return nameComponents || product.name;
+    }
+
+    // Форматирование для аудио: "JBL Tune 520BT Bluetooth headphones, white"
+    if (product.collection === 'audio') {
+      // Для аудио продуктов используем более лаконичный формат
+      const nameComponents = [
+        product.brand || '',                  // JBL
+        product.model || '',                  // Tune 520BT
+        // Используем только тип устройства, без дополнительной информации
+        product.description?.split(',')[0]?.split('•')[0]?.trim() || '', // Bluetooth headphones
+        product.color ? `, ${product.color}` : '' // , white
+      ]
+        .filter(component => component && component.trim() !== '')
+        .join(' ');
+      
+      console.log('Generated audio product full name:', nameComponents);
+      return nameComponents || product.name;
+    }
+
+    // Для мобильных устройств, игровых консолей и телевизоров - оставляем существующую логику
+    if (product.collection === 'mobile' || product.collection === 'gaming') {
       // Создаем массив компонентов названия в правильном порядке
       const nameComponents = [
-        product.brand || '', // Бренд (например, Motorola)
-        product.model || '', // Модель (например, Moto G84)
+        product.brand || '', // Бренд (например, Motorola, Sony, Samsung)
+        product.model || '', // Модель (например, Moto G84, PlayStation 5, QLED)
         product.modelNumber || '', // Номер модели, если есть
-        product.memory || '', // Память (например, 256GB)
-        product.color || '' // Цвет (например, Marshmallow Blue)
+        product.memory || '', // Память для мобильных/игровых (например, 256GB, 1TB)
+        product.color || '' // Цвет (например, Marshmallow Blue, Black)
       ];
       
       // Фильтруем пустые значения и объединяем в строку
@@ -438,7 +483,7 @@ const ProductPage: React.FC = () => {
         .join(' ');
       
       // Логируем результат для отладки
-      console.log('Generated mobile product full name:', fullName);
+      console.log(`Generated ${product.collection} product full name:`, fullName);
       
       // Если сгенерированное название пустое, возвращаем исходное название продукта
       return fullName || product.name;
