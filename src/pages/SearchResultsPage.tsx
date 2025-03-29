@@ -142,8 +142,11 @@ const SearchResultsPage: React.FC = () => {
         }
         
         let allResults: Product[] = [];
+        const collections = ['products', 'mobile', 'tv', 'gaming', 'laptops', 'audio'];
         
-        for (const collectionName of ['products', 'mobile', 'tv', 'gaming']) {
+        console.log(`Searching across collections: ${collections.join(', ')}`);
+        
+        for (const collectionName of collections) {
           const collectionRef = collection(db, collectionName);
           const querySnapshot = await getDocs(collectionRef);
           
@@ -151,6 +154,7 @@ const SearchResultsPage: React.FC = () => {
           
           querySnapshot.forEach(doc => {
             const data = doc.data();
+            console.log(`Checking product: ${data.name} in ${collectionName}`); // Add this line
             
             // Сначала проверяем searchKeywords
             if (data.searchKeywords && Array.isArray(data.searchKeywords)) {
@@ -189,7 +193,7 @@ const SearchResultsPage: React.FC = () => {
             );
             
             if (matchFound) {
-              console.log(`✅ Adding product by field match: ${collectionName}/${doc.id} - ${data.name}`);
+              console.log(`✅ Found matching product: ${data.name} in ${collectionName}`);
               allResults.push(ensureRequiredFields(data, doc.id, collectionName));
             }
           });

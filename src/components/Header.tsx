@@ -37,7 +37,7 @@ const Header: React.FC = () => {
       }
 
       try {
-        const collections = ['mobile', 'products']; // Add all collections you want to search
+        const collections = ['mobile', 'products', 'laptops', 'audio', 'tv', 'gaming']; // Обновляем список коллекций
         let results: any[] = [];
 
         for (const collectionName of collections) {
