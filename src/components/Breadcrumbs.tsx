@@ -82,9 +82,27 @@ const Breadcrumbs: React.FC = () => {
           });
         }
         
-        // Добавляем страницу товара
+        // Форматируем название продукта для отображения в хлебных крошках
+        let formattedProductName = productData?.name || 'Product Details';
+        
+        // Для мобильных устройств отображаем полное название (как в ProductPage)
+        if (productCollection === 'mobile' && productData) {
+          const nameComponents = [
+            productData.brand || '', 
+            productData.model || '', 
+            productData.modelNumber || '', 
+            productData.memory || '', 
+            productData.color || ''
+          ]
+            .filter(component => component && component.trim() !== '')
+            .join(' ');
+          
+          formattedProductName = nameComponents || productData.name;
+        }
+        
+        // Добавляем страницу товара с форматированным названием
         breadcrumbItems.push({
-          name: productData?.name || 'Product Details',
+          name: formattedProductName,
           path: location.pathname
         });
       } else {
@@ -125,7 +143,7 @@ const Breadcrumbs: React.FC = () => {
               {index < breadcrumbs.length - 1 ? (
                 <Link to={breadcrumb.path} className="hover:text-primary">{breadcrumb.name}</Link>
               ) : (
-                <span className="text-gray-500">{breadcrumb.name}</span>
+                <span className="text-gray-500 truncate max-w-[300px]">{breadcrumb.name}</span>
               )}
             </li>
           ))}
