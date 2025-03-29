@@ -2,63 +2,76 @@ import React from 'react';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-[#003D2D] text-white py-8">
-      <div className="container grid grid-cols-1 gap-8 mx-auto md:grid-cols-4">
+    <footer className="bg-[#003D2D] text-white py-6">
+      <div className="container mx-auto grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Company Info */}
         <div>
-          <h3 className="font-bold">NEAS AS</h3>
-          <p>Industriveien 1</p>
-          <p>6517 Kristiansund</p>
-          <p>Org.nr 960684737</p>
-          <p>P.O Box 2260 Løkkemyra, 6503 Kristiansund N</p>
+          <h3 className="font-bold text-lg mb-2">NEAS AS</h3>
+          <ul className="text-sm space-y-1">
+            <li>Industriveien 1</li>
+            <li>6517 Kristiansund</li>
+            <li>Org.nr 960684737</li>
+            <li>P.O Box 2260 Løkkemyra</li>
+            <li>6503 Kristiansund N</li>
+          </ul>
         </div>
+
+        {/* Contact Info */}
         <div>
-          <h3 className="font-bold">Contact Us</h3>
-          <p>71 56 55 25</p>
-          <p>Opening Hours</p>
+          <h3 className="font-bold text-lg mb-2">Contact Us</h3>
+          <ul className="text-sm space-y-1">
+            <li>Phone: 71 56 55 25</li>
+            <li>Opening Hours</li>
+          </ul>
         </div>
+
+        {/* Social Links */}
         <div>
-          <h3 className="font-bold">Follow Us</h3>
-          <p>
-            <a href="https://www.facebook.com/neas.i.nabolaget/" target="_blank" rel="noopener noreferrer">
-              Facebook
-            </a>
-          </p>
-          <p> 
-            <a href="https://www.instagram.com/neas_i_nabolaget/" target="_blank" rel="noopener noreferrer">
-            Instagram
-            </a>
-          </p>
-          <p>
-          <a href="https://www.linkedin.com/company/neas-as/" target="_blank" rel="noopener noreferrer">
-          LinkedIn</a>
-          </p>
-          <p>
-          <a href="https://www.youtube.com/user/neaskanalen" target="_blank" rel="noopener noreferrer">
-            YouTube</a>
-          </p>
+          <h3 className="font-bold text-lg mb-2">Follow Us</h3>
+          <ul className="text-sm space-y-1">
+            <li>
+              <a href="https://www.facebook.com/neas.i.nabolaget/" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                Facebook
+              </a>
+            </li>
+            <li>
+              <a href="https://www.instagram.com/neas_i_nabolaget/" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                Instagram
+              </a>
+            </li>
+            <li>
+              <a href="https://www.linkedin.com/company/neas-as/" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                LinkedIn
+              </a>
+            </li>
+            <li>
+              <a href="https://www.youtube.com/user/neaskanalen" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                YouTube
+              </a>
+            </li>
+          </ul>
         </div>
+
+        {/* Quick Links */}
         <div>
-          <h3 className="font-bold">About Us</h3>
-          <p>Contact Center</p>
-          <p>About Us</p>
-          <p>Help</p>
-          <p>Service Status</p>
-          <p>Work With Us</p>
-          <p>Employees</p>
-          <p>Sponsorship</p>
-          <p>NEAS BLOG</p>
-          <p>Wholesale</p>
-          <p>Privacy and Cookies</p>
+          <h3 className="font-bold text-lg mb-2">Quick Links</h3>
+          <ul className="text-sm space-y-1">
+            <li>About Us</li>
+            <li>Help</li>
+            <li>Service Status</li>
+            <li>Work With Us</li>
+            <li>Privacy and Cookies</li>
+          </ul>
         </div>
       </div>
-      <div className="container mx-auto mt-8 text-center">
+
+      <div className="container mx-auto mt-6 text-center border-t border-gray-700 pt-4">
         <img 
           src="/logo.svg" 
           alt="NEAS Logo" 
-          className="h-8 mx-auto bg-transparent" 
-          style={{ filter: 'brightness(1.2)' }} // Добавляем немного яркости для лучшей видимости на тёмном фоне
+          className="h-6 mx-auto mb-2 sm:h-8" 
         />
-        <p className="mt-4 text-gray-300">We are part of the NEAS GROUP</p>
+        <p className="text-xs text-gray-400 sm:text-sm">We are part of the NEAS GROUP</p>
       </div>
     </footer>
   );
