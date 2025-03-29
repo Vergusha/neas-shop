@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface FilterValue {
   value: string | number;
@@ -38,6 +38,17 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   const [maxPriceInput, setMaxPriceInput] = useState<string>('10000');
   const initializedRef = useRef(false);
 
+  const debouncedUpdate = useRef<NodeJS.Timeout>();
+
+  const debouncedFilterChange = useCallback((values: [number, number]) => {
+    if (debouncedUpdate.current) {
+      clearTimeout(debouncedUpdate.current);
+    }
+    debouncedUpdate.current = setTimeout(() => {
+      onFilterChange('price', values);
+    }, 100);
+  }, [onFilterChange]);
+
   useEffect(() => {
     if (initializedRef.current) return;
 
@@ -56,6 +67,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       initializedRef.current = true;
     }
   }, [filters, activeFilters]);
+
+  useEffect(() => {
+    return () => {
+      if (debouncedUpdate.current) {
+        clearTimeout(debouncedUpdate.current);
+      }
+    };
+  }, []);
 
   const handleMinPriceInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMinPriceInput(e.target.value);
@@ -77,11 +96,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     onFilterChange('price', newRange);
   };
 
-  // Helper function to check if a value is selected
   const isValueSelected = (filterId: string, value: string | number | FilterValue): boolean => {
     const stringValue = typeof value === 'object' ? String(value.value) : String(value);
     
-    // Check both selectedFilters (string array format) and activeFilters (Set format)
     if (selectedFilters && filterId in selectedFilters) {
       return Array.isArray(selectedFilters[filterId]) && 
              selectedFilters[filterId].includes(stringValue);
@@ -90,7 +107,6 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     if (activeFilters && filterId in activeFilters) {
       const filterValue = activeFilters[filterId];
       if (filterValue instanceof Set) {
-        // Need to handle both string and number values in the Set
         return filterValue.has(typeof value === 'object' ? value.value : value) || 
                filterValue.has(stringValue);
       }
@@ -99,12 +115,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     return false;
   };
 
-  // Helper function to handle filter change for checkbox filters
   const handleFilterChange = (filterId: string, value: string | number | FilterValue, checked: boolean) => {
-    // Always convert to string to ensure consistent handling
     const stringValue = typeof value === 'object' ? String(value.value) : String(value);
     
-    // Debug logs to help identify issues
     console.log('Filter change:', { filterId, value, stringValue, checked });
     
     if (checked) {
@@ -114,7 +127,6 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     }
   };
 
-  // Helper function to get value and count from option
   const getOptionValue = (option: string | FilterValue): string | number => {
     return typeof option === 'object' ? option.value : option;
   };
@@ -123,33 +135,124 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     return typeof option === 'object' ? option.count : 0;
   };
 
-  // Обновите рендеринг фильтров, чтобы корректно обрабатывать фильтры для ноутбуков
+  const renderPriceRangeSlider = () => {
+    const handleDrag = (
+      startEvent: React.MouseEvent,
+      isMin: boolean
+    ) => {
+      startEvent.preventDefault();
+      
+      const slider = startEvent.currentTarget.parentElement;
+      if (!slider) return;
+
+      const sliderRect = slider.getBoundingClientRect();
+      const startX = startEvent.clientX;
+      const startValue = isMin ? priceRange.current[0] : priceRange.current[1];
+
+      const calculateNewValue = (currentX: number) => {
+        const dx = currentX - startX;
+        const percent = dx / sliderRect.width;
+        const range = priceRange.max - priceRange.min;
+        const rawValue = startValue + (range * percent);
+        
+        return Math.round(rawValue / 100) * 100;
+      };
+
+      const handleMove = (moveEvent: MouseEvent) => {
+        moveEvent.preventDefault();
+        let newValue = calculateNewValue(moveEvent.clientX);
+
+        if (isMin) {
+          newValue = Math.max(priceRange.min, Math.min(priceRange.current[1] - 100, newValue));
+          const newValues: [number, number] = [newValue, priceRange.current[1]];
+          setPriceRange(prev => ({ ...prev, current: newValues }));
+          setMinPriceInput(String(newValue));
+          debouncedFilterChange(newValues);
+        } else {
+          newValue = Math.min(priceRange.max, Math.max(priceRange.current[0] + 100, newValue));
+          const newValues: [number, number] = [priceRange.current[0], newValue];
+          setPriceRange(prev => ({ ...prev, current: newValues }));
+          setMaxPriceInput(String(newValue));
+          debouncedFilterChange(newValues);
+        }
+      };
+
+      const handleUp = () => {
+        document.removeEventListener('mousemove', handleMove);
+        document.removeEventListener('mouseup', handleUp);
+        onFilterChange('price', [priceRange.current[0], priceRange.current[1]]);
+      };
+
+      document.addEventListener('mousemove', handleMove);
+      document.addEventListener('mouseup', handleUp);
+    };
+
+    return (
+      <div className="relative px-1 mt-4 mb-6">
+        <div className="relative w-full h-3 bg-gray-200 rounded-lg">
+          <div 
+            className="absolute top-0 h-full bg-yellow-400 rounded-lg transition-all duration-150"
+            style={{
+              left: `${((priceRange.current[0] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
+              width: `${((priceRange.current[1] - priceRange.current[0]) / (priceRange.max - priceRange.min)) * 100}%`
+            }}
+          />
+          
+          <button
+            type="button"
+            className="absolute z-20 w-6 h-6 -ml-3 -mt-1.5 bg-yellow-400 border-2 border-white rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-yellow-300"
+            style={{
+              left: `${((priceRange.current[0] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
+              top: '50%'
+            }}
+            onMouseDown={(e) => handleDrag(e, true)}
+            onClick={(e) => e.stopPropagation()}
+          />
+          
+          <button
+            type="button"
+            className="absolute z-20 w-6 h-6 -ml-3 -mt-1.5 bg-yellow-400 border-2 border-white rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-yellow-300"
+            style={{
+              left: `${((priceRange.current[1] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
+              top: '50%'
+            }}
+            onMouseDown={(e) => handleDrag(e, false)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+        
+        <div className="flex justify-between px-1 mt-4">
+          <span className="text-sm font-medium">{priceRange.current[0]} NOK</span>
+          <span className="text-sm font-medium">{priceRange.current[1]} NOK</span>
+        </div>
+      </div>
+    );
+  };
+
   const renderFilterOptions = (filter: FilterOption) => {
-    // Переводим названия фильтров для ноутбуков
     const getFilterLabel = (key: string, value: string | number) => {
       if (key === 'processor' && typeof value === 'string') {
-        if (value.includes('Apple M')) return value; // Для чипов Apple сохраняем оригинальное название
-        if (value.includes('Intel')) return value; // Для Intel процессоров сохраняем оригинальное название
-        if (value.includes('AMD')) return value; // Для AMD процессоров сохраняем оригинальное название
+        if (value.includes('Apple M')) return value;
+        if (value.includes('Intel')) return value;
+        if (value.includes('AMD')) return value;
         return value;
       }
       
       if (key === 'ram' && typeof value === 'string') {
-        return value; // Оставляем оригинальное значение RAM
+        return value;
       }
       
       if (key === 'storageType' && typeof value === 'string') {
-        return value; // Оставляем оригинальное значение типа хранилища
+        return value;
       }
       
       if (key === 'operatingSystem' && typeof value === 'string') {
-        return value; // Оставляем оригинальное значение ОС
+        return value;
       }
       
       return value;
     };
 
-    // Skip rendering the entire filter group if it's the category filter
     if (filter.key === 'category' || filter.name === 'Category') {
       return null;
     }
@@ -164,9 +267,6 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           const filterLabel = getFilterLabel(filterKey, optionValue);
           const optionKey = `${filterKey}-${optionValue}`;
           const isChecked = isValueSelected(filterKey, optionValue);
-          
-          // Debug for checkbox states
-          console.log(`Option ${optionKey}: ${isChecked ? 'checked' : 'unchecked'}`);
           
           return (
             <div key={optionKey} className="flex items-center mt-1">
@@ -196,7 +296,16 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     <div className="p-4 bg-white rounded-lg shadow-md">
       <h3 className="mb-4 text-lg font-semibold">Filters</h3>
       
-      {filters.map((filter) => {
+      {[...filters].sort((a, b) => {
+        const currentPath = window.location.pathname;
+        const priorityPages = ['/laptops', '/tv', '/audio', '/gaming']; // Добавляем /gaming
+        
+        if (priorityPages.includes(currentPath)) {
+          if (a.type === 'range' && a.key === 'price') return -1;
+          if (b.type === 'range' && b.key === 'price') return 1;
+        }
+        return 0;
+      }).map((filter) => {
         const filterId = filter.id || filter.key || '';
         
         if (filter.type === 'range' && filter.min !== undefined && filter.max !== undefined) {
@@ -230,98 +339,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 />
               </div>
               
-              {/* YELLOW range slider with proper styling */}
-              <div className="relative px-1 mt-4 mb-6">
-                {/* Base track */}
-                <div className="relative w-full h-3 bg-gray-300 rounded-lg">
-                  {/* Active track - FULLY YELLOW */}
-                  <div 
-                    className="absolute top-0 h-full bg-yellow-400 rounded-lg"
-                    style={{
-                      left: `${((priceRange.current[0] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
-                      width: `${((priceRange.current[1] - priceRange.current[0]) / (priceRange.max - priceRange.min)) * 100}%`
-                    }}
-                  ></div>
-                  
-                  {/* Min handle - BRIGHT YELLOW with white border */}
-                  <div 
-                    className="absolute z-20 w-6 h-6 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-400 border-2 border-white rounded-full shadow-md cursor-pointer top-1/2"
-                    style={{ left: `${((priceRange.current[0] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%` }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      const startX = e.clientX;
-                      const startValue = priceRange.current[0];
-                      const width = e.currentTarget.parentElement!.clientWidth;
-                      const valueRange = priceRange.max - priceRange.min;
-                      
-                      const handleMouseMove = (moveEvent: MouseEvent) => {
-                        moveEvent.preventDefault();
-                        const dx = moveEvent.clientX - startX;
-                        const pctChange = dx / width;
-                        const valueChange = pctChange * valueRange;
-                        let newValue = Math.round(startValue + valueChange);
-                        
-                        // Constrain to min and max values, and below max handle
-                        newValue = Math.max(priceRange.min, Math.min(priceRange.current[1] - 10, newValue));
-                        
-                        setPriceRange(prev => ({ ...prev, current: [newValue, prev.current[1]] }));
-                        setMinPriceInput(String(newValue));
-                      };
-                      
-                      const handleMouseUp = () => {
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', handleMouseUp);
-                        onFilterChange('price', [priceRange.current[0], priceRange.current[1]]);
-                      };
-                      
-                      document.addEventListener('mousemove', handleMouseMove);
-                      document.addEventListener('mouseup', handleMouseUp);
-                    }}
-                  ></div>
-                  
-                  {/* Max handle - BRIGHT YELLOW with white border */}
-                  <div 
-                    className="absolute z-10 w-6 h-6 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-400 border-2 border-white rounded-full shadow-md cursor-pointer top-1/2"
-                    style={{ left: `${((priceRange.current[1] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%` }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      const startX = e.clientX;
-                      const startValue = priceRange.current[1];
-                      const width = e.currentTarget.parentElement!.clientWidth;
-                      const valueRange = priceRange.max - priceRange.min;
-                      
-                      const handleMouseMove = (moveEvent: MouseEvent) => {
-                        moveEvent.preventDefault();
-                        const dx = moveEvent.clientX - startX;
-                        const pctChange = dx / width;
-                        const valueChange = pctChange * valueRange;
-                        let newValue = Math.round(startValue + valueChange);
-                        
-                        // Constrain to min and max values, and above min handle
-                        newValue = Math.min(priceRange.max, Math.max(priceRange.current[0] + 10, newValue));
-                        
-                        setPriceRange(prev => ({ ...prev, current: [prev.current[0], newValue] }));
-                        setMaxPriceInput(String(newValue));
-                      };
-                      
-                      const handleMouseUp = () => {
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', handleMouseUp);
-                        onFilterChange('price', [priceRange.current[0], priceRange.current[1]]);
-                      };
-                      
-                      document.addEventListener('mousemove', handleMouseMove);
-                      document.addEventListener('mouseup', handleMouseUp);
-                    }}
-                  ></div>
-                </div>
-                
-                {/* Price labels */}
-                <div className="flex justify-between px-1 mt-4 text-sm font-medium">
-                  <span>{priceRange.current[0]} NOK</span>
-                  <span>{priceRange.current[1]} NOK</span>
-                </div>
-              </div>
+              {renderPriceRangeSlider()}
             </div>
           );
         }

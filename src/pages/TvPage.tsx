@@ -31,7 +31,49 @@ interface FilterOption {
   name: string;
   key: string;
   values: FilterValue[];
+  type?: 'range' | 'checkbox';
+  min?: number;
+  max?: number;
 }
+
+// Добавляем функцию getUniqueValues
+const getUniqueValues = (products: Product[], key: keyof Product): FilterValue[] => {
+  const counts: Record<string, number> = {};
+  
+  products.forEach(product => {
+    const value = product[key];
+    if (typeof value === 'string' || typeof value === 'number') {
+      counts[value] = (counts[value] || 0) + 1;
+    }
+  });
+  
+  return Object.entries(counts)
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => String(a.value).localeCompare(String(b.value)));
+};
+
+const createFilters = (products: Product[]): FilterOption[] => {
+  // Добавляем ценовой фильтр первым
+  const priceFilter: FilterOption = {
+    name: 'Price',
+    key: 'price',
+    type: 'range',
+    min: Math.min(...products.map(p => p.price)),
+    max: Math.max(...products.map(p => p.price)),
+    values: []
+  };
+
+  // Остальные фильтры
+  const brandFilter = {
+    name: 'Brand',
+    key: 'brand',
+    type: 'checkbox' as const,
+    values: getUniqueValues(products, 'brand')
+  };
+
+  // Добавляем priceFilter первым в массив
+  return [priceFilter, brandFilter /* ...остальные фильтры */];
+};
 
 const TvPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -64,7 +106,7 @@ const TvPage: React.FC = () => {
 
         setProducts(combinedList);
 
-        const filters = extractFilters(combinedList, 'tv');
+        const filters = createFilters(combinedList);
         setAvailableFilters(filters);
 
         setFilteredProducts(combinedList);
