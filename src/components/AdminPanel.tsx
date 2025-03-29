@@ -46,7 +46,14 @@ const categoryColumns: Record<string, ColumnConfig[]> = {
     { header: 'Connectivity', key: 'connectivity' },
     { header: 'Color', key: 'color' },
   ],
-  'tv-audio': [
+  tv: [
+    ...commonColumns,
+    { header: 'Model', key: 'model' },
+    { header: 'Screen Size', key: 'diagonal' },
+    { header: 'Resolution', key: 'resolution' },
+    { header: 'Display Type', key: 'displayType' },
+  ],
+  audio: [
     ...commonColumns,
     { header: 'Model', key: 'model' },
     { header: 'Type', key: 'subtype' },
@@ -90,31 +97,12 @@ const AdminPanel: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        if (selectedCategory === 'tv-audio') {
-          const [tvSnapshot, audioSnapshot] = await Promise.all([
-            getDocs(collection(db, 'tv')),
-            getDocs(collection(db, 'audio'))
-          ]);
-          
-          const tvProducts = tvSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          
-          const audioProducts = audioSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          
-          setProducts([...tvProducts, ...audioProducts] as ProductForm[]);
-        } else {
-          const querySnapshot = await getDocs(collection(db, selectedCategory));
-          const productsList = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as ProductForm[];
-          setProducts(productsList);
-        }
+        const querySnapshot = await getDocs(collection(db, selectedCategory));
+        const productsList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as ProductForm[];
+        setProducts(productsList);
       } catch (error) {
         console.error('Error fetching products:', error);
       }
@@ -142,8 +130,12 @@ const AdminPanel: React.FC = () => {
       let productName = '';
       if (product.category === 'gaming') {
         productName = `${product.brand} ${product.model} ${product.deviceType || ''} ${product.color}`;
+      } else if (product.category === 'tv') {
+        productName = `${product.brand} ${product.model} ${product.diagonal}" ${product.resolution}`;
+      } else if (product.category === 'audio') {
+        productName = `${product.brand} ${product.model} ${product.subtype} ${product.color}`;
       } else {
-        productName = `${product.brand} ${product.model} ${product.memory}`;
+        productName = `${product.brand} ${product.model} ${product.memory || ''}`;
       }
 
       let finalImageUrl = product.image;
@@ -170,7 +162,6 @@ const AdminPanel: React.FC = () => {
         brand: product.brand,
         model: product.model,
         modelNumber: product.modelNumber || null,
-        memory: product.memory || '',
         color: product.color || '',
         description: product.description || '',
         price: Math.abs(Number(product.price)),
@@ -181,10 +172,15 @@ const AdminPanel: React.FC = () => {
         updatedAt: new Date().toISOString(),
         filterCategories: {
           brand: product.brand.toLowerCase(),
-          memory: (product.memory || '').toLowerCase(),
           color: (product.color || '').toLowerCase(),
         }
       };
+
+      // Добавляем память только если это нужная категория
+      if (product.category === 'mobile' || product.category === 'laptops' || product.category === 'gaming') {
+        productData.memory = product.memory || '';
+        productData.filterCategories.memory = (product.memory || '').toLowerCase();
+      }
 
       if (product.category === 'gaming') {
         productData.deviceType = product.deviceType || '';
@@ -204,6 +200,21 @@ const AdminPanel: React.FC = () => {
         productData.storageType = product.storageType || '';
         productData.ram = product.ram || '';
         productData.operatingSystem = product.operatingSystem || '';
+      }
+
+      if (product.category === 'tv') {
+        productData.diagonal = product.diagonal || '';
+        productData.resolution = product.resolution || '';
+        productData.refreshRate = product.refreshRate || '';
+        productData.displayType = product.displayType || '';
+      }
+
+      if (product.category === 'audio') {
+        productData.subtype = product.subtype || '';
+        productData.connectivity = product.connectivity || '';
+        if (product.batteryLife) productData.batteryLife = product.batteryLife;
+        if (product.power) productData.power = product.power;
+        if (product.channels) productData.channels = product.channels;
       }
 
       const collectionRef = collection(db, product.category);
@@ -254,15 +265,12 @@ const AdminPanel: React.FC = () => {
 
   const generateSearchKeywords = (name: string, modelNumber?: string): string[] => {
     const keywords: string[] = [];
-    
     const words = name.toLowerCase().split(' ');
-    
     for (const word of words) {
       if (word.length > 2) {
         keywords.push(word);
       }
     }
-    
     for (let i = 0; i < words.length; i++) {
       let combined = '';
       for (let j = i; j < words.length; j++) {
@@ -270,7 +278,6 @@ const AdminPanel: React.FC = () => {
         keywords.push(combined.trim());
       }
     }
-
     if (modelNumber) {
       keywords.push(modelNumber.toLowerCase());
       const cleanModelNumber = modelNumber.toLowerCase().replace(/[\s-]/g, '');
@@ -278,7 +285,6 @@ const AdminPanel: React.FC = () => {
         keywords.push(cleanModelNumber);
       }
     }
-    
     return Array.from(new Set(keywords));
   };
 
@@ -294,15 +300,12 @@ const AdminPanel: React.FC = () => {
   const generateProductId = (product: NewProductForm): string => {
     const brand = formatForUrl(product.brand);
     const model = formatForUrl(product.model);
-    
     if (product.category === 'gaming') {
       const connectivity = product.connectivity ? formatForUrl(product.connectivity) : 'standard';
       const version = formatForUrl(product.memory);
       const color = formatForUrl(product.color);
-      
       return `${brand}-${model}-${connectivity}-${version}-${color}`;
     }
-
     if (product.category === 'laptops') {
       if (product.brand === 'Apple') {
         const processor = formatForUrl(product.processor || '');
@@ -311,18 +314,14 @@ const AdminPanel: React.FC = () => {
         const screenSize = formatForUrl(product.screenSize || '');
         const color = formatForUrl(product.color || '');
         const year = product.modelNumber || '';
-        
         return `apple-${model}-${year}-${processor}-${ram}-${storage}-${screenSize}-${color}`;
       }
-      
       const processor = formatForUrl(product.processor || '');
       const ram = formatForUrl(product.ram || '');
       const storageType = formatForUrl(product.storageType || '');
       const color = formatForUrl(product.color || '');
-
       return `${brand}-${model}-${processor}-${ram}-${storageType}-${color}`;
     }
-    
     if (product.category === 'tv') {
       const diagonal = product.diagonal ? formatForUrl(product.diagonal) : '';
       const resolution = formatForUrl(product.resolution || '');
@@ -331,51 +330,37 @@ const AdminPanel: React.FC = () => {
       
       return `${brand}-${diagonal}-${resolution}-${displayType}-tv${modelSuffix}`;
     }
-
     if (product.category === 'audio') {
       const connectivity = product.connectivity ? formatForUrl(product.connectivity) : '';
       const type = product.subtype ? formatForUrl(product.subtype) : '';
       const color = formatForUrl(product.color);
-      
       const typeMap: { [key: string]: string } = {
         'headphones': 'headphones',
         'earbuds': 'earbuds',
         'speakers': 'speakers',
         'soundbar': 'soundbar'
       };
-
-      const englishType = typeMap[type] || type;
       
+      const englishType = typeMap[type] || type;
       return `${brand}-${model}-${connectivity}-${englishType}-${color}`;
     }
-
     const modelNumber = product.modelNumber ? `-${formatForUrl(product.modelNumber)}` : '';
     const memory = formatForUrl(product.memory)
       .replace('gb', '')
       + 'gb';
     const color = formatForUrl(product.color);
-    
     return `${brand}-${model}${modelNumber}-${memory}-${color}`;
   };
 
   const handleDeleteProduct = async () => {
     if (!productToDelete || !productToDelete.id) return;
-    
     try {
       const productId = productToDelete.id;
-      let categoryToDelete = selectedCategory;
-
-      if (selectedCategory === 'tv-audio') {
-        categoryToDelete = productToDelete.subtype ? 'audio' : 'tv';
-      }
-
-      const productRef = doc(db, categoryToDelete, productId);
+      const productRef = doc(db, selectedCategory, productId);
       await deleteDoc(productRef);
-      
       setProducts(prevProducts => 
         prevProducts.filter(p => p.id !== productToDelete.id)
       );
-      
       setShowDeleteConfirm(false);
       setProductToDelete(null);
       alert('Product successfully deleted!');
@@ -387,16 +372,10 @@ const AdminPanel: React.FC = () => {
 
   const handleEditProduct = (product: ProductForm) => {
     if (!product.id) return;
-    
-    let category = selectedCategory;
-    if (selectedCategory === 'tv-audio') {
-      category = product.subtype ? 'audio' : 'tv';
-    }
-
     setSelectedProduct({
       ...product,
       id: product.id,
-      category
+      category: selectedCategory
     } as ProductForm);
     setIsEditModalOpen(true);
   };
@@ -456,7 +435,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-      
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Model</label>
         <input
@@ -468,7 +446,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-      
       <div>
         <label className="block text-sm font-medium text-gray-700">Model Number</label>
         <input
@@ -479,7 +456,6 @@ const AdminPanel: React.FC = () => {
           placeholder="e.g. XT2341-1"
         />
       </div>
-      
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Memory</label>
         <input
@@ -491,7 +467,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-      
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Color</label>
         <input
@@ -503,7 +478,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
         <input
@@ -517,7 +491,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Description</label>
         <textarea
@@ -528,7 +501,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
         <div className="mt-1 text-sm text-gray-900">
@@ -554,7 +526,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-      
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Модель</label>
         <input
@@ -566,7 +537,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-      
       <div>
         <label className="block text-sm font-medium text-gray-700">Модельный номер</label>
         <input
@@ -577,7 +547,6 @@ const AdminPanel: React.FC = () => {
           placeholder="например: 920-009392"
         />
       </div>
-      
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Тип устройства</label>
         <select
@@ -599,7 +568,6 @@ const AdminPanel: React.FC = () => {
           <option value="Other">Другое</option>
         </select>
       </div>
-      
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Подключение</label>
         <select
@@ -615,7 +583,6 @@ const AdminPanel: React.FC = () => {
           <option value="N/A">Не применимо</option>
         </select>
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700">Совместимость</label>
         <select
@@ -633,7 +600,6 @@ const AdminPanel: React.FC = () => {
           <option value="Multi">Мультиплатформа</option>
         </select>
       </div>
-
       {product.deviceType === 'Mouse' && (
         <div>
           <label className="block text-sm font-medium text-gray-700">DPI</label>
@@ -646,7 +612,6 @@ const AdminPanel: React.FC = () => {
           />
         </div>
       )}
-
       {product.deviceType === 'Keyboard' && (
         <div>
           <label className="block text-sm font-medium text-gray-700">Тип переключателей</label>
@@ -659,7 +624,6 @@ const AdminPanel: React.FC = () => {
           />
         </div>
       )}
-
       {(product.connectivity === 'Wireless' || product.connectivity === 'Bluetooth') && (
         <div>
           <label className="block text-sm font-medium text-gray-700">Время работы от батареи</label>
@@ -672,7 +636,6 @@ const AdminPanel: React.FC = () => {
           />
         </div>
       )}
-
       <div>
         <label className="block text-sm font-medium text-gray-700">Вес</label>
         <input
@@ -683,7 +646,6 @@ const AdminPanel: React.FC = () => {
           placeholder="например: 80 г"
         />
       </div>
-      
       <div className="flex items-center gap-2 mt-2">
         <input
           type="checkbox"
@@ -696,7 +658,6 @@ const AdminPanel: React.FC = () => {
           RGB-подсветка
         </label>
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Версия/Серия</label>
         <input
@@ -708,7 +669,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-      
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Цвет</label>
         <input
@@ -720,7 +680,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Цена (NOK)</label>
         <input
@@ -734,7 +693,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Описание</label>
         <textarea
@@ -745,7 +703,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
         <div className="mt-1 text-sm text-gray-900">
@@ -760,7 +717,7 @@ const AdminPanel: React.FC = () => {
 
   const renderLaptopFields = () => {
     return (
-      <>  
+      <>
         <div>
           <label className="block text-sm font-medium text-gray-700 required">Brand</label>
           <select
@@ -782,7 +739,6 @@ const AdminPanel: React.FC = () => {
             <option value="Other">Other</option>
           </select>
         </div>
-        
         {product.brand === 'Apple' ? (
           <>
             <div>
@@ -799,7 +755,6 @@ const AdminPanel: React.FC = () => {
                 <option value="MacBook">MacBook</option>
               </select>
             </div>
-            
             <div>
               <label className="block text-sm font-medium text-gray-700">Model Number</label>
               <input
@@ -810,7 +765,6 @@ const AdminPanel: React.FC = () => {
                 placeholder="e.g. A2338"
               />
             </div>
-            
             <div>
               <label className="block text-sm font-medium text-gray-700 required">Chip</label>
               <select
@@ -841,7 +795,6 @@ const AdminPanel: React.FC = () => {
                 <option value="Intel Core i9">Intel Core i9</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 required">Model Year</label>
               <select
@@ -859,7 +812,6 @@ const AdminPanel: React.FC = () => {
                 <option value="2020">2020</option>
               </select>
             </div>
-            
             <div>
               <label className="block text-sm font-medium text-gray-700">Graphics Card</label>
               <input
@@ -870,7 +822,6 @@ const AdminPanel: React.FC = () => {
                 placeholder="e.g. Apple Integrated Graphics"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 required">Screen Size</label>
               <select
@@ -886,7 +837,6 @@ const AdminPanel: React.FC = () => {
                 <option value="16 inch">16 inch</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 required">Storage Type</label>
               <select
@@ -904,7 +854,6 @@ const AdminPanel: React.FC = () => {
                 <option value="8TB SSD">8TB SSD</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 required">RAM</label>
               <select
@@ -924,7 +873,6 @@ const AdminPanel: React.FC = () => {
                 <option value="128GB">128GB</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 required">Operating System</label>
               <select
@@ -954,7 +902,6 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-            
             <div>
               <label className="block text-sm font-medium text-gray-700">Model Number</label>
               <input
@@ -965,7 +912,6 @@ const AdminPanel: React.FC = () => {
                 placeholder="e.g. 9500"
               />
             </div>
-            
             <div>
               <label className="block text-sm font-medium text-gray-700 required">Processor</label>
               <input
@@ -977,7 +923,6 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-            
             <div>
               <label className="block text-sm font-medium text-gray-700 required">Graphics Card</label>
               <input
@@ -989,7 +934,6 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 required">Screen Size</label>
               <input
@@ -1001,7 +945,6 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 required">Storage Type</label>
               <input
@@ -1013,7 +956,6 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 required">RAM</label>
               <input
@@ -1025,7 +967,6 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 required">Operating System</label>
               <input
@@ -1039,7 +980,6 @@ const AdminPanel: React.FC = () => {
             </div>
           </>
         )}
-        
         <div>
           <label className="block text-sm font-medium text-gray-700 required">Color</label>
           <input
@@ -1051,7 +991,6 @@ const AdminPanel: React.FC = () => {
             required
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
           <input
@@ -1065,7 +1004,6 @@ const AdminPanel: React.FC = () => {
             required
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 required">Description</label>
           <textarea
@@ -1076,7 +1014,6 @@ const AdminPanel: React.FC = () => {
             required
           />
         </div>
-
         <div className="p-4 mt-4 bg-gray-100 rounded-lg">
           <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
           <div className="mt-1 text-sm text-gray-900">
@@ -1103,7 +1040,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Model</label>
         <input
@@ -1115,7 +1051,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Diagonal</label>
         <select
@@ -1134,7 +1069,6 @@ const AdminPanel: React.FC = () => {
           <option value="85">85"</option>
         </select>
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Resolution</label>
         <select
@@ -1150,7 +1084,6 @@ const AdminPanel: React.FC = () => {
           <option value="8K">8K (7680x4320)</option>
         </select>
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Refresh Rate</label>
         <select
@@ -1166,7 +1099,6 @@ const AdminPanel: React.FC = () => {
           <option value="144Hz">144Hz</option>
         </select>
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Display Type</label>
         <select
@@ -1182,7 +1114,6 @@ const AdminPanel: React.FC = () => {
           <option value="Mini LED">Mini LED</option>
         </select>
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
         <input
@@ -1196,7 +1127,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Description</label>
         <textarea
@@ -1207,7 +1137,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
         <div className="mt-1 text-sm text-gray-900">
@@ -1242,7 +1171,6 @@ const AdminPanel: React.FC = () => {
           <option value="Other">Other</option>
         </select>
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Model</label>
         <input
@@ -1254,7 +1182,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700">Model Number</label>
         <input
@@ -1265,7 +1192,6 @@ const AdminPanel: React.FC = () => {
           placeholder="e.g. JBLT520BTBLK"
         />
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Product Type</label>
         <select
@@ -1281,7 +1207,6 @@ const AdminPanel: React.FC = () => {
           <option value="soundbar">Soundbar</option>
         </select>
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Connectivity</label>
         <select
@@ -1297,7 +1222,6 @@ const AdminPanel: React.FC = () => {
           <option value="Multiple">Multiple</option>
         </select>
       </div>
-
       {(product.connectivity === 'Wireless' || product.connectivity === 'Bluetooth') && (
         <div>
           <label className="block text-sm font-medium text-gray-700">Battery Life</label>
@@ -1310,7 +1234,6 @@ const AdminPanel: React.FC = () => {
           />
         </div>
       )}
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
         <input
@@ -1324,7 +1247,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Description</label>
         <textarea
@@ -1335,7 +1257,6 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
-
       {product.subtype === 'speakers' && (
         <>
           <div>
@@ -1360,7 +1281,6 @@ const AdminPanel: React.FC = () => {
           </div>
         </>
       )}
-
       <div>
         <label className="block text-sm font-medium text-gray-700 required">Color</label>
         <select
@@ -1378,7 +1298,6 @@ const AdminPanel: React.FC = () => {
           <option value="Pink">Pink</option>
         </select>
       </div>
-
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
         <div className="mt-1 text-sm text-gray-900">
@@ -1392,74 +1311,22 @@ const AdminPanel: React.FC = () => {
   );
 
   const renderFields = () => {
-    const commonFields = (
-      <>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Product Name</label>
-          <input
-            type="text"
-            value={product.name}
-            onChange={(e) => setProduct({...product, name: e.target.value})}
-            className="w-full input input-bordered"
-            required
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            value={product.description}
-            onChange={(e) => setProduct({...product, description: e.target.value})}
-            className="w-full textarea textarea-bordered"
-            required
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Price (NOK)</label>
-          <input
-            type="number"
-            value={product.price}
-            onChange={(e) => setProduct({...product, price: Number(e.target.value)})}
-            className="w-full input input-bordered"
-            required
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Brand</label>
-          <input
-            type="text"
-            value={product.brand}
-            onChange={(e) => setProduct({...product, brand: e.target.value})}
-            className="w-full input input-bordered"
-            required
-          />
-        </div>
-      </>
-    );
-
     if (product.category === 'mobile') {
       return renderMobileFields();
     }
-
     if (product.category === 'tv') {
       return renderTVFields();
     }
-
     if (product.category === 'gaming') {
       return renderGamingFields();
     }
-
     if (product.category === 'laptops') {
       return renderLaptopFields();
     }
-
     if (product.category === 'audio') {
       return renderAudioFields();
     }
-
-    return commonFields;
+    return null;
   };
 
   return (
@@ -1490,13 +1357,11 @@ const AdminPanel: React.FC = () => {
           Debug Keywords
         </Link>
       </div>
-
       <div className="flex items-center justify-between mb-4 cursor-pointer" 
            onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}>
         <h2 className="text-xl font-bold">Admin Panel</h2>
         {isPanelCollapsed ? <FaChevronDown /> : <FaChevronUp />}
       </div>
-      
       {!isPanelCollapsed && (
         <>
           <div className="mb-6">
@@ -1509,17 +1374,15 @@ const AdminPanel: React.FC = () => {
                 required
               >
                 <option value="mobile">Mobile Phones</option>
-                <option value="tv">TVs</option>
+                <option value="tv">TV</option>
+                <option value="audio">Audio</option>
                 <option value="gaming">Gaming</option>
                 <option value="laptops">Laptops</option>
-                <option value="audio">Audio</option>
               </select>
             </div>
-
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {renderFields()}
-
                 <div className="lg:col-span-3">
                   <label className="block mb-2 text-sm font-medium text-gray-700">Image</label>
                   <div className="flex gap-2 mb-2">
@@ -1538,7 +1401,6 @@ const AdminPanel: React.FC = () => {
                       Insert URL
                     </button>
                   </div>
-                  
                   {imageInputType === 'file' ? (
                     <input
                       type="file"
@@ -1556,7 +1418,6 @@ const AdminPanel: React.FC = () => {
                     />
                   )}
                 </div>
-                
                 <div className="lg:col-span-3">
                   <button 
                     type="submit" 
@@ -1569,7 +1430,6 @@ const AdminPanel: React.FC = () => {
               </div>
             </form>
           </div>
-
           <div className="mt-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 cursor-pointer"
@@ -1584,13 +1444,13 @@ const AdminPanel: React.FC = () => {
                   className="select select-bordered select-sm"
                 >
                   <option value="mobile">Mobile Phones</option>
-                  <option value="tv-audio">TV & Audio</option>
+                  <option value="tv">TV</option>
+                  <option value="audio">Audio</option>
                   <option value="gaming">Gaming</option>
                   <option value="laptops">Laptops</option>
                 </select>
               )}
             </div>
-
             {!isManageCollapsed && (
               <div className="overflow-x-auto">
                 <table className="table w-full table-sm table-zebra">
@@ -1629,7 +1489,7 @@ const AdminPanel: React.FC = () => {
                               }}
                               className="btn btn-xs btn-error"
                             >
-                              Del
+                              Delete
                             </button>
                           </div>
                         </td>
@@ -1640,7 +1500,6 @@ const AdminPanel: React.FC = () => {
               </div>
             )}
           </div>
-
           {showDeleteConfirm && productToDelete && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
               <div className="w-full max-w-md p-6 bg-white rounded-lg">
@@ -1650,7 +1509,7 @@ const AdminPanel: React.FC = () => {
                 </p>
                 <div className="flex justify-end gap-2">
                   <button 
-                    className="btn btn-ghost"
+                    className="btn btn-ghost" 
                     onClick={() => {
                       setShowDeleteConfirm(false);
                       setProductToDelete(null);
@@ -1668,7 +1527,6 @@ const AdminPanel: React.FC = () => {
               </div>
             </div>
           )}
-
           {selectedProduct && selectedProduct.id && (
             <EditProductModal
               product={{...selectedProduct, id: selectedProduct.id}}
