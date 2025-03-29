@@ -109,15 +109,9 @@ const GamingPage: React.FC = () => {
   const handleFilterChange = (filterKey: string, values: string[] | [number, number]) => {
     const newActiveFilters = { ...activeFilters };
     
-    if (filterKey === 'price' && Array.isArray(values) && values.length === 2) {
-      newActiveFilters[filterKey] = values as [number, number];
-    } else if (Array.isArray(values)) {
-      if (values.length === 0) {
-        delete newActiveFilters[filterKey];
-      } else {
-        newActiveFilters[filterKey] = new Set(values);
-      }
-    }
+    newActiveFilters[filterKey] = Array.isArray(values) && values.length === 2 && typeof values[0] === 'number'
+      ? values as [number, number]
+      : new Set(values.map(v => String(v)));
     
     setActiveFilters(newActiveFilters);
   };

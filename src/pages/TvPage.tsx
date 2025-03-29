@@ -4,7 +4,7 @@ import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
-import { extractFilters, applyFilters } from '../utils/filterUtils';
+import { applyFilters } from '../utils/filterUtils';
 
 interface Product {
   id: string;

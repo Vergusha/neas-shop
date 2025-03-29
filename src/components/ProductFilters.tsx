@@ -38,7 +38,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   const [maxPriceInput, setMaxPriceInput] = useState<string>('10000');
   const initializedRef = useRef(false);
 
-  const debouncedUpdate = useRef<NodeJS.Timeout>();
+  const debouncedUpdate = useRef<ReturnType<typeof setTimeout>>(null);
 
   const debouncedFilterChange = useCallback((values: [number, number]) => {
     if (debouncedUpdate.current) {

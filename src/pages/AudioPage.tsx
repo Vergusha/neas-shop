@@ -5,10 +5,16 @@ import ProductCard from '../components/ProductCard';
 import ProductFilters from '../components/ProductFilters';
 import { Product } from '../types/product';
 
+// Remove local FilterOption interface and import it from ProductFilters
+type FilterValue = {
+  value: string | number;
+  count: number;
+};
+
 interface FilterOption {
   name: string;
   key?: string;
-  values: string[] | number[];
+  values: FilterValue[] | string[];
   type?: 'checkbox' | 'range';
   min?: number;
   max?: number;
@@ -56,27 +62,45 @@ const AudioPage: React.FC = () => {
   }, [activeFilters, products]);
 
   const handleFilterChange = (filterId: string, values: string[] | [number, number]) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      [filterId]: Array.isArray(values) && typeof values[0] === 'number' ? values : new Set(values),
-    }));
+    setActiveFilters(prev => {
+      const newFilters = { ...prev };
+      if (Array.isArray(values) && values.length === 2 && typeof values[0] === 'number') {
+        newFilters[filterId] = values as [number, number];
+      } else {
+        newFilters[filterId] = new Set(values.map(v => String(v)));
+      }
+      return newFilters;
+    });
   };
 
   const createFilters = (products: Product[]): FilterOption[] => {
+    const getUniqueValues = (key: keyof Product): FilterValue[] => {
+      const counts: Record<string, number> = {};
+      products.forEach(p => {
+        const value = p[key];
+        if (typeof value === 'string' || typeof value === 'number') {
+          counts[value] = (counts[value] || 0) + 1;
+        }
+      });
+      return Object.entries(counts)
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => String(a.value).localeCompare(String(b.value)));
+    };
+
     const priceFilter: FilterOption = {
       name: 'Price',
       key: 'price',
       type: 'range',
       min: Math.min(...products.map(p => p.price)),
       max: Math.max(...products.map(p => p.price)),
-      values: [],
+      values: []
     };
 
     const brandFilter: FilterOption = {
       name: 'Brand',
       key: 'brand',
       type: 'checkbox',
-      values: Array.from(new Set(products.map(p => p.brand))),
+      values: getUniqueValues('brand')
     };
 
     return [priceFilter, brandFilter];
