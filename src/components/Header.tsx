@@ -321,25 +321,26 @@ const Header: React.FC = () => {
     <header className="bg-[#003D2D] shadow-md relative">
       <div className="container py-2 sm:py-4">
         <div className="flex items-center justify-between gap-4">
-          {/* Logo with responsive switching */}
-          <a href="/" className="shrink-0 block transition-all duration-500 ease-in-out origin-center transform hover:scale-110">
-            <img
-              src={logo}
-              alt="Logo"
-              className="hidden sm:block w-auto h-6 sm:h-8 md:h-10"
-            />
-            <img
-              src="/symbol.svg"
-              alt="Logo"
-              className="block sm:hidden w-auto h-8"
-            />
-          </a>
-          
           {/* Main content wrapper */}
-          <div className="flex-1 flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex items-center gap-4 flex-1">
+            {/* Logo with responsive switching */}
+            <a href="/" className="shrink-0 block transition-all duration-500 ease-in-out origin-center transform hover:scale-110">
+              <img
+                src={logo}
+                alt="Logo"
+                className="hidden sm:block w-auto h-6 sm:h-8 md:h-10"
+              />
+              <img
+                src="/symbol.svg"
+                alt="Logo"
+                className="block sm:hidden w-auto h-8"
+              />
+            </a>
+
             {/* Search bar */}
             <div className="relative w-full sm:max-w-[400px] md:max-w-[500px] lg:max-w-[600px]">
-              <form onSubmit={handleSearch} className="relative w-full">
+              <form onSubmit={handleSearch} className="relative w-full flex items-center">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -356,9 +357,8 @@ const Header: React.FC = () => {
                       setShowResults(true);
                     }
                   }}
-                  className="w-full px-4 py-2 pl-10 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <Search className="absolute left-3 top-2.5 text-gray-500" size={20} />
               </form>
               {showResults && searchResults.length > 0 && (
                 <div 
@@ -374,146 +374,146 @@ const Header: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Icons section */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Favorites button */}
+            <button 
+              onClick={handleFavoriteClick} 
+              className={`btn btn-ghost btn-circle transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
+              title={!user ? 'Please login to use favorites' : 'Favorites'}
+            >
+              <Heart size={32} className="text-white" />
+            </button>
             
-            {/* Icons section */}
-            <div className="flex items-center gap-2 sm:gap-4 sm:ml-auto">
-              {/* Favorites button */}
+            {/* Cart button with dropdown */}
+            <div className="relative pt-2">
               <button 
-                onClick={handleFavoriteClick} 
-                className={`btn btn-ghost btn-circle transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
-                title={!user ? 'Please login to use favorites' : 'Favorites'}
+                onClick={toggleCartPreview} 
+                className={`btn btn-ghost btn-circle relative transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
+                title={!user ? 'Please login to use cart' : 'Cart'}
               >
-                <Heart size={32} className="text-white" />
+                <ShoppingCart size={32} className="text-white" />
+                {user && cartItemCount > 0 && (
+                  <div className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full -top-2 -right-2">
+                    {cartItemCount}
+                  </div>
+                )}
               </button>
               
-              {/* Cart button with dropdown */}
-              <div className="relative pt-2">
-                <button 
-                  onClick={toggleCartPreview} 
-                  className={`btn btn-ghost btn-circle relative transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
-                  title={!user ? 'Please login to use cart' : 'Cart'}
-                >
-                  <ShoppingCart size={32} className="text-white" />
-                  {user && cartItemCount > 0 && (
-                    <div className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full -top-2 -right-2">
-                      {cartItemCount}
-                    </div>
-                  )}
-                </button>
-                
-                {/* Cart preview dropdown */}
-                {user && cartOpen && cartItemCount > 0 && (
-                  <div className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80">
-                    <div className="p-4 border-b">
-                      <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
-                    </div>
-                    <div className="p-2 overflow-y-auto max-h-60">
-                      {getCartItems().map((item: any, index: number) => (
-                        <div key={index} className="flex items-center p-2 border-b hover:bg-gray-100">
-                          <img src={item.image} alt={item.name} className="object-contain w-12 h-12" />
-                          <div className="flex-1 ml-2">
-                            <p className="text-sm font-medium truncate">{item.name}</p>
-                            <p className="text-xs text-gray-500">{item.quantity} × {item.price} NOK</p>
-                          </div>
+              {/* Cart preview dropdown */}
+              {user && cartOpen && cartItemCount > 0 && (
+                <div className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80">
+                  <div className="p-4 border-b">
+                    <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
+                  </div>
+                  <div className="p-2 overflow-y-auto max-h-60">
+                    {getCartItems().map((item: any, index: number) => (
+                      <div key={index} className="flex items-center p-2 border-b hover:bg-gray-100">
+                        <img src={item.image} alt={item.name} className="object-contain w-12 h-12" />
+                        <div className="flex-1 ml-2">
+                          <p className="text-sm font-medium truncate">{item.name}</p>
+                          <p className="text-xs text-gray-500">{item.quantity} × {item.price} NOK</p>
                         </div>
-                      ))}
-                      
-                      {cartItemCount > 3 && (
-                        <p className="mt-2 text-xs text-center text-gray-500">
-                          and {cartItemCount - 3} more items...
-                        </p>
-                      )}
-                    </div>
-                    <div className="p-3 bg-gray-50">
-                      <button 
-                        onClick={() => {
-                          setCartOpen(false);
-                          handleCartClick();
-                        }}
-                        className="w-full btn btn-primary btn-sm"
-                      >
-                        View Cart
-                      </button>
-                    </div>
+                      </div>
+                    ))}
+                    
+                    {cartItemCount > 3 && (
+                      <p className="mt-2 text-xs text-center text-gray-500">
+                        and {cartItemCount - 3} more items...
+                      </p>
+                    )}
                   </div>
-                )}
-              </div>
-              
-              {/* User button with dropdown */}
-              <div className="relative">
-                <button 
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
-                >
-                  {userAvatar}
-                </button>
+                  <div className="p-3 bg-gray-50">
+                    <button 
+                      onClick={() => {
+                        setCartOpen(false);
+                        handleCartClick();
+                      }}
+                      className="w-full btn btn-primary btn-sm"
+                    >
+                      View Cart
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* User button with dropdown */}
+            <div className="relative">
+              <button 
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
+              >
+                {userAvatar}
+              </button>
 
-                {/* User menu dropdown */}
-                {userMenuOpen && (
-                  <div className="absolute right-0 z-20 w-48 mt-2 bg-white rounded-md shadow-xl">
-                    <div className="py-1">
-                      {user ? (
-                        <>
-                          <div className="px-4 py-3 border-b">
-                            <p className="text-sm font-medium text-gray-900">
-                              {user.displayName || 'User'}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {user.email}
-                            </p>
-                          </div>
-                          <a
-                            href="/profile"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setUserMenuOpen(false);
-                              navigate('/profile');
-                            }}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Profile
-                          </a>
-                          <button
-                            onClick={async () => {
-                              await handleSignOut();
-                              setUserMenuOpen(false);
-                              navigate('/');
-                            }}
-                            className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-100"
-                          >
-                            Sign Out
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <a
-                            href="/login"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setUserMenuOpen(false);
-                              navigate('/login');
-                            }}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Sign In
-                          </a>
-                          <a
-                            href="/register"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setUserMenuOpen(false);
-                              navigate('/register');
-                            }}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Register
-                          </a>
-                        </>
-                      )}
-                    </div>
+              {/* User menu dropdown */}
+              {userMenuOpen && (
+                <div className="absolute right-0 z-20 w-48 mt-2 bg-white rounded-md shadow-xl">
+                  <div className="py-1">
+                    {user ? (
+                      <>
+                        <div className="px-4 py-3 border-b">
+                          <p className="text-sm font-medium text-gray-900">
+                            {user.displayName || 'User'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {user.email}
+                          </p>
+                        </div>
+                        <a
+                          href="/profile"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setUserMenuOpen(false);
+                            navigate('/profile');
+                          }}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Profile
+                        </a>
+                        <button
+                          onClick={async () => {
+                            await handleSignOut();
+                            setUserMenuOpen(false);
+                            navigate('/');
+                          }}
+                          className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-100"
+                        >
+                          Sign Out
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <a
+                          href="/login"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setUserMenuOpen(false);
+                            navigate('/login');
+                          }}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Sign In
+                        </a>
+                        <a
+                          href="/register"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setUserMenuOpen(false);
+                            navigate('/register');
+                          }}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Register
+                        </a>
+                      </>
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
