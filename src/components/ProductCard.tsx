@@ -347,14 +347,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   return (
     <Link to={`/product/${product.id}`} className="block h-full">
       <div className="product-card-wrapper">
-        <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card h-[420px] flex flex-col">
-          <figure className="relative pt-4 px-6 h-48">
+        <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card h-[420px] sm:h-[450px] lg:h-[480px] flex flex-col">
+          <figure className="relative pt-4 px-3 sm:px-6 h-40 sm:h-48 lg:h-56">
             <ProductImageCarousel 
               images={getProductImages()} 
               productName={product.name}
               onClick={handleClick}
             />
-            <div className="absolute top-6 left-6 flex gap-2 card-actions" onClick={e => e.stopPropagation()}> {/* Add onClick handler here */}
+            <div className="absolute top-6 right-3 sm:right-6 flex flex-col gap-2">
               <button
                 onClick={handleAddToCart}
                 className={`btn btn-circle btn-primary ${!user ? 'opacity-50' : ''} ${isInCart ? 'btn-success' : ''} ${cartButtonFlash ? 'cart-flash' : ''}`}
@@ -372,7 +372,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
             </div>
           </figure>
           
-          <div className="card-body p-6 flex flex-col flex-1">
+          <div className="card-body p-4 sm:p-6 flex flex-col flex-1">
             <div className="h-6 flex items-center gap-2">
               <Rating value={product.rating || 0} size="sm" />
               <span className="text-xs text-gray-500">
@@ -382,16 +382,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
               </span>
             </div>
             
-            <div className="min-h-[2.5rem]"> 
+            <div className="min-h-[2.5rem] text-sm sm:text-base"> 
               {formatProductDetails(product)}
             </div>
             
-            <div className="flex-1 overflow-hidden"> {/* Изменили класс */}
+            <div className="flex-1 overflow-hidden text-xs sm:text-sm"> 
               {formatDescription(product.description)}
             </div>
             
-            <div className="mt-2"> {/* Изменили mt-auto на mt-2 */}
-              <span className="text-xl font-bold">
+            <div className="mt-2 text-lg sm:text-xl"> 
+              <span className="font-bold">
                 {typeof product.price === 'number' 
                   ? product.price.toFixed(2) 
                   : Number(product.price).toFixed(2)} NOK

@@ -44,3 +44,58 @@ body {
     transform: scale(1);
   }
 }
+
+/* Responsive base styles */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply antialiased text-base;
+    text-size-adjust: 100%;
+  }
+  
+  img {
+    @apply max-w-full h-auto;
+  }
+}
+
+/* Responsive layout containers */
+.container {
+  @apply w-full mx-auto px-4;
+  max-width: min(100% - 2rem, 1440px);
+}
+
+@screen sm {
+  .container {
+    @apply px-6;
+  }
+}
+
+@screen lg {
+  .container {
+    @apply px-8;
+  }
+}
+
+/* Grid layouts */
+.responsive-grid {
+  @apply grid gap-4;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+@screen md {
+  .responsive-grid {
+    @apply gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+
+@screen xl {
+  .responsive-grid {
+    @apply gap-8;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+}

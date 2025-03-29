@@ -41,12 +41,34 @@ const config: Config = {
       },
       maxWidth: {
         'card-w': 'calc(100% - 2.5rem)', // Максимальная ширина контента карточки
+        'content': '1440px',
+        'mobile': '600px',
+        'tablet': '960px',
       },
       transform: {
         'logo-scale': 'scale(1.1)',
       },
       transition: {
         'logo': 'transform 0.3s ease-in-out',
+      },
+      screens: {
+        'xs': '475px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
+      },
+      padding: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+      },
+      minHeight: {
+        'screen-safe': ['100vh', '100dvh'],
+      },
+      gridTemplateColumns: {
+        'auto-fit': 'repeat(auto-fit, minmax(280px, 1fr))',
+        'auto-fill': 'repeat(auto-fill, minmax(280px, 1fr))',
       }
     },
   },

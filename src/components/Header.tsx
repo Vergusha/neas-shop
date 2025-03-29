@@ -319,21 +319,26 @@ const Header: React.FC = () => {
 
   return (
     <header className="bg-[#003D2D] shadow-md relative">
-      <div className="container py-2 mx-auto">
-        <div className="flex items-center justify-between">
-          {/* Logo - Left aligned */}
-          <a href="/" className="block transition-all duration-500 ease-in-out origin-center transform hover:scale-110">
+      <div className="container py-2 sm:py-4">
+        <div className="flex items-center justify-between gap-4">
+          {/* Logo with responsive switching */}
+          <a href="/" className="shrink-0 block transition-all duration-500 ease-in-out origin-center transform hover:scale-110">
             <img
               src={logo}
               alt="Logo"
-              className="w-auto h-8 md:h-10"
+              className="hidden sm:block w-auto h-6 sm:h-8 md:h-10"
+            />
+            <img
+              src="/symbol.svg"
+              alt="Logo"
+              className="block sm:hidden w-auto h-8"
             />
           </a>
           
-          {/* Right side with search and icons */}
-          <div className="flex items-center gap-3">
+          {/* Main content wrapper */}
+          <div className="flex-1 flex flex-col sm:flex-row items-center gap-4">
             {/* Search bar */}
-            <div className="relative w-64 md:w-80">
+            <div className="relative w-full sm:max-w-[400px] md:max-w-[500px] lg:max-w-[600px]">
               <form onSubmit={handleSearch} className="relative w-full">
                 <input
                   ref={searchInputRef}
@@ -370,8 +375,8 @@ const Header: React.FC = () => {
               )}
             </div>
             
-            {/* Icon buttons in a row - Adjusted for consistent alignment */}
-            <div className="flex items-center gap-2">
+            {/* Icons section */}
+            <div className="flex items-center gap-2 sm:gap-4 sm:ml-auto">
               {/* Favorites button */}
               <button 
                 onClick={handleFavoriteClick} 
@@ -382,7 +387,7 @@ const Header: React.FC = () => {
               </button>
               
               {/* Cart button with dropdown */}
-              <div className="relative pt-2"> {/* Added padding-top here */}
+              <div className="relative pt-2">
                 <button 
                   onClick={toggleCartPreview} 
                   className={`btn btn-ghost btn-circle relative transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
