@@ -213,6 +213,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
       return <span className="font-medium">{macBookName}</span>;
     }
 
+    // Special formatting for Audio products
+    if (product.collection === 'audio') {
+      const audioName = formatAudioName(product);
+      return <span className="font-medium">{audioName}</span>;
+    }
+
     const details = [];
     
     if (product.brand) details.push(

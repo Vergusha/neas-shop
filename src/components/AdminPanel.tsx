@@ -9,6 +9,52 @@ import { updatePopularProducts } from '../utils/updatePopularProducts';
 import { updateGamingKeywords } from '../utils/updateGamingKeywords';
 import { Link } from 'react-router-dom';
 
+type ColumnConfig = {
+  header: string;
+  key: string;
+  width?: string;
+  render?: (product: any) => React.ReactNode;
+};
+
+const commonColumns: ColumnConfig[] = [
+  { header: 'Image', key: 'image', width: 'w-16', render: (product) => (
+    <img src={product.image} alt={product.name} className="object-contain w-12 h-12" />
+  )},
+  { header: 'Brand', key: 'brand' },
+  { header: 'Price', key: 'price', render: (product) => `${product.price} NOK` },
+];
+
+const categoryColumns: Record<string, ColumnConfig[]> = {
+  mobile: [
+    ...commonColumns,
+    { header: 'Model', key: 'model' },
+    { header: 'Memory', key: 'memory' },
+    { header: 'Color', key: 'color' },
+  ],
+  laptops: [
+    ...commonColumns,
+    { header: 'Model', key: 'model' },
+    { header: 'Processor', key: 'processor' },
+    { header: 'RAM', key: 'ram' },
+    { header: 'Storage', key: 'storageType' },
+    { header: 'Color', key: 'color' },
+  ],
+  gaming: [
+    ...commonColumns,
+    { header: 'Model', key: 'model' },
+    { header: 'Type', key: 'deviceType' },
+    { header: 'Connectivity', key: 'connectivity' },
+    { header: 'Color', key: 'color' },
+  ],
+  'tv-audio': [
+    ...commonColumns,
+    { header: 'Model', key: 'model' },
+    { header: 'Type', key: 'subtype' },
+    { header: 'Connectivity', key: 'connectivity' },
+    { header: 'Color', key: 'color' },
+  ],
+};
+
 const AdminPanel: React.FC = () => {
   const [product, setProduct] = useState<NewProductForm>({
     name: '',
@@ -45,7 +91,6 @@ const AdminPanel: React.FC = () => {
     const fetchProducts = async () => {
       try {
         if (selectedCategory === 'tv-audio') {
-          // Fetch both TV and Audio collections
           const [tvSnapshot, audioSnapshot] = await Promise.all([
             getDocs(collection(db, 'tv')),
             getDocs(collection(db, 'audio'))
@@ -320,9 +365,7 @@ const AdminPanel: React.FC = () => {
       const productId = productToDelete.id;
       let categoryToDelete = selectedCategory;
 
-      // Определяем правильную коллекцию для удаления
       if (selectedCategory === 'tv-audio') {
-        // Проверяем тип продукта по его свойствам
         categoryToDelete = productToDelete.subtype ? 'audio' : 'tv';
       }
 
@@ -347,7 +390,6 @@ const AdminPanel: React.FC = () => {
     
     let category = selectedCategory;
     if (selectedCategory === 'tv-audio') {
-      // Определяем правильную категорию по типу продукта
       category = product.subtype ? 'audio' : 'tv';
     }
 
@@ -469,7 +511,7 @@ const AdminPanel: React.FC = () => {
           value={product.price}
           onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
           className="w-full input input-bordered"
-          placeholder="e.g. 4999"
+          placeholder="e.g. 12999"
           min="0"
           step="1"
           required
@@ -716,335 +758,337 @@ const AdminPanel: React.FC = () => {
     </>
   );
 
-  const renderLaptopFields = () => (
-    <>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 required">Brand</label>
-        <select
-          value={product.brand}
-          onChange={(e) => setProduct({...product, brand: e.target.value})}
-          className="w-full select select-bordered"
-          required
-        >
-          <option value="">Select Brand</option>
-          <option value="Apple">Apple (MacBook)</option>
-          <option value="Dell">Dell</option>
-          <option value="HP">HP</option>
-          <option value="Lenovo">Lenovo</option>
-          <option value="Asus">Asus</option>
-          <option value="Acer">Acer</option>
-          <option value="MSI">MSI</option>
-          <option value="Microsoft">Microsoft</option>
-          <option value="Samsung">Samsung</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-      
-      {product.brand === 'Apple' ? (
-        <>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Model</label>
-            <select
-              value={product.model}
-              onChange={(e) => setProduct({...product, model: e.target.value})}
-              className="w-full select select-bordered"
-              required
-            >
-              <option value="">Select Model</option>
-              <option value="MacBook Air">MacBook Air</option>
-              <option value="MacBook Pro">MacBook Pro</option>
-              <option value="MacBook">MacBook</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Model Number</label>
-            <input
-              type="text"
-              value={product.modelNumber}
-              onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
-              className="w-full input input-bordered"
-              placeholder="e.g. A2338"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Chip</label>
-            <select
-              value={product.processor || ''}
-              onChange={(e) => setProduct({...product, processor: e.target.value})}
-              className="w-full select select-bordered"
-              required
-            >
-              <option value="">Select Chip</option>
-              <option value="Apple M1">Apple M1</option>
-              <option value="Apple M1 Pro">Apple M1 Pro</option>
-              <option value="Apple M1 Max">Apple M1 Max</option>
-              <option value="Apple M1 Ultra">Apple M1 Ultra</option>
-              <option value="Apple M2">Apple M2</option>
-              <option value="Apple M2 Pro">Apple M2 Pro</option>
-              <option value="Apple M2 Max">Apple M2 Max</option>
-              <option value="Apple M2 Ultra">Apple M2 Ultra</option>
-              <option value="Apple M3">Apple M3</option>
-              <option value="Apple M3 Pro">Apple M3 Pro</option>
-              <option value="Apple M3 Max">Apple M3 Max</option>
-              <option value="Apple M3 Ultra">Apple M3 Ultra</option>
-              <option value="Apple M4">Apple M4</option>
-              <option value="Apple M4 Pro">Apple M4 Pro</option>
-              <option value="Apple M4 Max">Apple M4 Max</option>
-              <option value="Apple M4 Ultra">Apple M4 Ultra</option>
-              <option value="Intel Core i5">Intel Core i5</option>
-              <option value="Intel Core i7">Intel Core i7</option>
-              <option value="Intel Core i9">Intel Core i9</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Model Year</label>
-            <select
-              value={product.modelNumber || ''}
-              onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
-              className="w-full select select-bordered"
-              required
-            >
-              <option value="">Select Year</option>
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
-              <option value="2022">2022</option>
-              <option value="2021">2021</option>
-              <option value="2020">2020</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Graphics Card</label>
-            <input
-              type="text"
-              value={product.graphicsCard}
-              onChange={(e) => setProduct({...product, graphicsCard: e.target.value})}
-              className="w-full input input-bordered"
-              placeholder="e.g. Apple Integrated Graphics"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Screen Size</label>
-            <select
-              value={product.screenSize || ''}
-              onChange={(e) => setProduct({...product, screenSize: e.target.value})}
-              className="w-full select select-bordered"
-              required
-            >
-              <option value="">Select Screen Size</option>
-              <option value="13 inch">13 inch</option>
-              <option value="14 inch">14 inch</option>
-              <option value="15 inch">15 inch</option>
-              <option value="16 inch">16 inch</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Storage Type</label>
-            <select
-              value={product.storageType || ''}
-              onChange={(e) => setProduct({...product, storageType: e.target.value})}
-              className="w-full select select-bordered"
-              required
-            >
-              <option value="">Select Storage</option>
-              <option value="256GB SSD">256GB SSD</option>
-              <option value="512GB SSD">512GB SSD</option>
-              <option value="1TB SSD">1TB SSD</option>
-              <option value="2TB SSD">2TB SSD</option>
-              <option value="4TB SSD">4TB SSD</option>
-              <option value="8TB SSD">8TB SSD</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">RAM</label>
-            <select
-              value={product.ram || ''}
-              onChange={(e) => setProduct({...product, ram: e.target.value})}
-              className="w-full select select-bordered"
-              required
-            >
-              <option value="">Select RAM</option>
-              <option value="8GB">8GB</option>
-              <option value="16GB">16GB</option>
-              <option value="24GB">24GB</option>
-              <option value="32GB">32GB</option>
-              <option value="48GB">48GB</option>
-              <option value="64GB">64GB</option>
-              <option value="96GB">96GB</option>
-              <option value="128GB">128GB</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Operating System</label>
-            <select
-              value={product.operatingSystem || ''}
-              onChange={(e) => setProduct({...product, operatingSystem: e.target.value})}
-              className="w-full select select-bordered"
-              required
-            >
-              <option value="">Select OS</option>
-              <option value="macOS Monterey">macOS Monterey</option>
-              <option value="macOS Ventura">macOS Ventura</option>
-              <option value="macOS Sonoma">macOS Sonoma</option>
-              <option value="macOS Sequoia">macOS Sequoia</option>
-            </select>
-          </div>
-        </>
-      ) : (
-        <>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Model</label>
-            <input
-              type="text"
-              value={product.model}
-              onChange={(e) => setProduct({...product, model: e.target.value})}
-              className="w-full input input-bordered"
-              placeholder="e.g. XPS 15"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Model Number</label>
-            <input
-              type="text"
-              value={product.modelNumber}
-              onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
-              className="w-full input input-bordered"
-              placeholder="e.g. 9500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Processor</label>
-            <input
-              type="text"
-              value={product.processor}
-              onChange={(e) => setProduct({...product, processor: e.target.value})}
-              className="w-full input input-bordered"
-              placeholder="e.g. Intel Core i7-11800H"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Graphics Card</label>
-            <input
-              type="text"
-              value={product.graphicsCard}
-              onChange={(e) => setProduct({...product, graphicsCard: e.target.value})}
-              className="w-full input input-bordered"
-              placeholder="e.g. NVIDIA RTX 3060"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Screen Size</label>
-            <input
-              type="text"
-              value={product.screenSize}
-              onChange={(e) => setProduct({...product, screenSize: e.target.value})}
-              className="w-full input input-bordered"
-              placeholder="e.g. 15.6 inch"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Storage Type</label>
-            <input
-              type="text"
-              value={product.storageType}
-              onChange={(e) => setProduct({...product, storageType: e.target.value})}
-              className="w-full input input-bordered"
-              placeholder="e.g. 512GB SSD"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">RAM</label>
-            <input
-              type="text"
-              value={product.ram}
-              onChange={(e) => setProduct({...product, ram: e.target.value})}
-              className="w-full input input-bordered"
-              placeholder="e.g. 16GB DDR4"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 required">Operating System</label>
-            <input
-              type="text"
-              value={product.operatingSystem}
-              onChange={(e) => setProduct({...product, operatingSystem: e.target.value})}
-              className="w-full input input-bordered"
-              placeholder="e.g. Windows 11 Home"
-              required
-            />
-          </div>
-        </>
-      )}
-      
-      <div>
-        <label className="block text-sm font-medium text-gray-700 required">Color</label>
-        <input
-          type="text"
-          value={product.color}
-          onChange={(e) => setProduct({...product, color: e.target.value})}
-          className="w-full input input-bordered"
-          placeholder="e.g. Silver"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
-        <input
-          type="number"
-          value={product.price}
-          onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
-          className="w-full input input-bordered"
-          placeholder="e.g. 12999"
-          min="0"
-          step="1"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 required">Description</label>
-        <textarea
-          value={product.description}
-          onChange={(e) => setProduct({...product, description: e.target.value})}
-          className="w-full textarea textarea-bordered"
-          placeholder="Product description"
-          required
-        />
-      </div>
-
-      <div className="p-4 mt-4 bg-gray-100 rounded-lg">
-        <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
-        <div className="mt-1 text-sm text-gray-900">
-          {generateProductId(product) || 'Example: dell-xps15-intelcorei7-16gb-512gbssd-silver'}
+  const renderLaptopFields = () => {
+    return (
+      <>  
+        <div>
+          <label className="block text-sm font-medium text-gray-700 required">Brand</label>
+          <select
+            value={product.brand}
+            onChange={(e) => setProduct({...product, brand: e.target.value})}
+            className="w-full select select-bordered"
+            required
+          >
+            <option value="">Select Brand</option>
+            <option value="Apple">Apple (MacBook)</option>
+            <option value="Dell">Dell</option>
+            <option value="HP">HP</option>
+            <option value="Lenovo">Lenovo</option>
+            <option value="Asus">Asus</option>
+            <option value="Acer">Acer</option>
+            <option value="MSI">MSI</option>
+            <option value="Microsoft">Microsoft</option>
+            <option value="Samsung">Samsung</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
-        <div className="mt-2 text-xs text-gray-500">
-          Format: brand-model-processor-ram-storagetype-color
+        
+        {product.brand === 'Apple' ? (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Model</label>
+              <select
+                value={product.model}
+                onChange={(e) => setProduct({...product, model: e.target.value})}
+                className="w-full select select-bordered"
+                required
+              >
+                <option value="">Select Model</option>
+                <option value="MacBook Air">MacBook Air</option>
+                <option value="MacBook Pro">MacBook Pro</option>
+                <option value="MacBook">MacBook</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Model Number</label>
+              <input
+                type="text"
+                value={product.modelNumber}
+                onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
+                className="w-full input input-bordered"
+                placeholder="e.g. A2338"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Chip</label>
+              <select
+                value={product.processor || ''}
+                onChange={(e) => setProduct({...product, processor: e.target.value})}
+                className="w-full select select-bordered"
+                required
+              >
+                <option value="">Select Chip</option>
+                <option value="Apple M1">Apple M1</option>
+                <option value="Apple M1 Pro">Apple M1 Pro</option>
+                <option value="Apple M1 Max">Apple M1 Max</option>
+                <option value="Apple M1 Ultra">Apple M1 Ultra</option>
+                <option value="Apple M2">Apple M2</option>
+                <option value="Apple M2 Pro">Apple M2 Pro</option>
+                <option value="Apple M2 Max">Apple M2 Max</option>
+                <option value="Apple M2 Ultra">Apple M2 Ultra</option>
+                <option value="Apple M3">Apple M3</option>
+                <option value="Apple M3 Pro">Apple M3 Pro</option>
+                <option value="Apple M3 Max">Apple M3 Max</option>
+                <option value="Apple M3 Ultra">Apple M3 Ultra</option>
+                <option value="Apple M4">Apple M4</option>
+                <option value="Apple M4 Pro">Apple M4 Pro</option>
+                <option value="Apple M4 Max">Apple M4 Max</option>
+                <option value="Apple M4 Ultra">Apple M4 Ultra</option>
+                <option value="Intel Core i5">Intel Core i5</option>
+                <option value="Intel Core i7">Intel Core i7</option>
+                <option value="Intel Core i9">Intel Core i9</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Model Year</label>
+              <select
+                value={product.modelNumber || ''}
+                onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
+                className="w-full select select-bordered"
+                required
+              >
+                <option value="">Select Year</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+                <option value="2021">2021</option>
+                <option value="2020">2020</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Graphics Card</label>
+              <input
+                type="text"
+                value={product.graphicsCard}
+                onChange={(e) => setProduct({...product, graphicsCard: e.target.value})}
+                className="w-full input input-bordered"
+                placeholder="e.g. Apple Integrated Graphics"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Screen Size</label>
+              <select
+                value={product.screenSize || ''}
+                onChange={(e) => setProduct({...product, screenSize: e.target.value})}
+                className="w-full select select-bordered"
+                required
+              >
+                <option value="">Select Screen Size</option>
+                <option value="13 inch">13 inch</option>
+                <option value="14 inch">14 inch</option>
+                <option value="15 inch">15 inch</option>
+                <option value="16 inch">16 inch</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Storage Type</label>
+              <select
+                value={product.storageType || ''}
+                onChange={(e) => setProduct({...product, storageType: e.target.value})}
+                className="w-full select select-bordered"
+                required
+              >
+                <option value="">Select Storage</option>
+                <option value="256GB SSD">256GB SSD</option>
+                <option value="512GB SSD">512GB SSD</option>
+                <option value="1TB SSD">1TB SSD</option>
+                <option value="2TB SSD">2TB SSD</option>
+                <option value="4TB SSD">4TB SSD</option>
+                <option value="8TB SSD">8TB SSD</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">RAM</label>
+              <select
+                value={product.ram || ''}
+                onChange={(e) => setProduct({...product, ram: e.target.value})}
+                className="w-full select select-bordered"
+                required
+              >
+                <option value="">Select RAM</option>
+                <option value="8GB">8GB</option>
+                <option value="16GB">16GB</option>
+                <option value="24GB">24GB</option>
+                <option value="32GB">32GB</option>
+                <option value="48GB">48GB</option>
+                <option value="64GB">64GB</option>
+                <option value="96GB">96GB</option>
+                <option value="128GB">128GB</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Operating System</label>
+              <select
+                value={product.operatingSystem || ''}
+                onChange={(e) => setProduct({...product, operatingSystem: e.target.value})}
+                className="w-full select select-bordered"
+                required
+              >
+                <option value="">Select OS</option>
+                <option value="macOS Monterey">macOS Monterey</option>
+                <option value="macOS Ventura">macOS Ventura</option>
+                <option value="macOS Sonoma">macOS Sonoma</option>
+                <option value="macOS Sequoia">macOS Sequoia</option>
+              </select>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Model</label>
+              <input
+                type="text"
+                value={product.model}
+                onChange={(e) => setProduct({...product, model: e.target.value})}
+                className="w-full input input-bordered"
+                placeholder="e.g. XPS 15"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Model Number</label>
+              <input
+                type="text"
+                value={product.modelNumber}
+                onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
+                className="w-full input input-bordered"
+                placeholder="e.g. 9500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Processor</label>
+              <input
+                type="text"
+                value={product.processor}
+                onChange={(e) => setProduct({...product, processor: e.target.value})}
+                className="w-full input input-bordered"
+                placeholder="e.g. Intel Core i7-11800H"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Graphics Card</label>
+              <input
+                type="text"
+                value={product.graphicsCard}
+                onChange={(e) => setProduct({...product, graphicsCard: e.target.value})}
+                className="w-full input input-bordered"
+                placeholder="e.g. NVIDIA RTX 3060"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Screen Size</label>
+              <input
+                type="text"
+                value={product.screenSize}
+                onChange={(e) => setProduct({...product, screenSize: e.target.value})}
+                className="w-full input input-bordered"
+                placeholder="e.g. 15.6 inch"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Storage Type</label>
+              <input
+                type="text"
+                value={product.storageType}
+                onChange={(e) => setProduct({...product, storageType: e.target.value})}
+                className="w-full input input-bordered"
+                placeholder="e.g. 512GB SSD"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">RAM</label>
+              <input
+                type="text"
+                value={product.ram}
+                onChange={(e) => setProduct({...product, ram: e.target.value})}
+                className="w-full input input-bordered"
+                placeholder="e.g. 16GB DDR4"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 required">Operating System</label>
+              <input
+                type="text"
+                value={product.operatingSystem}
+                onChange={(e) => setProduct({...product, operatingSystem: e.target.value})}
+                className="w-full input input-bordered"
+                placeholder="e.g. Windows 11 Home"
+                required
+              />
+            </div>
+          </>
+        )}
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 required">Color</label>
+          <input
+            type="text"
+            value={product.color}
+            onChange={(e) => setProduct({...product, color: e.target.value})}
+            className="w-full input input-bordered"
+            placeholder="e.g. Silver"
+            required
+          />
         </div>
-      </div>
-    </>
-  );
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
+          <input
+            type="number"
+            value={product.price}
+            onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
+            className="w-full input input-bordered"
+            placeholder="e.g. 12999"
+            min="0"
+            step="1"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 required">Description</label>
+          <textarea
+            value={product.description}
+            onChange={(e) => setProduct({...product, description: e.target.value})}
+            className="w-full textarea textarea-bordered"
+            placeholder="Product description"
+            required
+          />
+        </div>
+
+        <div className="p-4 mt-4 bg-gray-100 rounded-lg">
+          <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
+          <div className="mt-1 text-sm text-gray-900">
+            {generateProductId(product) || 'Example: dell-xps15-intelcorei7-16gb-512gbssd-silver'}
+          </div>
+          <div className="mt-2 text-xs text-gray-500">
+            Format: brand-model-processor-ram-storagetype-color
+          </div>
+        </div>
+      </>
+    );
+  };
 
   const renderTVFields = () => (
     <>
@@ -1552,32 +1596,24 @@ const AdminPanel: React.FC = () => {
                 <table className="table w-full table-sm table-zebra">
                   <thead>
                     <tr>
-                      <th className="w-16">Image</th>
-                      <th>Name</th>
-                      <th>Brand</th>
-                      <th>Model</th>
-                      <th>Memory</th>
-                      <th>Color</th>
-                      <th>Price</th>
+                      {(categoryColumns[selectedCategory] || []).map((column) => (
+                        <th key={column.key} className={column.width}>
+                          {column.header}
+                        </th>
+                      ))}
                       <th className="w-24">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {products.map(product => (
                       <tr key={product.id} className="hover">
-                        <td>
-                          <img 
-                            src={product.image} 
-                            alt={product.name} 
-                            className="object-contain w-12 h-12"
-                          />
-                        </td>
-                        <td className="max-w-xs truncate">{product.name}</td>
-                        <td>{product.brand}</td>
-                        <td>{product.model}</td>
-                        <td>{product.memory}</td>
-                        <td>{product.color}</td>
-                        <td>{product.price} NOK</td>
+                        {(categoryColumns[selectedCategory] || []).map((column) => (
+                          <td key={column.key}>
+                            {column.render 
+                              ? column.render(product)
+                              : product[column.key as keyof typeof product]}
+                          </td>
+                        ))}
                         <td>
                           <div className="flex gap-1">
                             <button

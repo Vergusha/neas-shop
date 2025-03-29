@@ -10,7 +10,7 @@ import Reviews from '../components/Reviews';
 import ColorVariantSelector from '../components/ColorVariantSelector';
 import { trackProductInteraction } from '../utils/productTracking';
 import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
-import { formatMacBookName } from '../utils/productFormatting';
+import { formatMacBookName, formatAudioName } from '../utils/productFormatting'; // Updated import
 
 // Импортируем необходимые модули для авторизации
 import { getAuth } from 'firebase/auth';
@@ -411,6 +411,11 @@ const ProductPage: React.FC = () => {
     if (product.category === 'laptops' && product.brand === 'Apple') {
       return formatMacBookName(product);
     }
+    
+    if (product.collection === 'audio') {
+      return formatAudioName(product);
+    }
+    
     return product.name;
   };
 
