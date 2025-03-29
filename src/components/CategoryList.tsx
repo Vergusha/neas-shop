@@ -1,5 +1,5 @@
 import React, { JSX } from 'react';
-import { FaMobileAlt, FaGamepad, FaTv, FaHome, FaWrench, FaLaptop } from 'react-icons/fa';
+import { FaMobileAlt, FaGamepad, FaTv, FaWrench, FaLaptop } from 'react-icons/fa';
 
 interface Category {
   name: string;
@@ -9,10 +9,9 @@ interface Category {
 
 const categories: Category[] = [
   { name: 'Mobile', icon: <FaMobileAlt />, link: '/products/mobile' },
-  { name: 'Laptops', icon: <FaLaptop />, link: '/products/laptops' }, // Added Laptops category
+  { name: 'Laptops', icon: <FaLaptop />, link: '/products/laptops' },
   { name: 'Gaming', icon: <FaGamepad />, link: '/products/gaming' },
   { name: 'TV and Sound', icon: <FaTv />, link: '/products/tv-audio' },
-  { name: 'Smart Home', icon: <FaHome />, link: '/products/smart-home' },
   { name: 'NEAS Support', icon: <FaWrench />, link: '/products/support' },
 ];
 

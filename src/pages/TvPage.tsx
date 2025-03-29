@@ -45,23 +45,35 @@ const TvPage: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const tvCollection = collection(db, 'tv');
-        const tvSnapshot = await getDocs(tvCollection);
+        // Загружаем обе коллекции: TV и Audio
+        const [tvSnapshot, audioSnapshot] = await Promise.all([
+          getDocs(collection(db, 'tv')),
+          getDocs(collection(db, 'audio'))
+        ]);
+        
         const tvList = tvSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        })) as Product[];
+        }));
+
+        const audioList = audioSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         
-        setProducts(tvList);
+        // Объединяем списки продуктов
+        const combinedList = [...tvList, ...audioList] as Product[];
         
-        // Extract available filters from products
-        const filters = extractFilters(tvList);
+        setProducts(combinedList);
+        
+        // Extract available filters from combined products
+        const filters = extractFilters(combinedList);
         setAvailableFilters(filters);
         
-        // Initialize filtered products
-        setFilteredProducts(tvList);
+        // Initialize filtered products with combined list
+        setFilteredProducts(combinedList);
       } catch (err) {
-        console.error('Error fetching TV products:', err);
+        console.error('Error fetching TV & Audio products:', err);
         setError('Failed to load products');
       } finally {
         setLoading(false);

@@ -30,6 +30,10 @@ const ProfilePage: React.FC = () => {
   const [showAvatarEditor, setShowAvatarEditor] = useState(false);
   const [customUserId, setCustomUserId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [cart, setCart] = useState<any[]>(() => {
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
 
   const database = getDatabase();
   const { updateUserAvatar } = useAuth();
@@ -49,6 +53,7 @@ const ProfilePage: React.FC = () => {
       const savedAvatarURL = localStorage.getItem('avatarURL');
       const savedFavorites = localStorage.getItem('favorites');
       const savedUserId = localStorage.getItem('userId');
+      const savedCart = localStorage.getItem('cart');
       if (savedNickname) setNickname(savedNickname);
       if (savedFirstName) setFirstName(savedFirstName);
       if (savedLastName) setLastName(savedLastName);
@@ -56,6 +61,7 @@ const ProfilePage: React.FC = () => {
       if (savedAvatarURL) setAvatarURL(savedAvatarURL);
       if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
       if (savedUserId) setUserId(savedUserId);
+      if (savedCart) setCart(JSON.parse(savedCart));
     }
   }, [user]);
 
@@ -93,6 +99,12 @@ const ProfilePage: React.FC = () => {
     localStorage.setItem('userId', userId);
   }, [userId]);
 
+  useEffect(() => {
+    if (!user) {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    }
+  }, [cart, user]);
+
   const fetchUserProfile = async () => {
     if (user?.email) {
       const emailPrefix = user.email.split('@')[0].toLowerCase()
@@ -113,6 +125,11 @@ const ProfilePage: React.FC = () => {
           setCustomUserId(emailPrefix);
           setAvatarURL(data.avatarURL || defaultAvatarSVG);
           setPreviewAvatar(data.avatarURL || defaultAvatarSVG);
+          
+          if (data.cart) {
+            setCart(data.cart);
+            localStorage.setItem('cart', JSON.stringify(data.cart));
+          }
 
           localStorage.setItem('userProfile', JSON.stringify(data));
         }
@@ -129,6 +146,26 @@ const ProfilePage: React.FC = () => {
       setCustomUserId(userData.customUserId || '');
     }
   }, []);
+
+  useEffect(() => {
+    if (user?.email) {
+      const emailPrefix = user.email.split('@')[0].toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '')
+        .replace(/\s+/g, '-');
+      
+      const cartRef = ref(database, `users/${emailPrefix}/cart`);
+      
+      const unsubscribe = onValue(cartRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const cartData = snapshot.val();
+          setCart(cartData);
+          localStorage.setItem('cart', JSON.stringify(cartData));
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user, database]);
 
   const fetchOrderHistory = async () => {
     if (userId) {

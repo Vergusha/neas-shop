@@ -75,96 +75,55 @@ const ProductPage: React.FC = () => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      if (!id) {
-        console.error("Product ID is undefined");
-        setLoading(false);
-        return;
-      }
-
+      if (!id) return;
+      
       try {
-        console.log(`Fetching product with ID: ${id}`);
+        setLoading(true);
+
+        // Сначала проверяем все возможные коллекции для поиска товара
+        const collections = ['laptops', 'gaming', 'tv', 'audio', 'mobile'];
         
-        // Try to determine collection from ID first
-        let targetCollection = 'laptops';
-        if (id.includes('apple-macbook')) {
-          targetCollection = 'laptops';
-        } else if (id.includes('-wireless-') || id.includes('-gaming-')) {
-          targetCollection = 'gaming';
-        } else if (id.includes('-tv-')) {
-          targetCollection = 'tv';
-        } else if (id.includes('-mobile-')) {
-          targetCollection = 'mobile';
+        for (const collectionName of collections) {
+          const docRef = doc(db, collectionName, id);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const productData = { 
+              id: docSnap.id, 
+              ...docSnap.data(),
+              collection: collectionName // Добавляем информацию о коллекции
+            } as ProductData;
+            setProduct(productData);
+            
+            // Получаем все изображения продукта
+            const images = [productData.image];
+            if (productData.image2) images.push(productData.image2);
+            if (productData.image3) images.push(productData.image3);
+            setProductImages(images);
+
+            // Если это ноутбук, загружаем цветовые варианты
+            if (collectionName === 'laptops') {
+              await fetchColorVariants(productData);
+            }
+            
+            return; // Выходим после нахождения продукта
+          }
         }
 
-        // Try specific collection first
-        const docRef = doc(db, targetCollection, id);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const foundProduct = {
-            ...docSnap.data(),
-            id: id,
-            collection: targetCollection
-          } as ProductData;
-          
-          setProduct(foundProduct);
-          sessionStorage.setItem('lastProductCollection', targetCollection);
-          
-          // Set up images array
-          const images = [foundProduct.image];
-          if (foundProduct.image2) images.push(foundProduct.image2);
-          if (foundProduct.image3) images.push(foundProduct.image3);
-          
-          setProductImages(images);
-          setCurrentImageIndex(0);
-          
-          await fetchColorVariants(foundProduct);
-        } else {
-          // Fallback to searching other collections
-          const collections = ['mobile', 'products', 'tv', 'gaming', 'laptops'];
-          let foundProduct: ProductData | null = null;
-          
-          for (const collectionName of collections) {
-            if (collectionName === targetCollection) continue;
-            
-            const alternateDocRef = doc(db, collectionName, id);
-            const alternateDocSnap = await getDoc(alternateDocRef);
-            
-            if (alternateDocSnap.exists()) {
-              foundProduct = {
-                ...alternateDocSnap.data(),
-                id: id,
-                collection: collectionName
-              } as ProductData;
-              break;
-            }
-          }
-          
-          if (foundProduct) {
-            setProduct(foundProduct);
-            sessionStorage.setItem('lastProductCollection', foundProduct.collection || '');
-            
-            const images = [foundProduct.image];
-            if (foundProduct.image2) images.push(foundProduct.image2);
-            if (foundProduct.image3) images.push(foundProduct.image3);
-            
-            setProductImages(images);
-            setCurrentImageIndex(0);
-            
-            await fetchColorVariants(foundProduct);
-          } else {
-            console.error("Product not found in any collection");
-          }
-        }
+        // Если продукт не найден ни в одной коллекции
+        throw new Error('Product not found');
       } catch (error) {
-        console.error("Error fetching product:", error);
+        console.error('Error fetching product:', error);
+        setProduct(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProduct();
-    
+  }, [id]);
+
+  useEffect(() => {
     // Check if product is in favorites
     const checkFavoriteStatus = async () => {
       if (id) {

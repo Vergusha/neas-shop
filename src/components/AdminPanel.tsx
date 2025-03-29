@@ -21,7 +21,6 @@ const AdminPanel: React.FC = () => {
     modelNumber: '',
     memory: '',
     color: '',
-    // Laptop specific fields
     processor: '',
     graphicsCard: '',
     screenSize: '',
@@ -45,12 +44,32 @@ const AdminPanel: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, selectedCategory));
-        const productsList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as ProductForm[];
-        setProducts(productsList);
+        if (selectedCategory === 'tv-audio') {
+          // Fetch both TV and Audio collections
+          const [tvSnapshot, audioSnapshot] = await Promise.all([
+            getDocs(collection(db, 'tv')),
+            getDocs(collection(db, 'audio'))
+          ]);
+          
+          const tvProducts = tvSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          const audioProducts = audioSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          setProducts([...tvProducts, ...audioProducts] as ProductForm[]);
+        } else {
+          const querySnapshot = await getDocs(collection(db, selectedCategory));
+          const productsList = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as ProductForm[];
+          setProducts(productsList);
+        }
       } catch (error) {
         console.error('Error fetching products:', error);
       }
@@ -59,137 +78,125 @@ const AdminPanel: React.FC = () => {
     fetchProducts();
   }, [selectedCategory]);
 
-  // Обновите функцию handleSubmit, когда добавляете данные для игровой периферии
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
-  
-  try {
-    // Data validation
-    if (!product.brand || !product.model) {
-      throw new Error('Please fill in all required fields');
-    }
-
-    // For gaming peripherals, ensure device type is selected
-    if (product.category === 'gaming' && !product.deviceType) {
-      throw new Error('Please select a device type');
-    }
-
-    // Generate product ID
-    const productId = generateProductId(product);
-    console.log('Generated Product ID:', productId);
-
-    // Generate product name based on category
-    let productName = '';
-    if (product.category === 'gaming') {
-      productName = `${product.brand} ${product.model} ${product.deviceType || ''} ${product.color}`;
-    } else {
-      productName = `${product.brand} ${product.model} ${product.memory}`;
-    }
-
-    let finalImageUrl = product.image;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
     
-    if (imageInputType === 'file' && imageFile) {
-      try {
-        finalImageUrl = await convertToBase64(imageFile);
-      } catch (imageError) {
-        console.error('Ошибка при конвертации изображения:', imageError);
-        throw new Error('Ошибка при обработке изображения');
+    try {
+      if (!product.brand || !product.model) {
+        throw new Error('Please fill in all required fields');
       }
-    } else if (imageInputType === 'url' && imageUrl) {
-      finalImageUrl = imageUrl;
-    }
-    
-    const db = getFirestore();
-    if (!db) {
-      throw new Error('Database not initialized');
-    }
 
-    // Создаем базовый объект с данными продукта
-    const productData: Record<string, any> = {
-      id: productId,
-      name: productName,
-      brand: product.brand,
-      model: product.model,
-      modelNumber: product.modelNumber || null, // null вместо undefined
-      memory: product.memory || '', // Пустая строка вместо undefined
-      color: product.color || '', // Пустая строка вместо undefined
-      description: product.description || '', // Пустая строка вместо undefined
-      price: Math.abs(Number(product.price)),
-      image: finalImageUrl,
-      createdAt: new Date().toISOString(),
-      searchKeywords: generateSearchKeywords(productName, product.modelNumber),
-      clickCount: 0,
-      updatedAt: new Date().toISOString(),
-      // Фильтры для поиска
-      filterCategories: {
-        brand: product.brand.toLowerCase(),
-        memory: (product.memory || '').toLowerCase(),
-        color: (product.color || '').toLowerCase(),
+      if (product.category === 'gaming' && !product.deviceType) {
+        throw new Error('Please select a device type');
       }
-    };
 
-    // Add gaming peripherals specific fields if applicable
-    if (product.category === 'gaming') {
-      // Добавляем только определенные поля, заменяя undefined на null или пустые строки
-      productData.deviceType = product.deviceType || '';
-      productData.connectivity = product.connectivity || '';
-      productData.compatibleWith = product.compatibleWith || '';
-      productData.rgbLighting = product.rgbLighting === true ? true : false; // Убедитесь, что это boolean
-      productData.switchType = product.switchType || '';
-      productData.dpi = product.dpi || '';
-      productData.batteryLife = product.batteryLife || '';
-      productData.weight = product.weight || '';
+      const productId = generateProductId(product);
+      console.log('Generated Product ID:', productId);
+
+      let productName = '';
+      if (product.category === 'gaming') {
+        productName = `${product.brand} ${product.model} ${product.deviceType || ''} ${product.color}`;
+      } else {
+        productName = `${product.brand} ${product.model} ${product.memory}`;
+      }
+
+      let finalImageUrl = product.image;
+      
+      if (imageInputType === 'file' && imageFile) {
+        try {
+          finalImageUrl = await convertToBase64(imageFile);
+        } catch (imageError) {
+          console.error('Ошибка при конвертации изображения:', imageError);
+          throw new Error('Ошибка при обработке изображения');
+        }
+      } else if (imageInputType === 'url' && imageUrl) {
+        finalImageUrl = imageUrl;
+      }
+      
+      const db = getFirestore();
+      if (!db) {
+        throw new Error('Database not initialized');
+      }
+
+      const productData: Record<string, any> = {
+        id: productId,
+        name: productName,
+        brand: product.brand,
+        model: product.model,
+        modelNumber: product.modelNumber || null,
+        memory: product.memory || '',
+        color: product.color || '',
+        description: product.description || '',
+        price: Math.abs(Number(product.price)),
+        image: finalImageUrl,
+        createdAt: new Date().toISOString(),
+        searchKeywords: generateSearchKeywords(productName, product.modelNumber),
+        clickCount: 0,
+        updatedAt: new Date().toISOString(),
+        filterCategories: {
+          brand: product.brand.toLowerCase(),
+          memory: (product.memory || '').toLowerCase(),
+          color: (product.color || '').toLowerCase(),
+        }
+      };
+
+      if (product.category === 'gaming') {
+        productData.deviceType = product.deviceType || '';
+        productData.connectivity = product.connectivity || '';
+        productData.compatibleWith = product.compatibleWith || '';
+        productData.rgbLighting = product.rgbLighting === true ? true : false;
+        productData.switchType = product.switchType || '';
+        productData.dpi = product.dpi || '';
+        productData.batteryLife = product.batteryLife || '';
+        productData.weight = product.weight || '';
+      }
+
+      if (product.category === 'laptops') {
+        productData.processor = product.processor || '';
+        productData.graphicsCard = product.graphicsCard || '';
+        productData.screenSize = product.screenSize || '';
+        productData.storageType = product.storageType || '';
+        productData.ram = product.ram || '';
+        productData.operatingSystem = product.operatingSystem || '';
+      }
+
+      const collectionRef = collection(db, product.category);
+      const docRef = doc(collectionRef, productId);
+      await setDoc(docRef, productData);
+      
+      console.log('Product successfully added with ID:', productId);
+      
+      setProduct({
+        name: '',
+        description: '',
+        price: 0,
+        image: '',
+        category: 'mobile',
+        brand: '',
+        model: '',
+        modelNumber: '',
+        memory: '',
+        color: '',
+        processor: '',
+        graphicsCard: '',
+        screenSize: '',
+        storageType: '',
+        ram: '',
+        operatingSystem: '',
+      });
+      setImageFile(null);
+      setImageUrl('');
+      
+      alert('Product successfully added!');
+      
+    } catch (error) {
+      console.error('Error adding product:', error);
+      alert(error instanceof Error ? error.message : 'An error occurred while adding the product');
+    } finally {
+      setIsLoading(false);
     }
-
-    // Add laptop specific fields if applicable
-    if (product.category === 'laptops') {
-      productData.processor = product.processor || '';
-      productData.graphicsCard = product.graphicsCard || '';
-      productData.screenSize = product.screenSize || '';
-      productData.storageType = product.storageType || '';
-      productData.ram = product.ram || '';
-      productData.operatingSystem = product.operatingSystem || '';
-    }
-
-    // Добавляем документ с custom ID
-    const collectionRef = collection(db, product.category);
-    const docRef = doc(collectionRef, productId);
-    await setDoc(docRef, productData);
-    
-    console.log('Product successfully added with ID:', productId);
-    
-    // Reset form
-    setProduct({
-      name: '',
-      description: '',
-      price: 0,
-      image: '',
-      category: 'mobile',
-      brand: '',
-      model: '',
-      modelNumber: '',
-      memory: '',
-      color: '',
-      processor: '',
-      graphicsCard: '',
-      screenSize: '',
-      storageType: '',
-      ram: '',
-      operatingSystem: '',
-    });
-    setImageFile(null);
-    setImageUrl('');
-    
-    alert('Product successfully added!');
-    
-  } catch (error) {
-    console.error('Error adding product:', error);
-    alert(error instanceof Error ? error.message : 'An error occurred while adding the product');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -203,17 +210,14 @@ const handleSubmit = async (e: React.FormEvent) => {
   const generateSearchKeywords = (name: string, modelNumber?: string): string[] => {
     const keywords: string[] = [];
     
-    // Process name
     const words = name.toLowerCase().split(' ');
     
-    // Add individual words
     for (const word of words) {
       if (word.length > 2) {
         keywords.push(word);
       }
     }
     
-    // Add combinations of words
     for (let i = 0; i < words.length; i++) {
       let combined = '';
       for (let j = i; j < words.length; j++) {
@@ -222,56 +226,50 @@ const handleSubmit = async (e: React.FormEvent) => {
       }
     }
 
-    // Add model number variations if provided
     if (modelNumber) {
       keywords.push(modelNumber.toLowerCase());
-      // Remove spaces and hyphens for alternative search
       const cleanModelNumber = modelNumber.toLowerCase().replace(/[\s-]/g, '');
       if (cleanModelNumber !== modelNumber.toLowerCase()) {
         keywords.push(cleanModelNumber);
       }
     }
     
-    return Array.from(new Set(keywords)); // удаляем дубликаты
+    return Array.from(new Set(keywords));
   };
 
-  // Функция для форматирования строки в URL-friendly формат
   const formatForUrl = (str: string): string => {
     return str
       .toLowerCase()
-      .replace(/\s+/g, '-') // заменяем пробелы на дефисы
-      .replace(/[^a-z0-9-]/g, '') // удаляем все, кроме букв, цифр и дефисов
-      .replace(/-+/g, '-') // заменяем множественные дефисы на один
-      .trim(); // убираем пробелы в начале и конце
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .trim();
   };
 
-  // Обновленная функция для генерации ID товара
   const generateProductId = (product: NewProductForm): string => {
     const brand = formatForUrl(product.brand);
     const model = formatForUrl(product.model);
     
     if (product.category === 'gaming') {
       const connectivity = product.connectivity ? formatForUrl(product.connectivity) : 'standard';
-      const version = formatForUrl(product.memory); // memory field is used for version/series
+      const version = formatForUrl(product.memory);
       const color = formatForUrl(product.color);
       
       return `${brand}-${model}-${connectivity}-${version}-${color}`;
     }
 
     if (product.category === 'laptops') {
-      // Создаем специальный ID для MacBook
       if (product.brand === 'Apple') {
         const processor = formatForUrl(product.processor || '');
         const ram = formatForUrl(product.ram || '');
         const storage = formatForUrl(product.storageType || '');
         const screenSize = formatForUrl(product.screenSize || '');
         const color = formatForUrl(product.color || '');
-        const year = product.modelNumber || ''; // Using modelNumber field for year
+        const year = product.modelNumber || '';
         
         return `apple-${model}-${year}-${processor}-${ram}-${storage}-${screenSize}-${color}`;
       }
       
-      // Обычный ID для других ноутбуков
       const processor = formatForUrl(product.processor || '');
       const ram = formatForUrl(product.ram || '');
       const storageType = formatForUrl(product.storageType || '');
@@ -280,11 +278,36 @@ const handleSubmit = async (e: React.FormEvent) => {
       return `${brand}-${model}-${processor}-${ram}-${storageType}-${color}`;
     }
     
-    // Original logic for other product types
+    if (product.category === 'tv') {
+      const diagonal = product.diagonal ? formatForUrl(product.diagonal) : '';
+      const resolution = formatForUrl(product.resolution || '');
+      const displayType = formatForUrl(product.displayType || '');
+      const modelSuffix = product.modelNumber ? `-${formatForUrl(product.modelNumber)}` : '';
+      
+      return `${brand}-${diagonal}-${resolution}-${displayType}-tv${modelSuffix}`;
+    }
+
+    if (product.category === 'audio') {
+      const connectivity = product.connectivity ? formatForUrl(product.connectivity) : '';
+      const type = product.subtype ? formatForUrl(product.subtype) : '';
+      const color = formatForUrl(product.color);
+      
+      const typeMap: { [key: string]: string } = {
+        'headphones': 'headphones',
+        'earbuds': 'earbuds',
+        'speakers': 'speakers',
+        'soundbar': 'soundbar'
+      };
+
+      const englishType = typeMap[type] || type;
+      
+      return `${brand}-${model}-${connectivity}-${englishType}-${color}`;
+    }
+
     const modelNumber = product.modelNumber ? `-${formatForUrl(product.modelNumber)}` : '';
     const memory = formatForUrl(product.memory)
-      .replace('gb', '') // убираем 'gb' из памяти
-      + 'gb'; // добавляем 'gb' в конце
+      .replace('gb', '')
+      + 'gb';
     const color = formatForUrl(product.color);
     
     return `${brand}-${model}${modelNumber}-${memory}-${color}`;
@@ -294,23 +317,46 @@ const handleSubmit = async (e: React.FormEvent) => {
     if (!productToDelete || !productToDelete.id) return;
     
     try {
-      // Use proper type checking
       const productId = productToDelete.id;
-      const productRef = doc(db, selectedCategory, productId);
+      let categoryToDelete = selectedCategory;
+
+      // Определяем правильную коллекцию для удаления
+      if (selectedCategory === 'tv-audio') {
+        // Проверяем тип продукта по его свойствам
+        categoryToDelete = productToDelete.subtype ? 'audio' : 'tv';
+      }
+
+      const productRef = doc(db, categoryToDelete, productId);
       await deleteDoc(productRef);
       
-      // Update products list
       setProducts(prevProducts => 
         prevProducts.filter(p => p.id !== productToDelete.id)
       );
       
       setShowDeleteConfirm(false);
       setProductToDelete(null);
-      alert('Product deleted successfully!');
+      alert('Product successfully deleted!');
     } catch (error) {
       console.error('Error deleting product:', error);
       alert('Failed to delete product');
     }
+  };
+
+  const handleEditProduct = (product: ProductForm) => {
+    if (!product.id) return;
+    
+    let category = selectedCategory;
+    if (selectedCategory === 'tv-audio') {
+      // Определяем правильную категорию по типу продукта
+      category = product.subtype ? 'audio' : 'tv';
+    }
+
+    setSelectedProduct({
+      ...product,
+      id: product.id,
+      category
+    } as ProductForm);
+    setIsEditModalOpen(true);
   };
 
   const handleUpdateSearchKeywords = async () => {
@@ -441,7 +487,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         />
       </div>
 
-      {/* Preview Generated ID с примером */}
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
         <div className="mt-1 text-sm text-gray-900">
@@ -547,7 +592,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         </select>
       </div>
 
-      {/* Дополнительные поля для мышей */}
       {product.deviceType === 'Mouse' && (
         <div>
           <label className="block text-sm font-medium text-gray-700">DPI</label>
@@ -561,7 +605,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
       )}
 
-      {/* Дополнительные поля для клавиатур */}
       {product.deviceType === 'Keyboard' && (
         <div>
           <label className="block text-sm font-medium text-gray-700">Тип переключателей</label>
@@ -575,7 +618,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
       )}
 
-      {/* Поля для беспроводных устройств */}
       {(product.connectivity === 'Wireless' || product.connectivity === 'Bluetooth') && (
         <div>
           <label className="block text-sm font-medium text-gray-700">Время работы от батареи</label>
@@ -662,7 +704,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         />
       </div>
 
-      {/* Preview Generated ID */}
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
         <div className="mt-1 text-sm text-gray-900">
@@ -699,9 +740,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         </select>
       </div>
       
-      {/* Условный рендеринг полей для MacBook */}
       {product.brand === 'Apple' ? (
-        // Поля специфичные для Apple устройств
         <>
           <div>
             <label className="block text-sm font-medium text-gray-700 required">Model</label>
@@ -760,7 +799,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             </select>
           </div>
 
-          {/* Add Model Year field for MacBooks */}
           <div>
             <label className="block text-sm font-medium text-gray-700 required">Model Year</label>
             <select
@@ -861,7 +899,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
         </>
       ) : (
-        // Обычные поля для Windows/Linux ноутбуков
         <>
           <div>
             <label className="block text-sm font-medium text-gray-700 required">Model</label>
@@ -997,7 +1034,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         />
       </div>
 
-      {/* Preview Generated ID */}
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
         <div className="mt-1 text-sm text-gray-900">
@@ -1005,6 +1041,308 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
         <div className="mt-2 text-xs text-gray-500">
           Format: brand-model-processor-ram-storagetype-color
+        </div>
+      </div>
+    </>
+  );
+
+  const renderTVFields = () => (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Brand</label>
+        <input
+          type="text"
+          value={product.brand}
+          onChange={(e) => setProduct({...product, brand: e.target.value})}
+          className="w-full input input-bordered"
+          placeholder="e.g. Samsung, LG, Sony"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Model</label>
+        <input
+          type="text"
+          value={product.model}
+          onChange={(e) => setProduct({...product, model: e.target.value})}
+          className="w-full input input-bordered"
+          placeholder="e.g. QN90B"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Diagonal</label>
+        <select
+          value={product.diagonal || ''}
+          onChange={(e) => setProduct({...product, diagonal: e.target.value})}
+          className="w-full select select-bordered"
+          required
+        >
+          <option value="">Select Size</option>
+          <option value="32">32"</option>
+          <option value="43">43"</option>
+          <option value="50">50"</option>
+          <option value="55">55"</option>
+          <option value="65">65"</option>
+          <option value="75">75"</option>
+          <option value="85">85"</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Resolution</label>
+        <select
+          value={product.resolution || ''}
+          onChange={(e) => setProduct({...product, resolution: e.target.value})}
+          className="w-full select select-bordered"
+          required
+        >
+          <option value="">Select Resolution</option>
+          <option value="HD">HD (1366x768)</option>
+          <option value="Full HD">Full HD (1920x1080)</option>
+          <option value="4K">4K Ultra HD (3840x2160)</option>
+          <option value="8K">8K (7680x4320)</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Refresh Rate</label>
+        <select
+          value={product.refreshRate || ''}
+          onChange={(e) => setProduct({...product, refreshRate: e.target.value})}
+          className="w-full select select-bordered"
+          required
+        >
+          <option value="">Select Refresh Rate</option>
+          <option value="60Hz">60Hz</option>
+          <option value="100Hz">100Hz</option>
+          <option value="120Hz">120Hz</option>
+          <option value="144Hz">144Hz</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Display Type</label>
+        <select
+          value={product.displayType || ''}
+          onChange={(e) => setProduct({...product, displayType: e.target.value})}
+          className="w-full select select-bordered"
+          required
+        >
+          <option value="">Select Display Type</option>
+          <option value="LED">LED</option>
+          <option value="QLED">QLED</option>
+          <option value="OLED">OLED</option>
+          <option value="Mini LED">Mini LED</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">HDR</label>
+        <input
+          type="text"
+          value={product.hdr || ''}
+          onChange={(e) => setProduct({...product, hdr: e.target.value})}
+          className="w-full input input-bordered"
+          placeholder="e.g. HDR10+, Dolby Vision"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">HDMI Ports</label>
+        <select
+          value={product.hdmi || ''}
+          onChange={(e) => setProduct({...product, hdmi: e.target.value})}
+          className="w-full select select-bordered"
+          required
+        >
+          <option value="">Select HDMI Ports</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </div>
+
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          type="checkbox"
+          id="smartTV"
+          checked={product.smartTV || false}
+          onChange={(e) => setProduct({...product, smartTV: e.target.checked})}
+          className="checkbox"
+        />
+        <label htmlFor="smartTV" className="text-sm font-medium text-gray-700">
+          Smart TV
+        </label>
+      </div>
+
+      <div className="p-4 mt-4 bg-gray-100 rounded-lg">
+        <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
+        <div className="mt-1 text-sm text-gray-900">
+          {generateProductId(product) || 'Example: samsung-55-4k-uhd-led-tv-tu7105'}
+        </div>
+        <div className="mt-2 text-xs text-gray-500">
+          Format: brand-diagonal-resolution-displaytype-tv-modelnumber
+        </div>
+      </div>
+    </>
+  );
+
+  const renderAudioFields = () => (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Brand</label>
+        <select
+          value={product.brand}
+          onChange={(e) => setProduct({...product, brand: e.target.value})}
+          className="w-full select select-bordered"
+          required
+        >
+          <option value="">Select Brand</option>
+          <option value="JBL">JBL</option>
+          <option value="Sony">Sony</option>
+          <option value="Bose">Bose</option>
+          <option value="Apple">Apple</option>
+          <option value="Samsung">Samsung</option>
+          <option value="Sennheiser">Sennheiser</option>
+          <option value="Beats">Beats</option>
+          <option value="Marshall">Marshall</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Model</label>
+        <input
+          type="text"
+          value={product.model}
+          onChange={(e) => setProduct({...product, model: e.target.value})}
+          className="w-full input input-bordered"
+          placeholder="e.g. Tune 520BT, WH-1000XM4"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Model Number</label>
+        <input
+          type="text"
+          value={product.modelNumber}
+          onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
+          className="w-full input input-bordered"
+          placeholder="e.g. JBLT520BTBLK"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Product Type</label>
+        <select
+          value={product.subtype || ''}
+          onChange={(e) => setProduct({...product, subtype: e.target.value as any})}
+          className="w-full select select-bordered"
+          required
+        >
+          <option value="">Select Type</option>
+          <option value="headphones">Headphones</option>
+          <option value="earbuds">Earbuds</option>
+          <option value="speakers">Speakers</option>
+          <option value="soundbar">Soundbar</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Connectivity</label>
+        <select
+          value={product.connectivity || ''}
+          onChange={(e) => setProduct({...product, connectivity: e.target.value})}
+          className="w-full select select-bordered"
+          required
+        >
+          <option value="">Select Connectivity</option>
+          <option value="Wired">Wired</option>
+          <option value="Wireless">Wireless</option>
+          <option value="Bluetooth">Bluetooth</option>
+          <option value="Multiple">Multiple</option>
+        </select>
+      </div>
+
+      {(product.connectivity === 'Wireless' || product.connectivity === 'Bluetooth') && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Battery Life</label>
+          <input
+            type="text"
+            value={product.batteryLife || ''}
+            onChange={(e) => setProduct({...product, batteryLife: e.target.value})}
+            className="w-full input input-bordered"
+            placeholder="e.g. Up to 30 hours"
+          />
+        </div>
+      )}
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Frequency Response</label>
+        <input
+          type="text"
+          value={product.frequency || ''}
+          onChange={(e) => setProduct({...product, frequency: e.target.value})}
+          className="w-full input input-bordered"
+          placeholder="e.g. 20Hz - 20kHz"
+          required
+        />
+      </div>
+
+      {product.subtype === 'speakers' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Power Output</label>
+            <input
+              type="text"
+              value={product.power || ''}
+              onChange={(e) => setProduct({...product, power: e.target.value})}
+              className="w-full input input-bordered"
+              placeholder="e.g. 100W"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Channels</label>
+            <input
+              type="text"
+              value={product.channels || ''}
+              onChange={(e) => setProduct({...product, channels: e.target.value})}
+              className="w-full input input-bordered"
+              placeholder="e.g. 2.1, 5.1"
+            />
+          </div>
+        </>
+      )}
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 required">Color</label>
+        <select
+          value={product.color}
+          onChange={(e) => setProduct({...product, color: e.target.value})}
+          className="w-full select select-bordered"
+          required
+        >
+          <option value="">Select Color</option>
+          <option value="Black">Black</option>
+          <option value="White">White</option>
+          <option value="Blue">Blue</option>
+          <option value="Red">Red</option>
+          <option value="Gray">Gray</option>
+          <option value="Pink">Pink</option>
+        </select>
+      </div>
+
+      <div className="p-4 mt-4 bg-gray-100 rounded-lg">
+        <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
+        <div className="mt-1 text-sm text-gray-900">
+          {generateProductId(product) || 'Example: jbl-tune520bt-bluetooth-headphones-black'}
+        </div>
+        <div className="mt-2 text-xs text-gray-500">
+          Format: brand-model-connectivity-type-color
         </div>
       </div>
     </>
@@ -1063,51 +1401,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     }
 
     if (product.category === 'tv') {
-      return (
-        <>
-          {commonFields}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Screen Diagonal</label>
-            <input
-              type="text"
-              value={product.screenDiagonal || ''}
-              onChange={(e) => setProduct({...product, screenDiagonal: e.target.value})}
-              className="w-full input input-bordered"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Screen Resolution</label>
-            <input
-              type="text"
-              value={product.resolution || ''}
-              onChange={(e) => setProduct({...product, resolution: e.target.value})}
-              className="w-full input input-bordered"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Screen Format</label>
-            <input
-              type="text"
-              value={product.screenFormat || ''}
-              onChange={(e) => setProduct({...product, screenFormat: e.target.value})}
-              className="w-full input input-bordered"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Color</label>
-            <input
-              type="text"
-              value={product.color || ''}
-              onChange={(e) => setProduct({...product, color: e.target.value})}
-              className="w-full input input-bordered"
-              required
-            />
-          </div>
-        </>
-      );
+      return renderTVFields();
     }
 
     if (product.category === 'gaming') {
@@ -1118,6 +1412,10 @@ const handleSubmit = async (e: React.FormEvent) => {
       return renderLaptopFields();
     }
 
+    if (product.category === 'audio') {
+      return renderAudioFields();
+    }
+
     return commonFields;
   };
 
@@ -1126,19 +1424,19 @@ const handleSubmit = async (e: React.FormEvent) => {
       <div className="mb-4">
         <button
           onClick={handleUpdateSearchKeywords}
-          className="btn btn-warning btn-sm mr-2"
+          className="mr-2 btn btn-warning btn-sm"
         >
           Update All Search Keywords
         </button>
         <button
           onClick={handleUpdatePopularProducts}
-          className="btn btn-info btn-sm mr-2"
+          className="mr-2 btn btn-info btn-sm"
         >
           Update Popular Products
         </button>
         <button
           onClick={handleUpdateGamingKeywords}
-          className="btn btn-secondary btn-sm mr-2"
+          className="mr-2 btn btn-secondary btn-sm"
         >
           Update Gaming Keywords
         </button>
@@ -1158,13 +1456,12 @@ const handleSubmit = async (e: React.FormEvent) => {
       
       {!isPanelCollapsed && (
         <>
-          {/* Add Product Form */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold">Add New Product</h3>
               <select 
                 value={product.category}
-                onChange={(e) => setProduct({...product, category: e.target.value})}
+                onChange={(e) => setProduct({...product, category: e.target.value as any})}
                 className="select select-bordered select-sm"
                 required
               >
@@ -1172,15 +1469,14 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <option value="tv">TVs</option>
                 <option value="gaming">Gaming</option>
                 <option value="laptops">Laptops</option>
+                <option value="audio">Audio</option>
               </select>
             </div>
 
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {/* Render dynamic fields based on category */}
                 {renderFields()}
 
-                {/* Image upload section */}
                 <div className="lg:col-span-3">
                   <label className="block mb-2 text-sm font-medium text-gray-700">Image</label>
                   <div className="flex gap-2 mb-2">
@@ -1231,7 +1527,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             </form>
           </div>
 
-          {/* Manage Products Section */}
           <div className="mt-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 cursor-pointer"
@@ -1246,7 +1541,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   className="select select-bordered select-sm"
                 >
                   <option value="mobile">Mobile Phones</option>
-                  <option value="tv">TVs</option>
+                  <option value="tv-audio">TV & Audio</option>
                   <option value="gaming">Gaming</option>
                   <option value="laptops">Laptops</option>
                 </select>
@@ -1287,24 +1582,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                         <td>
                           <div className="flex gap-1">
                             <button
-                              onClick={() => {
-                                if (product.id) {
-                                  setSelectedProduct({
-                                    id: product.id,
-                                    name: product.name,
-                                    description: product.description,
-                                    price: product.price,
-                                    image: product.image,
-                                    category: selectedCategory,
-                                    brand: product.brand,
-                                    model: product.model,
-                                    modelNumber: product.modelNumber || '',
-                                    memory: product.memory,
-                                    color: product.color
-                                  } as ProductForm);
-                                  setIsEditModalOpen(true);
-                                }
-                              }}
+                              onClick={() => handleEditProduct(product)}
                               className="btn btn-xs btn-primary"
                             >
                               Edit
@@ -1328,7 +1606,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             )}
           </div>
 
-          {/* Delete Confirmation Modal */}
           {showDeleteConfirm && productToDelete && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
               <div className="w-full max-w-md p-6 bg-white rounded-lg">
@@ -1357,7 +1634,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
           )}
 
-          {/* Edit Modal */}
           {selectedProduct && selectedProduct.id && (
             <EditProductModal
               product={{...selectedProduct, id: selectedProduct.id}}

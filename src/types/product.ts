@@ -38,8 +38,49 @@ export interface ProductForm extends Omit<Product, 'id'> {
   id?: string;
 }
 
+export interface TVProduct {
+  diagonal: string;
+  resolution: string;
+  refreshRate: string;
+  smartTV: boolean;
+  hdmi: string;
+  technicalSpecs: {
+    hdr?: string;
+    soundSystem?: string;
+    displayType?: string;
+  };
+}
+
+export interface AudioProduct {
+  subtype: 'speakers' | 'headphones' | 'earbuds' | 'soundbar';
+  connectivity: string;
+  batteryLife?: string;
+  frequency: string;
+  impedance?: string;
+  soundMode?: string;
+  channels?: string;
+  power?: string;
+}
+
 export interface NewProductForm extends BaseProductForm {
   id?: string;
+  category: 'mobile' | 'tv' | 'gaming' | 'laptops' | 'audio';
+  // TV fields
+  diagonal?: string;
+  resolution?: string;
+  refreshRate?: string;
+  smartTV?: boolean;
+  hdmi?: string;
+  hdr?: string;
+  soundSystem?: string;
+  displayType?: string;
+  // Audio fields
+  subtype?: 'speakers' | 'headphones' | 'earbuds' | 'soundbar';
+  frequency?: string;
+  impedance?: string;
+  soundMode?: string;
+  channels?: string;
+  power?: string;
 }
 
 // Обновляем интерфейс Product, добавляя все необходимые поля для ноутбуков

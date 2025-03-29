@@ -6,7 +6,6 @@ import ProductPage from './pages/ProductPage';
 import DataPage from './pages/DataPage';
 import GamingPage from './pages/GamingPage';
 import TvPage from './pages/TvPage';
-import SmartHomePage from './pages/SmartHomePage';
 import SupportPage from './pages/SupportPage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import Register from './pages/Register'; // Обновляем путь импорта с components на pages
@@ -48,7 +47,7 @@ const App = () => {
     <AuthProvider>
       <Router>
         <LoginRedirect />
-        <div className="min-h-screen flex flex-col">
+        <div className="flex flex-col min-h-screen">
           <Header />
           <Breadcrumbs />
           <main className="flex-grow">
@@ -59,7 +58,6 @@ const App = () => {
               <Route path="/products/data-accessories" element={<DataPage />} />
               <Route path="/products/gaming" element={<GamingPage />} />
               <Route path="/products/tv-audio" element={<TvPage />} />
-              <Route path="/products/smart-home" element={<SmartHomePage />} />
               <Route path="/products/support" element={<SupportPage />} />
               <Route path="/search" element={<SearchResultsPage />} />
               <Route path="/register" element={<Register />} />
