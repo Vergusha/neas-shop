@@ -1,8 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaMobileAlt, FaLaptop, FaGamepad, FaTv, FaWrench } from 'react-icons/fa';
-
-const logoColor = '#F0E965'; // Цвет логотипа
+import { FaMobileAlt, FaLaptop, FaGamepad, FaTv } from 'react-icons/fa';
 
 const CategoryList: React.FC = () => {
   return (

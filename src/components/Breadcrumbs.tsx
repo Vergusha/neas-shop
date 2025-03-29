@@ -158,7 +158,7 @@ const Breadcrumbs: React.FC = () => {
         // Обработка обычных путей (не страниц товаров)
         let currentPath = '';
         
-        pathSegments.forEach((segment, index) => {
+        pathSegments.forEach((segment) => {
           currentPath += `/${segment}`;
           
           // Используем карту маршрутов для отображаемых имен

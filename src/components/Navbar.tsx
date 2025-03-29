@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuth, signOut } from 'firebase/auth';
-import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { FaSearch, FaShoppingCart, FaUser } from 'react-icons/fa';
 import { ProductSearchResult } from '../types/product';
@@ -17,11 +17,8 @@ const Navbar: React.FC = () => {
 
   useEffect(() => {
     const updateCartCount = () => {
-      // Используем единый ключ для корзины
       const cartKey = 'cart';
       const cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
-      
-      // Подсчитываем общее количество товаров
       setCartCount(cart.reduce((count: number, item: any) => count + (item.quantity || 1), 0));
     };
 
@@ -39,129 +36,66 @@ const Navbar: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Логируем прямое значение поискового запроса
-      console.log(`🔍 Original search query: "${query.trim()}"`);
       const cleanQuery = query.toLowerCase().trim();
-      console.log(`🔍 Normalized search query: "${cleanQuery}"`);
+      console.log('🔍 Starting search with query:', cleanQuery);
 
-      // Специальные обработчики для известных запросов
-      if (cleanQuery.includes('v3') || cleanQuery.includes('pro')) {
-        console.log("RAZER V3 PRO SEARCH DETECTED: Trying direct match");
-        
-        const gamingRef = collection(db, 'gaming');
-        const querySnapshot = await getDocs(gamingRef);
-        
-        const v3Results: ProductSearchResult[] = [];
-        
-        querySnapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          if (data.brand && 
-              data.brand.toLowerCase() === 'razer' && 
-              ((data.model && 
-                (data.model.toLowerCase().includes('v3') || 
-                 data.model.toLowerCase().includes('pro'))) || 
-               (data.name && 
-                (data.name.toLowerCase().includes('v3') || 
-                 data.name.toLowerCase().includes('pro'))) ||
-               (data.memory && data.memory.toLowerCase().includes('v3')))) {
-                
-            console.log(`Found Razer V3/Pro product: ${docSnap.id}`, data);
-            v3Results.push({
-              id: docSnap.id,
-              name: data.name || 'Razer Product',
-              brand: data.brand || 'Razer',
-              price: data.price || 0,
-              image: data.image || '',
-              collection: 'gaming',
-              deviceType: data.deviceType || '',
-              description: data.description || '',
-              model: data.model || '',
-              color: data.color || '',
-              connectivity: data.connectivity || '',
-              memory: data.memory || '',
-              modelNumber: data.modelNumber || ''
-            });
-          }
-        });
-        
-        if (v3Results.length > 0) {
-          setSearchResults(v3Results);
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      if (cleanQuery.includes('deathadder') || 
-          (cleanQuery.includes('razer') && cleanQuery.includes('death'))) {
-        console.log("RAZER DEATHADDER DETECTED: Trying direct product match");
-        try {
-          const specificId = 'razer-deathadder-wiredwireless-2022-black';
-          const productDoc = await getDoc(doc(db, 'gaming', specificId));
-          
-          if (productDoc.exists()) {
-            const data = productDoc.data();
-            console.log("Found Razer DeathAdder by direct ID", data);
-            
-            setSearchResults([{
-              id: specificId,
-              name: data.name || 'Razer DeathAdder',
-              brand: data.brand || 'Razer',
-              price: data.price || 0,
-              image: data.image || '',
-              collection: 'gaming',
-              deviceType: data.deviceType || '',
-              description: data.description || '',
-              model: data.model || '',
-              color: data.color || '',
-              connectivity: data.connectivity || ''
-            }]);
-            
-            setIsLoading(false);
-            return;
-          }
-        } catch (err) {
-          console.error("Error in direct DeathAdder search:", err);
-        }
-      }
+      // Проверяем аудио коллекцию
+      const audioRef = collection(db, 'audio');
+      const audioSnapshot = await getDocs(audioRef);
       
-      if (cleanQuery.includes('razer')) {
-        console.log("RAZER SEARCH DETECTED: Applying special search");
-        const directGamingRef = collection(db, 'gaming');
-        const directSnapshot = await getDocs(directGamingRef);
-        
-        const razerResults: ProductSearchResult[] = [];
-        
-        directSnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.brand && data.brand.toLowerCase().includes('razer')) {
-            console.log(`DIRECT MATCH - Added Razer product: ${doc.id}`, data.name);
-            
-            razerResults.push({
-              id: doc.id,
-              name: data.name || 'Razer Product',
-              brand: data.brand || 'Razer',
-              price: data.price || 0,
-              image: data.image || '',
-              collection: 'gaming',
-              deviceType: data.deviceType || '',
-              description: data.description || '',
-              model: data.model || '',
-              color: data.color || '',
-              connectivity: data.connectivity || '',
-              memory: data.memory || '',
-              modelNumber: data.modelNumber || ''
-            });
-          }
+      console.log(`📢 Found ${audioSnapshot.size} audio products to check`);
+      
+      const audioResults: ProductSearchResult[] = [];
+      
+      audioSnapshot.forEach((doc) => {
+        const data = doc.data();
+        console.log('Checking audio product:', {
+          id: doc.id,
+          name: data.name,
+          brand: data.brand,
+          model: data.model,
+          keywords: data.searchKeywords
         });
-        
-        if (razerResults.length > 0) {
-          setSearchResults(razerResults);
-          setIsLoading(false);
-          return;
+
+        // Проверяем все возможные поля для совпадений
+        const searchableFields = [
+          data.name,
+          data.brand,
+          data.model,
+          data.subtype,
+          data.description,
+          ...(data.searchKeywords || [])
+        ].map(field => field?.toLowerCase?.() || '');
+
+        const isMatch = searchableFields.some(field => field.includes(cleanQuery));
+
+        if (isMatch) {
+          console.log('✅ Found matching audio product:', data.name);
+          audioResults.push({
+            id: doc.id,
+            name: data.name || 'Unknown Product',
+            brand: data.brand || '',
+            price: data.price || 0,
+            image: data.image || '',
+            collection: 'audio',
+            subtype: data.subtype || '',
+            description: data.description || '',
+            model: data.model || '',
+            color: data.color || '',
+            connectivity: data.connectivity || ''
+          });
         }
+      });
+
+      if (audioResults.length > 0) {
+        console.log(`✨ Found ${audioResults.length} matching audio products`);
+        setSearchResults(audioResults);
+        setIsLoading(false);
+        return;
       }
 
-      const collections = ['products', 'mobile', 'tv', 'gaming'];
+      // Check other collections
+      const collections = ['products', 'mobile', 'tv', 'gaming', 'laptops'];
       let allResults: ProductSearchResult[] = [];
       
       console.log(`Searching across collections: ${collections.join(', ')}`);
@@ -182,21 +116,28 @@ const Navbar: React.FC = () => {
         
         querySnapshot.forEach((doc) => {
           const data = doc.data();
+          console.log(`Checking document ${doc.id} in ${collectionName}:`, {
+            name: data.name,
+            subtype: data.subtype,
+            collection: collectionName,
+            hasKeywords: Boolean(data.searchKeywords)
+          });
           
+          // Проверяем есть ли поисковые ключевые слова
           if (data.searchKeywords && Array.isArray(data.searchKeywords)) {
             const keywordsMatch = uniqueQueryVariants.some(variant => 
               data.searchKeywords.some((keyword: string) => {
                 if (!keyword || typeof keyword !== 'string') return false;
                 const match = keyword.toLowerCase().includes(variant);
                 if (match) {
-                  console.log(`✅ Keyword match found in ${collectionName}/${doc.id}: "${keyword}" matches "${variant}"`);
+                  console.log(`✅ Keyword match in ${collectionName}/${doc.id}: "${keyword}" matches "${variant}"`);
                 }
                 return match;
               })
             );
             
             if (keywordsMatch) {
-              console.log(`✅ Adding product by keyword match: ${collectionName}/${doc.id} - ${data.name}`);
+              console.log(`Adding product by keyword match: ${collectionName}/${doc.id}`);
               allResults.push({
                 id: doc.id,
                 name: data.name || 'Unnamed Product',
@@ -205,27 +146,33 @@ const Navbar: React.FC = () => {
                 image: data.image || '',
                 collection: collectionName,
                 deviceType: data.deviceType || '',
+                subtype: data.subtype || '',
+                description: data.description || ''
               });
               return;
             }
           }
           
-          const name = (data.name || '').toLowerCase();
-          const brand = (data.brand || '').toLowerCase();
-          const model = (data.model || '').toLowerCase();
-          const deviceType = (data.deviceType || '').toLowerCase();
+          // Если ключевых слов нет, ищем по основным полям
+          const searchableFields = {
+            name: (data.name || '').toLowerCase(),
+            brand: (data.brand || '').toLowerCase(),
+            model: (data.model || '').toLowerCase(),
+            deviceType: (data.deviceType || '').toLowerCase(),
+            subtype: (data.subtype || '').toLowerCase(),
+            description: (data.description || '').toLowerCase()
+          };
           
           const matchFound = uniqueQueryVariants.some(variant => 
-            name.includes(variant) || 
-            brand.includes(variant) || 
-            model.includes(variant) || 
-            deviceType.includes(variant) || 
-            `${brand} ${model}`.includes(variant) || 
-            `${brand} ${deviceType}`.includes(variant)
+            Object.values(searchableFields).some(fieldValue => 
+              fieldValue.includes(variant)
+            ) ||
+            `${searchableFields.brand} ${searchableFields.model}`.includes(variant) ||
+            `${searchableFields.brand} ${searchableFields.subtype}`.includes(variant)
           );
           
           if (matchFound) {
-            console.log(`✅ Adding product by field match: ${collectionName}/${doc.id} - ${data.name}`);
+            console.log(`Adding product by field match: ${collectionName}/${doc.id}`);
             allResults.push({
               id: doc.id,
               name: data.name || 'Unnamed Product',
@@ -234,6 +181,8 @@ const Navbar: React.FC = () => {
               image: data.image || '',
               collection: collectionName,
               deviceType: data.deviceType || '',
+              subtype: data.subtype || '',
+              description: data.description || ''
             });
           }
         });
@@ -319,6 +268,12 @@ const Navbar: React.FC = () => {
           {user ? (
             <>
               <Link to="/profile" className="text-white"><FaUser /></Link>
+              <Link 
+                to="/admin" 
+                className="btn btn-secondary btn-sm"
+              >
+                Admin Panel
+              </Link>
               <button onClick={handleLogout} className="text-white">Logout</button>
             </>
           ) : (

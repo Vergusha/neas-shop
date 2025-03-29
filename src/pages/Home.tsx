@@ -19,6 +19,20 @@ const Home = () => {
     }
   };
 
+  const processProductData = (data: any): Product => {
+    return {
+      ...data,
+      id: data.id || '',
+      name: data.name || '',
+      description: data.description || '',
+      price: Number(data.price) || 0,
+      image: data.image || '',
+      brand: data.brand || '',
+      model: data.model || '',
+      // Add any other required fields with defaults
+    } as unknown as Product;
+  };
+
   useEffect(() => {
     const fetchPopularProducts = async () => {
       try {
@@ -84,14 +98,10 @@ const Home = () => {
             if (productDoc.exists()) {
               const data = productDoc.data();
               return {
-                ...data,
+                ...processProductData(data),
                 id: item.id,
-                score: item.score,
-                description: data.description || '',
-                name: data.name || 'Product not found',
-                price: data.price || 0,
-                image: data.image || ''
-              } as Product;
+                score: item.score
+              };
             }
           } catch (err) {
             console.error(`Error fetching product ${item.id} from ${collectionName}:`, err);
@@ -101,11 +111,13 @@ const Home = () => {
         return {
           id: item.id,
           name: 'Product not found',
+          description: 'Not available',
           price: 0,
           image: '',
-          description: 'Not available',
+          brand: 'Unknown', // Add required brand field
+          model: 'Unknown', // Add required model field
           score: item.score
-        } as Product;
+        } satisfies Product;
       });
       
       const resolvedProducts = await Promise.all(productsPromises);
@@ -126,15 +138,10 @@ const Home = () => {
             const data = doc.data();
             if (data.name && data.price && data.image) {
               recentProducts.push({
+                ...processProductData(data),
                 id: doc.id,
-                name: data.name,
-                description: data.description || '',
-                price: typeof data.price === 'number' ? data.price : 
-                       typeof data.price === 'string' ? parseFloat(data.price) : 0,
-                image: data.image,
-                collection: collectionName,
-                ...data
-              } as Product);
+                collection: collectionName
+              });
             }
           });
         }

@@ -36,7 +36,7 @@ interface FilterOption {
 const TvPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> | [number, number] }>({});
@@ -45,12 +45,11 @@ const TvPage: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Загружаем обе коллекции: TV и Audio
         const [tvSnapshot, audioSnapshot] = await Promise.all([
           getDocs(collection(db, 'tv')),
           getDocs(collection(db, 'audio'))
         ]);
-        
+
         const tvList = tvSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -60,21 +59,17 @@ const TvPage: React.FC = () => {
           id: doc.id,
           ...doc.data()
         }));
-        
-        // Объединяем списки продуктов
+
         const combinedList = [...tvList, ...audioList] as Product[];
-        
+
         setProducts(combinedList);
-        
-        // Extract available filters from combined products
-        const filters = extractFilters(combinedList);
+
+        const filters = extractFilters(combinedList, 'tv');
         setAvailableFilters(filters);
-        
-        // Initialize filtered products with combined list
+
         setFilteredProducts(combinedList);
       } catch (err) {
         console.error('Error fetching TV & Audio products:', err);
-        setError('Failed to load products');
       } finally {
         setLoading(false);
       }

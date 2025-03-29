@@ -8,6 +8,7 @@ import { updateAllProductsSearchKeywords } from '../utils/updateSearchKeywords';
 import { updatePopularProducts } from '../utils/updatePopularProducts';
 import { updateGamingKeywords } from '../utils/updateGamingKeywords';
 import { Link } from 'react-router-dom';
+import UpdateSearchKeywordsButton from './UpdateSearchKeywordsButton';
 
 type ColumnConfig = {
   header: string;
@@ -1333,6 +1334,19 @@ const AdminPanel: React.FC = () => {
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md">
+      {/* Add the maintenance section at the top */}
+      <div className="mb-8">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title text-2xl">Database Maintenance</h2>
+            <p className="text-lg mb-4">
+              Update search keywords and optimize database
+            </p>
+            <UpdateSearchKeywordsButton />
+          </div>
+        </div>
+      </div>
+
       <div className="mb-4">
         <button
           onClick={handleUpdateSearchKeywords}

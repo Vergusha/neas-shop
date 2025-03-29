@@ -1,5 +1,6 @@
-import { ref, increment, update, get } from 'firebase/database';
 import { database } from '../firebaseConfig';
+import { ref, increment, update, get, set } from 'firebase/database';
+import { findProductCollection } from './productUtils';
 
 // Track product interactions with different types and weights
 interface TrackingOptions {
@@ -9,128 +10,78 @@ interface TrackingOptions {
   userId?: string | null; // Optional user ID to avoid duplicate counts
 }
 
-/**
- * Track product interactions in Firebase
- * Returns a promise that resolves when tracking is complete
- */
 export const trackProductInteraction = async (
   productId: string, 
-  options: TrackingOptions = {}
+  options: TrackingOptions
 ): Promise<void> => {
-  if (!productId) return;
-  
   try {
-    const productStatsRef = ref(database, `productStats/${productId}`);
-    const updates: Record<string, any> = {};
+    // Skip tracking if no action to track
+    if (!options.incrementClick && !options.incrementFavorite && !options.incrementCart) {
+      return;
+    }
     
-    // Track product view/click
-    if (options.incrementClick) {
-      updates['clickCount'] = increment(1);
+    // Reference to product stats in Realtime Database
+    const productStatsRef = ref(database, `productStats/${productId}`);
+    
+    // Check if we already have tracking data for this product
+    const snapshot = await get(productStatsRef);
+    
+    // If this is a new product, initialize tracking object
+    if (!snapshot.exists()) {
+      // Determine which collection the product belongs to
+      const productData = await findProductCollection(productId);
       
-      // If we have a userId, also record unique view
-      if (options.userId) {
-        // Only increment if user hasn't viewed this product before
-        const uniqueViewsRef = ref(database, `productStats/${productId}/uniqueViews/${options.userId}`);
-        const snapshot = await get(uniqueViewsRef);
-        if (!snapshot.exists()) {
-          updates[`uniqueViews/${options.userId}`] = true;
-          updates['uniqueViewCount'] = increment(1);
-        }
+      if (productData) {
+        // Initialize product with collection info
+        await set(productStatsRef, {
+          collection: productData.collection,
+          clickCount: options.incrementClick ? 1 : 0,
+          favoriteCount: options.incrementFavorite ? 1 : 0,
+          cartCount: options.incrementCart ? 1 : 0,
+          lastUpdated: new Date().toISOString()
+        });
+        
+        // Also update the collections tracking node
+        const collectionStatsRef = ref(database, `collectionStats/${productData.collection}/${productId}`);
+        await set(collectionStatsRef, {
+          clickCount: options.incrementClick ? 1 : 0,
+          favoriteCount: options.incrementFavorite ? 1 : 0,
+          cartCount: options.incrementCart ? 1 : 0,
+          lastUpdated: new Date().toISOString()
+        });
+        
+        return;
       }
     }
     
-    // Track favorite action
+    // Prepare update object for existing product
+    const updates: Record<string, any> = {
+      lastUpdated: new Date().toISOString()
+    };
+    
+    if (options.incrementClick) {
+      updates.clickCount = increment(1);
+    }
+    
     if (options.incrementFavorite) {
-      updates['favoriteCount'] = increment(1);
+      updates.favoriteCount = increment(1);
     }
     
-    // Track add to cart action
     if (options.incrementCart) {
-      updates['cartCount'] = increment(1);
+      updates.cartCount = increment(1);
     }
     
-    // Update total popularity score with weighted values
-    // Click: 1 point, Favorite: 3 points, Cart: 5 points
-    let popularityIncrement = 0;
-    if (options.incrementClick) popularityIncrement += 1;
-    if (options.incrementFavorite) popularityIncrement += 3;
-    if (options.incrementCart) popularityIncrement += 5;
+    // Update product stats
+    await update(productStatsRef, updates);
     
-    if (popularityIncrement > 0) {
-      updates['popularityScore'] = increment(popularityIncrement);
+    // Update collection-specific stats if we know the collection
+    if (snapshot.exists() && snapshot.val().collection) {
+      const collection = snapshot.val().collection;
+      const collectionStatsRef = ref(database, `collectionStats/${collection}/${productId}`);
+      await update(collectionStatsRef, updates);
     }
     
-    // Only perform update if we have changes to make
-    if (Object.keys(updates).length > 0) {
-      await update(productStatsRef, updates);
-      
-      // Also update the popularProducts reference for easy querying
-      const popularRef = ref(database, `popularProducts/${productId}`);
-      await update(popularRef, { 
-        lastUpdated: new Date().toISOString(),
-        score: increment(popularityIncrement)
-      });
-    }
-
-    // Определение типа продукта по его ID
-    let productCollection: 'mobile' | 'gaming' | 'tv' | 'laptops' = 'mobile';
-    
-    if (productId.includes('apple-macbook') || 
-        productId.includes('-processor-') || 
-        productId.includes('-ram-')) {
-      productCollection = 'laptops';
-    } else if (productId.includes('-wireless-') || 
-               productId.includes('-wired-') || 
-               productId.includes('gaming')) {
-      productCollection = 'gaming';
-    } else if (productId.includes('-inch-') || 
-               productId.includes('-hdr-') || 
-               productId.includes('-tv-')) {
-      productCollection = 'tv';
-    }
-    
-    // Получаем текущее значение clickCount из updates, или используем 1, если incrementClick установлен
-    const currentClickCount = options.incrementClick ? 1 : 0;
-    
-    // Передаем обновленное значение в processTrackedProduct
-    await processTrackedProduct(productId, productCollection, {
-      clickCount: currentClickCount,
-      lastClickTimestamp: new Date().toISOString()
-    });
   } catch (error) {
     console.error('Error tracking product interaction:', error);
   }
-};
-
-/**
- * Get popularity score for a product
- */
-export const getProductPopularityScore = async (productId: string): Promise<number> => {
-  try {
-    const productStatsRef = ref(database, `productStats/${productId}`);
-    const snapshot = await get(productStatsRef);
-    
-    if (snapshot.exists()) {
-      const data = snapshot.val();
-      return data.popularityScore || 0;
-    }
-    
-    return 0;
-  } catch (error) {
-    console.error('Error getting product popularity:', error);
-    return 0;
-  }
-};
-
-// В функции processTrackedProduct добавьте обработку для ноутбуков
-export const processTrackedProduct = async (
-  _productId: string, // Add underscore to indicate unused parameter
-  _collection: 'mobile' | 'gaming' | 'tv' | 'laptops',
-  _clickData: {
-    clickCount: number;
-    lastClickTimestamp: string;
-  }
-) => {
-  // Implementation will be added later
-  return;
 };

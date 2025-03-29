@@ -1,97 +1,93 @@
+import { collection, getDocs } from 'firebase/firestore';
 import { ref, set, get } from 'firebase/database';
-import { doc, getDoc } from 'firebase/firestore';
-import { database, db } from '../firebaseConfig';
+import { db, database } from '../firebaseConfig';
 
-interface Product {
-  id: string;
-  score: number;
-  lastUpdated?: string;
-}
-
-interface PopularProductsData {
-  [id: string]: {
-    score: number;
-    lastUpdated: string;
-  };
-}
-
-export const updatePopularProducts = async () => {
+export const updatePopularProducts = async (): Promise<void> => {
   try {
-    // Собираем данные о взаимодействии с продуктами (клики, добавления в корзину, избранное)
-    const statsRef = ref(database, 'productStats');
-    const statsSnapshot = await get(statsRef);
+    console.log('Starting to update popular products...');
+    
+    // Get product tracking data from Realtime Database
+    const productStatsRef = ref(database, 'productStats');
+    const statsSnapshot = await get(productStatsRef);
     
     if (!statsSnapshot.exists()) {
-      console.log('No product stats found');
+      console.log('No product stats found in database');
       return;
     }
     
-    const stats = statsSnapshot.val();
-    
-    // Преобразуем объект в массив и рассчитываем общий score для каждого продукта
-    const productsWithScore = Object.entries(stats)
-      .map(([id, data]: [string, any]) => {
-        // Рассчитываем score на основе различных метрик взаимодействия
-        const clickWeight = 1;
-        const cartWeight = 5;
-        const favoriteWeight = 3;
-        
-        const clickCount = data.clickCount || 0;
-        const cartCount = data.cartCount || 0;
-        const favoriteCount = data.favoriteCount || 0;
-        
-        const score = (clickCount * clickWeight) + 
-                      (cartCount * cartWeight) + 
-                      (favoriteCount * favoriteWeight);
-                      
-        return {
-          id,
-          score,
-          lastInteraction: data.lastInteraction || new Date().toISOString()
-        };
-      })
-      .sort((a, b) => b.score - a.score) // Сортируем по убыванию score
-      .slice(0, 20); // Ограничиваем количество популярных продуктов
-    
-    // Проверяем существование продуктов в Firestore (некоторые могли быть удалены)
-    const validProducts: Product[] = [];
-    const collections = ['products', 'mobile', 'tv', 'gaming'];
-    
-    for (const product of productsWithScore) {
-      let found = false;
+    // Calculate popularity scores based on clicks, favorites, and cart actions
+    const products = statsSnapshot.val();
+    const productsWithScores = Object.entries(products).map(([id, data]: [string, any]) => {
+      // Weights for different actions
+      const clickWeight = 1;
+      const favoriteWeight = 5;
+      const cartWeight = 10;
       
-      for (const collectionName of collections) {
-        if (found) break;
-        
-        try {
-          const productDoc = await getDoc(doc(db, collectionName, product.id));
-          if (productDoc.exists()) {
-            found = true;
-            validProducts.push(product);
-          }
-        } catch (err) {
-          console.error(`Error checking product ${product.id} in ${collectionName}:`, err);
-        }
-      }
-    }
-    
-    // Сохраняем обновленную информацию о популярных продуктах
-    const popularProductsRef = ref(database, 'popularProducts');
-    
-    // Преобразуем массив в объект, где ключами являются ID продуктов
-    const popularProductsData: PopularProductsData = {};
-    
-    validProducts.forEach(product => {
-      popularProductsData[product.id] = {
-        score: product.score,
+      // Calculate score based on weighted actions
+      const clickCount = data.clickCount || 0;
+      const favoriteCount = data.favoriteCount || 0;
+      const cartCount = data.cartCount || 0;
+      
+      const score = (clickCount * clickWeight) + 
+                    (favoriteCount * favoriteWeight) + 
+                    (cartCount * cartWeight);
+      
+      return {
+        id,
+        score,
+        clickCount,
+        favoriteCount,
+        cartCount,
         lastUpdated: new Date().toISOString()
       };
     });
     
-    await set(popularProductsRef, popularProductsData);
+    // Sort by score (highest first)
+    productsWithScores.sort((a, b) => b.score - a.score);
     
-    console.log(`Successfully updated ${validProducts.length} popular products`);
-    return validProducts;
+    // Get the top 100 products
+    const topProducts = productsWithScores.slice(0, 100);
+    
+    // Check if products exist in Firestore collections
+    const collections = ['products', 'mobile', 'tv', 'audio', 'gaming', 'laptops'];
+    const validProducts = [];
+    
+    for (const product of topProducts) {
+      let found = false;
+      
+      for (const collectionName of collections) {
+        const querySnapshot = await getDocs(collection(db, collectionName));
+        const exists = querySnapshot.docs.some(doc => doc.id === product.id);
+        
+        if (exists) {
+          found = true;
+          validProducts.push({
+            ...product,
+            collection: collectionName
+          });
+          break;
+        }
+      }
+      
+      if (!found) {
+        console.log(`Product ${product.id} not found in any collection, but has tracking data`);
+      }
+    }
+    
+    // Update popularProducts in Realtime Database
+    const popularProductsRef = ref(database, 'popularProducts');
+    const popularProductsData = validProducts.reduce((obj, product) => {
+      obj[product.id] = {
+        score: product.score,
+        collection: product.collection,
+        lastUpdated: product.lastUpdated
+      };
+      return obj;
+    }, {} as Record<string, any>);
+    
+    await set(popularProductsRef, popularProductsData);
+    console.log(`Updated ${validProducts.length} popular products in database`);
+    
   } catch (error) {
     console.error('Error updating popular products:', error);
     throw error;

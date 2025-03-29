@@ -141,11 +141,9 @@ const SearchResultsPage: React.FC = () => {
           }
         }
         
-        // Стандартный поиск по всем коллекциям
-        const collections = ['products', 'mobile', 'tv', 'gaming'];
         let allResults: Product[] = [];
         
-        for (const collectionName of collections) {
+        for (const collectionName of ['products', 'mobile', 'tv', 'gaming']) {
           const collectionRef = collection(db, collectionName);
           const querySnapshot = await getDocs(collectionRef);
           

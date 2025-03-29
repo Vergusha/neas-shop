@@ -1,164 +1,233 @@
-import { db } from '../firebaseConfig';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
-// Функция для генерации поисковых ключевых слов из названия продукта
-export const generateSearchKeywords = (name: string, modelNumber?: string): string[] => {
-  const keywords: string[] = [];
-  
-  // Обработка основного названия
-  const words = name.toLowerCase().split(' ');
-  
-  // Добавляем отдельные слова
-  for (const word of words) {
-    if (word.length > 2) {
-      keywords.push(word);
-    }
-  }
-  
-  // Добавляем комбинации слов
-  for (let i = 0; i < words.length; i++) {
-    let combined = '';
-    for (let j = i; j < words.length; j++) {
-      combined += words[j] + ' ';
-      keywords.push(combined.trim());
-    }
-  }
-
-  // Добавляем вариации номера модели, если он указан
-  if (modelNumber) {
-    keywords.push(modelNumber.toLowerCase());
-    // Удаляем пробелы и дефисы для альтернативного поиска
-    const cleanModelNumber = modelNumber.toLowerCase().replace(/[\s-]/g, '');
-    if (cleanModelNumber !== modelNumber.toLowerCase()) {
-      keywords.push(cleanModelNumber);
-    }
-  }
-  
-  return Array.from(new Set(keywords)); // удаляем дубликаты
-};
-
-// Функция для обновления ключевых слов для всех продуктов
-export const updateAllProductsSearchKeywords = async () => {
+export const updateAllProductsSearchKeywords = async (): Promise<void> => {
   try {
-    // Получаем все коллекции, включая gaming
-    const collectionNames = ['products', 'mobile', 'tv', 'gaming'];
-    let updatedCount = 0;
+    console.log('Starting to update search keywords for all products...');
+    const collections = ['products', 'mobile', 'tv', 'audio', 'gaming', 'laptops'];
+    let totalUpdated = 0;
     
-    for (const collectionName of collectionNames) {
-      const productsRef = collection(db, collectionName);
-      const snapshot = await getDocs(productsRef);
+    for (const collectionName of collections) {
+      console.log(`Processing collection: ${collectionName}`);
+      const querySnapshot = await getDocs(collection(db, collectionName));
+      let collectionUpdated = 0;
       
-      for (const docSnap of snapshot.docs) {
-        const productData = docSnap.data();
-        console.log(`Updating keywords for ${collectionName}/${docSnap.id}:`, {
-          name: productData.name,
-          brand: productData.brand,
-          model: productData.model,
-          deviceType: productData.deviceType
-        });
+      for (const document of querySnapshot.docs) {
+        const data = document.data();
+        const name = data.name || '';
+        const brand = data.brand || '';
+        const model = data.model || '';
+        const color = data.color || '';
+        const deviceType = data.deviceType || '';
+        const diagonal = data.diagonal || '';
+        const resolution = data.resolution || '';
+        const displayType = data.displayType || '';
         
-        // Базовые ключевые слова из имени и номера модели
-        let keywords: string[] = [];
+        // Generate keywords based on product information
+        const keywords = generateSearchKeywords(
+          name, 
+          brand, 
+          model, 
+          color, 
+          deviceType, 
+          collectionName,
+          diagonal,
+          resolution,
+          displayType,
+          data
+        );
         
-        // Используем name, если он есть
-        if (productData.name) {
-          keywords = keywords.concat(generateSearchKeywords(
-            productData.name,
-            productData.modelNumber || null
-          ));
-        }
-        
-        // Добавляем бренд и модель напрямую, так как они часто ищутся
-        if (productData.brand) {
-          keywords.push(productData.brand.toLowerCase());
+        // If product doesn't have keywords or they're different, update them
+        if (!data.searchKeywords || 
+            !Array.isArray(data.searchKeywords) || 
+            JSON.stringify(data.searchKeywords.sort()) !== JSON.stringify(keywords.sort())) {
           
-          // Если есть модель, добавляем комбинацию бренда и модели
-          if (productData.model) {
-            keywords.push(
-              productData.model.toLowerCase(),
-              `${productData.brand.toLowerCase()} ${productData.model.toLowerCase()}`
-            );
-          }
-        }
-        
-        // Специфичные ключевые слова для игровой периферии
-        if (collectionName === 'gaming') {
-          // Добавляем "игровой", "gaming" и "gamer" для всех игровых продуктов
-          keywords.push('gaming', 'игровой', 'игровая', 'gamer', 'геймерский');
+          await updateDoc(doc(db, collectionName, document.id), {
+            searchKeywords: keywords,
+            updatedAt: new Date().toISOString()
+          });
           
-          // Добавляем тип устройства
-          if (productData.deviceType) {
-            const deviceType = productData.deviceType.toLowerCase();
-            keywords.push(deviceType);
-            
-            // Добавляем локализованные варианты для типов устройств
-            const deviceTranslations: Record<string, string[]> = {
-              'mouse': ['мышь', 'мышка', 'gaming mouse', 'игровая мышь', 'мышь для игр'],
-              'keyboard': ['клавиатура', 'gaming keyboard', 'игровая клавиатура', 'клавиатура для игр'],
-              'headset': ['наушники', 'гарнитура', 'gaming headset', 'игровая гарнитура', 'гарнитура для игр'],
-              'controller': ['контроллер', 'геймпад', 'джойстик', 'gamepad', 'joystick', 'игровой контроллер'],
-              'mousepad': ['коврик', 'коврик для мыши', 'игровой коврик'],
-              'chair': ['кресло', 'игровое кресло', 'gaming chair']
-            };
-            
-            if (deviceTranslations[deviceType]) {
-              keywords = keywords.concat(deviceTranslations[deviceType]);
-            }
-            
-            // Добавляем бренд + тип устройства
-            if (productData.brand) {
-              keywords.push(`${productData.brand.toLowerCase()} ${deviceType}`);
-              
-              // Если это распространенный бренд, добавляем вариации названия
-              if (['razer', 'logitech', 'hyperx', 'steelseries'].includes(productData.brand.toLowerCase())) {
-                keywords.push(productData.brand.toLowerCase());
-              }
-              
-              // Например: razer mouse, razer мышь
-              if (deviceTranslations[deviceType]) {
-                for (const translation of deviceTranslations[deviceType]) {
-                  keywords.push(`${productData.brand.toLowerCase()} ${translation}`);
-                }
-              }
-            }
-          }
-          
-          // Добавляем connectivity как ключевое слово
-          if (productData.connectivity) {
-            const connectivity = productData.connectivity.toLowerCase();
-            keywords.push(connectivity);
-            
-            // Добавляем локализованные варианты для подключения
-            const connectivityTranslations: Record<string, string[]> = {
-              'wired': ['проводной', 'проводная', 'с проводом'],
-              'wireless': ['беспроводной', 'беспроводная', 'без провода', 'wireless']
-            };
-            
-            if (connectivityTranslations[connectivity]) {
-              keywords = keywords.concat(connectivityTranslations[connectivity]);
-            }
-          }
+          collectionUpdated++;
+          totalUpdated++;
         }
-        
-        // Удаляем дубликаты и нормализуем ключевые слова
-        const uniqueKeywords = Array.from(new Set(keywords.map(k => k.trim().toLowerCase()).filter(k => k.length > 1)));
-        
-        console.log(`Generated ${uniqueKeywords.length} keywords for ${collectionName}/${docSnap.id}:`, uniqueKeywords);
-        
-        // Обновляем документ с новыми ключевыми словами
-        await updateDoc(doc(db, collectionName, docSnap.id), {
-          searchKeywords: uniqueKeywords,
-          updatedAt: new Date().toISOString()
-        });
-        
-        updatedCount++;
       }
+      
+      console.log(`Updated ${collectionUpdated} products in ${collectionName} collection`);
     }
     
-    console.log(`Successfully updated search keywords for ${updatedCount} products`);
-    return updatedCount;
+    console.log(`Total products updated: ${totalUpdated}`);
   } catch (error) {
     console.error('Error updating search keywords:', error);
     throw error;
   }
 };
+
+const generateSearchKeywords = (
+  name: string, 
+  brand: string, 
+  model: string, 
+  color: string, 
+  deviceType: string,
+  collection: string,
+  diagonal?: string,
+  resolution?: string,
+  displayType?: string,
+  data?: any
+): string[] => {
+  const keywords: string[] = [];
+  
+  // Add basic information
+  if (name) {
+    keywords.push(name.toLowerCase());
+    name.toLowerCase().split(' ').forEach(word => {
+      if (word.length > 2) keywords.push(word);
+    });
+  }
+  
+  if (brand) {
+    const brandLower = brand.toLowerCase();
+    keywords.push(brandLower);
+    // Add brand-specific keywords
+    if (brandLower === 'jbl') {
+      keywords.push('jbl');
+      keywords.push('jbl audio');
+      keywords.push('jbl sound');
+      if (model) {
+        const modelLower = model.toLowerCase();
+        keywords.push(`jbl ${modelLower}`);
+        // Add specific keywords for Tune series
+        if (modelLower.includes('tune')) {
+          const tuneNumber = modelLower.match(/\d+/)?.[0];
+          if (tuneNumber) {
+            keywords.push(`tune ${tuneNumber}`);
+            keywords.push(`tune${tuneNumber}`);
+            keywords.push(`jbl tune ${tuneNumber}`);
+            keywords.push(`jbl tune${tuneNumber}`);
+          }
+        }
+      }
+    }
+  }
+  
+  if (model) keywords.push(model.toLowerCase());
+  if (color) keywords.push(color.toLowerCase());
+  
+  // Collection-specific keywords
+  if (collection === 'gaming' && deviceType) {
+    keywords.push(deviceType.toLowerCase());
+    keywords.push(`${brand} ${deviceType}`.toLowerCase());
+    keywords.push(`gaming ${deviceType}`.toLowerCase());
+    keywords.push(`${brand} gaming`.toLowerCase());
+  }
+  
+  if (collection === 'tv') {
+    if (diagonal) {
+      keywords.push(`${diagonal} inch`.toLowerCase());
+      keywords.push(`${diagonal}"`.toLowerCase());
+      keywords.push(`${brand} ${diagonal}"`.toLowerCase());
+    }
+    
+    if (resolution) {
+      keywords.push(resolution.toLowerCase());
+      keywords.push(`${resolution} tv`.toLowerCase());
+      keywords.push(`${brand} ${resolution}`.toLowerCase());
+    }
+    
+    if (displayType) {
+      keywords.push(displayType.toLowerCase());
+      keywords.push(`${displayType} tv`.toLowerCase());
+      keywords.push(`${brand} ${displayType}`.toLowerCase());
+    }
+    
+    // Common TV search terms
+    keywords.push('tv');
+    keywords.push('television');
+    keywords.push(`${brand} tv`.toLowerCase());
+  }
+  
+  if (collection === 'audio') {
+    keywords.push('audio');
+    keywords.push('sound');
+    
+    // Add specific audio product type keywords
+    const subtype = data?.subtype?.toLowerCase() || '';
+    if (subtype) {
+      keywords.push(subtype);
+      keywords.push(`${brand} ${subtype}`.toLowerCase());
+      
+      // Common audio product types
+      if (subtype.includes('headphones')) {
+        keywords.push('headphones');
+        keywords.push('headset');
+        keywords.push(`${brand} headphones`.toLowerCase());
+      }
+      
+      if (subtype.includes('earbuds')) {
+        keywords.push('earbuds');
+        keywords.push('earphones');
+        keywords.push('tws');
+        keywords.push(`${brand} earbuds`.toLowerCase());
+      }
+      
+      if (subtype.includes('speaker')) {
+        keywords.push('speaker');
+        keywords.push('speakers');
+        keywords.push('bluetooth speaker');
+        keywords.push(`${brand} speaker`.toLowerCase());
+      }
+      
+      if (subtype.includes('soundbar')) {
+        keywords.push('soundbar');
+        keywords.push('sound bar');
+        keywords.push('tv speaker');
+        keywords.push(`${brand} soundbar`.toLowerCase());
+      }
+    }
+    
+    // Add connectivity keywords for audio products
+    const connectivity = data?.connectivity?.toLowerCase() || '';
+    if (connectivity) {
+      keywords.push(connectivity);
+      if (subtype) {
+        keywords.push(`${connectivity} ${subtype}`.toLowerCase());
+      }
+      
+      if (connectivity.includes('bluetooth')) {
+        keywords.push('bluetooth');
+        keywords.push('wireless');
+        if (subtype) keywords.push(`bluetooth ${subtype}`.toLowerCase());
+      }
+    }
+  }
+  
+  if (collection === 'laptops') {
+    keywords.push('laptop');
+    keywords.push('notebook');
+    keywords.push(`${brand} laptop`.toLowerCase());
+  }
+  
+  if (collection === 'mobile') {
+    keywords.push('mobile');
+    keywords.push('phone');
+    keywords.push('smartphone');
+    keywords.push(`${brand} phone`.toLowerCase());
+  }
+  
+  // Combine brand and model
+  if (brand && model) {
+    keywords.push(`${brand} ${model}`.toLowerCase());
+  }
+  
+  // Fully qualified product names
+  const parts = [brand, model, diagonal, resolution, displayType, color].filter(Boolean);
+  if (parts.length > 1) {
+    keywords.push(parts.join(' ').toLowerCase());
+  }
+  
+  // Remove duplicates
+  return Array.from(new Set(keywords));
+};
+
+// Add immediate execution
+console.log('Running search keywords update...');
+updateAllProductsSearchKeywords().catch(console.error);

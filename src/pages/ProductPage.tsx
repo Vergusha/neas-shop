@@ -10,7 +10,7 @@ import Reviews from '../components/Reviews';
 import ColorVariantSelector from '../components/ColorVariantSelector';
 import { trackProductInteraction } from '../utils/productTracking';
 import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
-import { formatMacBookName, formatAudioName } from '../utils/productFormatting'; // Updated import
+import { formatMacBookName } from '../utils/productFormatting'; // Updated import
 
 // Импортируем необходимые модули для авторизации
 import { getAuth } from 'firebase/auth';

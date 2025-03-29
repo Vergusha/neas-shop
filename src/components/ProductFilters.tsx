@@ -81,22 +81,31 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   const isValueSelected = (filterId: string, value: string | number | FilterValue): boolean => {
     const stringValue = typeof value === 'object' ? String(value.value) : String(value);
     
+    // Check both selectedFilters (string array format) and activeFilters (Set format)
     if (selectedFilters && filterId in selectedFilters) {
       return Array.isArray(selectedFilters[filterId]) && 
              selectedFilters[filterId].includes(stringValue);
     }
+    
     if (activeFilters && filterId in activeFilters) {
       const filterValue = activeFilters[filterId];
       if (filterValue instanceof Set) {
-        return filterValue.has(typeof value === 'object' ? value.value : value);
+        // Need to handle both string and number values in the Set
+        return filterValue.has(typeof value === 'object' ? value.value : value) || 
+               filterValue.has(stringValue);
       }
     }
+    
     return false;
   };
 
   // Helper function to handle filter change for checkbox filters
   const handleFilterChange = (filterId: string, value: string | number | FilterValue, checked: boolean) => {
+    // Always convert to string to ensure consistent handling
     const stringValue = typeof value === 'object' ? String(value.value) : String(value);
+    
+    // Debug logs to help identify issues
+    console.log('Filter change:', { filterId, value, stringValue, checked });
     
     if (checked) {
       onFilterChange(filterId, [...(selectedFilters[filterId] || []), stringValue]);
@@ -146,27 +155,33 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     }
 
     return (
-      <div key={filter.key} className="mb-6">
+      <div key={filter.key || filter.name} className="mb-6">
         <h3 className="mb-2 font-medium">{filter.name}</h3>
         
         {filter.values.map(option => {
           const optionValue = getOptionValue(option);
-          const filterLabel = getFilterLabel(filter.key || '', optionValue);
+          const filterKey = filter.key || filter.id || filter.name;
+          const filterLabel = getFilterLabel(filterKey, optionValue);
+          const optionKey = `${filterKey}-${optionValue}`;
+          const isChecked = isValueSelected(filterKey, optionValue);
+          
+          // Debug for checkbox states
+          console.log(`Option ${optionKey}: ${isChecked ? 'checked' : 'unchecked'}`);
           
           return (
-            <div key={optionValue} className="flex items-center mt-1">
+            <div key={optionKey} className="flex items-center mt-1">
               <input
                 type="checkbox"
-                id={`${filter.key}-${optionValue}`}
+                id={optionKey}
                 className="checkbox checkbox-sm"
-                checked={isValueSelected(filter.key || '', optionValue)}
+                checked={isChecked}
                 onChange={() => handleFilterChange(
-                  filter.key || '', 
+                  filterKey, 
                   optionValue, 
-                  !isValueSelected(filter.key || '', optionValue)
+                  !isChecked
                 )}
               />
-              <label htmlFor={`${filter.key}-${optionValue}`} className="ml-2 text-sm cursor-pointer">
+              <label htmlFor={optionKey} className="ml-2 text-sm cursor-pointer">
                 {filterLabel} 
                 ({getOptionCount(option)})
               </label>

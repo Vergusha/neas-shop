@@ -45,7 +45,7 @@ const PopularProducts: React.FC = () => {
               const statsSnapshot = await get(statsRef);
               
               // Then get full product details from multiple collections
-              const collections = ['mobile', 'products', 'tv'];
+              const collections = ['mobile', 'products', 'tv', 'audio', 'gaming', 'laptops'];
               for (const collectionName of collections) {
                 try {
                   const docRef = doc(db, collectionName, item.id);
@@ -129,7 +129,7 @@ const PopularProducts: React.FC = () => {
   const fetchRecentProducts = async (): Promise<Product[]> => {
     try {
       const recentProducts: Product[] = [];
-      const collections = ['mobile', 'products', 'tv'];
+      const collections = ['mobile', 'products', 'tv', 'audio', 'gaming', 'laptops'];
       
       for (const collectionName of collections) {
         try {

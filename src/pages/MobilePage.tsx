@@ -24,7 +24,7 @@ const MobilePage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
-  const [filters, setFilters] = useState<Array<{ id: string; name: string; values: string[] }>>([]);
+  const [filters, setFilters] = useState<Array<{ id: string; name: string; values: any[] }>>([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -63,10 +63,11 @@ const MobilePage: React.FC = () => {
         const productsRef = collection(db, 'mobile');
         const snapshot = await getDocs(productsRef);
         
-        const uniqueFilters: Record<string, Set<string>> = {
-          brand: new Set(),
-          memory: new Set(),
-          color: new Set(),
+        // Track filter counts
+        const filterCounts: Record<string, Record<string, number>> = {
+          brand: {},
+          memory: {},
+          color: {},
         };
         
         // For price range
@@ -75,9 +76,17 @@ const MobilePage: React.FC = () => {
 
         snapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.brand) uniqueFilters.brand.add(data.brand);
-          if (data.memory) uniqueFilters.memory.add(data.memory);
-          if (data.color) uniqueFilters.color.add(data.color);
+          
+          // Skip rating and reviewCount properties
+          if (data.brand) {
+            filterCounts.brand[data.brand] = (filterCounts.brand[data.brand] || 0) + 1;
+          }
+          if (data.memory) {
+            filterCounts.memory[data.memory] = (filterCounts.memory[data.memory] || 0) + 1;
+          }
+          if (data.color) {
+            filterCounts.color[data.color] = (filterCounts.color[data.color] || 0) + 1;
+          }
           
           // Track price range
           if (data.price) {
@@ -93,6 +102,7 @@ const MobilePage: React.FC = () => {
         const roundedMinPrice = Math.floor(minPrice / 100) * 100;
         const roundedMaxPrice = Math.ceil(maxPrice / 100) * 100;
 
+        // Create filters with count information
         const filtersList = [
           {
             id: 'price',
@@ -102,9 +112,30 @@ const MobilePage: React.FC = () => {
             min: roundedMinPrice,
             max: roundedMaxPrice
           },
-          { id: 'brand', name: 'Brand', values: Array.from(uniqueFilters.brand).sort() },
-          { id: 'memory', name: 'Memory', values: Array.from(uniqueFilters.memory).sort() },
-          { id: 'color', name: 'Color', values: Array.from(uniqueFilters.color).sort() },
+          { 
+            id: 'brand', 
+            name: 'Brand', 
+            values: Object.entries(filterCounts.brand).map(([value, count]) => ({
+              value,
+              count
+            })).sort((a, b) => a.value.localeCompare(b.value))
+          },
+          { 
+            id: 'memory', 
+            name: 'Memory', 
+            values: Object.entries(filterCounts.memory).map(([value, count]) => ({
+              value,
+              count
+            })).sort((a, b) => a.value.localeCompare(b.value))
+          },
+          { 
+            id: 'color', 
+            name: 'Color', 
+            values: Object.entries(filterCounts.color).map(([value, count]) => ({
+              value,
+              count
+            })).sort((a, b) => a.value.localeCompare(b.value))
+          },
         ];
 
         setFilters(filtersList);
@@ -141,10 +172,17 @@ const MobilePage: React.FC = () => {
   }, [products, selectedFilters]);
 
   const handleFilterChange = (filterId: string, values: string[] | [number, number]) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [filterId]: Array.isArray(values) ? values.map(String) : values
-    } as Record<string, string[]>));
+    const newSelectedFilters = { ...selectedFilters };
+    
+    if (filterId === 'price' && Array.isArray(values) && values.length === 2) {
+      newSelectedFilters[filterId] = values.map(String);
+    } else {
+      newSelectedFilters[filterId] = Array.isArray(values) 
+        ? values.map(String)
+        : [String(values)];
+    }
+    
+    setSelectedFilters(newSelectedFilters);
   };
 
   if (loading) {

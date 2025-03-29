@@ -8,32 +8,58 @@ import Rating from './Rating'; // Add this import
 import ProductImageCarousel from './ProductImageCarousel';
 import { trackProductInteraction } from '../utils/productTracking';
 import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
-import { Product } from '../types/product';
 import { formatMacBookName, formatAudioName, formatMobileName, formatTVName } from '../utils/productFormatting';
 
 interface ProductCardProps {
-  product: Product;
+  product: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    image: string;
+    brand?: string;
+    model?: string;
+    category?: string;
+    collection?: string;
+    image2?: string;
+    image3?: string;
+    image4?: string;
+    image5?: string;
+    deviceType?: string;
+    color?: string;
+    connectivity?: string;
+    memory?: string;
+    diagonal?: string;
+    screenSize?: string;
+    resolution?: string;
+    refreshRate?: string;
+    displayType?: string;
+    modelNumber?: string;
+    rating?: number;
+    reviewCount?: number;
+    [key: string]: any;
+  };
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) => {
-  // Ensure product has required properties with proper types
+  // Normalize the product data
   const normalizedProduct = {
     ...initialProduct,
+    brand: initialProduct.brand || '',
+    model: initialProduct.model || '',
     price: typeof initialProduct.price === 'number' ? initialProduct.price : 
            typeof initialProduct.price === 'string' ? parseFloat(initialProduct.price) : 0,
     id: initialProduct.id || '',
     name: initialProduct.name || 'Unnamed Product',
     description: initialProduct.description || '',
     image: initialProduct.image || '',
-    brand: initialProduct.brand || '',
-    model: initialProduct.model || '',
     deviceType: initialProduct.deviceType || '',
     color: initialProduct.color || '',
     connectivity: initialProduct.connectivity || '',
     memory: initialProduct.memory || ''
   };
   
-  const [product, setProduct] = useState<Product>(normalizedProduct);
+  const [product, setProduct] = useState(normalizedProduct);
   const auth = getAuth();
   const user = auth.currentUser;
   
@@ -206,10 +232,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     }
   };
 
-  const formatProductDetails = (product: Product) => {
+  const formatProductDetails = (product: typeof normalizedProduct) => {
+    // Ensure we have non-null values before formatting
+    const safeProduct = {
+      ...product,
+      model: product.model || '',
+      brand: product.brand || '',
+      color: product.color || ''
+    };
+
     // Special formatting for MacBooks
     if (product.category === 'laptops' && product.brand === 'Apple') {
-      const macBookName = formatMacBookName(product);
+      const macBookName = formatMacBookName(safeProduct);
       return <span className="font-medium">{macBookName}</span>;
     }
 
