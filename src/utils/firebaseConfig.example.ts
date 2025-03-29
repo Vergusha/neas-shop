@@ -1,5 +1,5 @@
 // Пример конфигурации Firebase (без реальных ключей)
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "your-app.firebaseapp.com",
   databaseURL: "https://your-app-default-rtdb.region.firebasedatabase.app",

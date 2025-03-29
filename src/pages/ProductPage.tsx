@@ -32,6 +32,7 @@ interface ProductData {
   model?: string;
   modelNumber?: string;
   memory?: string;
+  category: string;
   // Laptop specific
   processor?: string;
   graphicsCard?: string;
@@ -417,24 +418,6 @@ const ProductPage: React.FC = () => {
     if (index >= 0 && index < productImages.length) {
       setCurrentImageIndex(index);
     }
-  };
-
-  // Функция для форматирования имени продукта
-  const formatProductName = (product: any): string => {
-    const parts = [];
-    if (product.brand) parts.push(product.brand);
-    if (product.model) parts.push(product.model);
-    
-    // Для игровой периферии добавляем deviceType
-    if (product.deviceType) parts.push(product.deviceType);
-    
-    if (product.modelNumber) parts.push(product.modelNumber);
-    if (product.memory) parts.push(product.memory);
-    if (product.color) parts.push(product.color);
-    
-    return parts.length > 0 
-      ? parts.join(' ') 
-      : product.name || 'Unnamed Product';
   };
 
   // Функция для форматирования описания товара

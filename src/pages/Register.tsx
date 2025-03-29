@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { getDatabase, ref, set, get } from 'firebase/database';
 import { useNavigate, Link } from 'react-router-dom';
 import { createCustomUserId } from '../utils/generateUserId';

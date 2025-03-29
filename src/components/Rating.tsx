@@ -68,7 +68,7 @@ const Rating: React.FC<RatingProps> = ({
         );
       })}
       {!readonly && (
-        <span className="text-xs text-gray-500 ml-2">
+        <span className="ml-2 text-xs text-gray-500">
           {value.toFixed(1)}/{maxValue}
         </span>
       )}
