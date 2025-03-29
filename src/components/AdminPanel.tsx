@@ -324,16 +324,18 @@ const AdminPanel: React.FC = () => {
     }
     if (product.category === 'tv') {
       const diagonal = product.diagonal ? formatForUrl(product.diagonal) : '';
+      const model = formatForUrl(product.model); // Include model in TV ID generation
       const resolution = formatForUrl(product.resolution || '');
       const displayType = formatForUrl(product.displayType || '');
-      const modelSuffix = product.modelNumber ? `-${formatForUrl(product.modelNumber)}` : '';
+      const modelNumber = product.modelNumber ? `-${formatForUrl(product.modelNumber)}` : '';
       
-      return `${brand}-${diagonal}-${resolution}-${displayType}-tv${modelSuffix}`;
+      return `${brand}-${model}-${diagonal}-${resolution}-${displayType}-tv${modelNumber}`;
     }
     if (product.category === 'audio') {
       const connectivity = product.connectivity ? formatForUrl(product.connectivity) : '';
       const type = product.subtype ? formatForUrl(product.subtype) : '';
       const color = formatForUrl(product.color);
+      const modelNumber = product.modelNumber ? `-${formatForUrl(product.modelNumber)}` : '';
       const typeMap: { [key: string]: string } = {
         'headphones': 'headphones',
         'earbuds': 'earbuds',
@@ -342,7 +344,7 @@ const AdminPanel: React.FC = () => {
       };
       
       const englishType = typeMap[type] || type;
-      return `${brand}-${model}-${connectivity}-${englishType}-${color}`;
+      return `${brand}-${model}${modelNumber}-${connectivity}-${englishType}-${color}`;
     }
     const modelNumber = product.modelNumber ? `-${formatForUrl(product.modelNumber)}` : '';
     const memory = formatForUrl(product.memory)
@@ -1143,7 +1145,7 @@ const AdminPanel: React.FC = () => {
           {generateProductId(product) || 'Example: samsung-55-4k-uhd-led-tv-tu7105'}
         </div>
         <div className="mt-2 text-xs text-gray-500">
-          Format: brand-diagonal-resolution-displaytype-tv-modelnumber
+          Format: brand-model-diagonal-resolution-displaytype-tv-modelnumber
         </div>
       </div>
     </>

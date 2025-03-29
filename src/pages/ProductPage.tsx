@@ -436,10 +436,15 @@ const ProductPage: React.FC = () => {
 
     // Форматирование для телевизоров: "Samsung 55" 4K UHD LED TV TU55DU7105KXXC"
     if (product.collection === 'tv') {
+      // Извлекаем и форматируем правильно название телевизора
+      const tvModelParts = product.model?.split(' ') || [];
+      // Получаем часть модели, которая содержит технологию (4K UHD, LED TV, etc.)
+      const displayTechnology = tvModelParts.length > 0 ? tvModelParts.join(' ') : '';
+      
       const nameComponents = [
         product.brand || '',                  // Samsung
         product.screenSize ? `${product.screenSize}"` : '', // 55"
-        product.model || '',                  // 4K UHD LED TV
+        displayTechnology || '',              // 4K UHD LED TV
         product.modelNumber || ''             // TU55DU7105KXXC
       ]
         .filter(component => component && component.trim() !== '')
