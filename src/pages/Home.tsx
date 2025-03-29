@@ -1,14 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import CategoryList from '../components/CategoryList';
 import ProductCard from '../components/ProductCard';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db, database } from '../firebaseConfig';
 import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
 import { Product } from '../types/product';
+import './Home.css'; // Import the CSS file for custom styles
 
 const Home = () => {
   const [popularProducts, setPopularProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const productRowRef = useRef<HTMLDivElement>(null);
+
+  const scrollProducts = (direction: 'left' | 'right') => {
+    if (productRowRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      productRowRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     const fetchPopularProducts = async () => {
@@ -173,14 +182,22 @@ const Home = () => {
               <span className="loading loading-spinner loading-lg"></span>
             </div>
           ) : (
-            <div className="px-12 sm:px-16 md:px-20 overflow-x-hidden">
-              <div className="flex flex-row flex-nowrap overflow-x-auto pb-4 product-row">
+            <div className="relative">
+              <button
+                onClick={() => scrollProducts('left')}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-md"
+                aria-label="Scroll left"
+              >
+                &#8249;
+              </button>
+              <div
+                ref={productRowRef}
+                className="flex flex-row flex-nowrap overflow-x-auto pb-4 product-row hide-scrollbar"
+              >
                 {popularProducts.length > 0 ? (
                   popularProducts.map(product => (
                     <div key={product.id} className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 flex-shrink-0">
-                      <ProductCard
-                        product={product}
-                      />
+                      <ProductCard product={product} />
                     </div>
                   ))
                 ) : (
@@ -189,6 +206,13 @@ const Home = () => {
                   </div>
                 )}
               </div>
+              <button
+                onClick={() => scrollProducts('right')}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-md"
+                aria-label="Scroll right"
+              >
+                &#8250;
+              </button>
             </div>
           )}
         </section>
