@@ -102,16 +102,14 @@ const Breadcrumbs: React.FC = () => {
         
         // Форматирование для телевизоров
         else if (productCollection === 'tv' && productData) {
-          // Извлекаем и форматируем правильно название телевизора
-          const tvModelParts = productData.model?.split(' ') || [];
-          // Получаем часть модели, которая содержит технологию (4K UHD, LED TV, etc.)
-          const displayTechnology = tvModelParts.length > 0 ? tvModelParts.join(' ') : '';
-          
           const nameComponents = [
             productData.brand || '',                  // Samsung
             productData.screenSize ? `${productData.screenSize}"` : '', // 55"
-            displayTechnology || '',                  // 4K UHD LED TV 
-            productData.modelNumber || ''             // TU55DU7105KXXC
+            productData.resolution || '',             // 4K
+            productData.refreshRate || '',            // 120Hz
+            productData.displayType || '',            // QLED
+            productData.model || '',                  // QN90B
+            productData.modelNumber || ''             // Model number if available
           ]
             .filter(component => component && component.trim() !== '')
             .join(' ');

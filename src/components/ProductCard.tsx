@@ -9,7 +9,7 @@ import ProductImageCarousel from './ProductImageCarousel';
 import { trackProductInteraction } from '../utils/productTracking';
 import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
 import { Product } from '../types/product';
-import { formatMacBookName, formatAudioName, formatMobileName } from '../utils/productFormatting';
+import { formatMacBookName, formatAudioName, formatMobileName, formatTVName } from '../utils/productFormatting';
 
 interface ProductCardProps {
   product: Product;
@@ -222,6 +222,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     // Special formatting for Mobile products
     if (product.collection === 'mobile') {
       return <span className="font-medium">{formatMobileName(product)}</span>;
+    }
+    
+    // Special formatting for TV products using the correct format with all required fields
+    if (product.collection === 'tv' || product.category === 'tv') {
+      const tvName = formatTVName({
+        brand: product.brand,
+        diagonal: product.diagonal,
+        screenSize: product.screenSize,
+        resolution: product.resolution,
+        refreshRate: product.refreshRate, // Make sure refreshRate is passed
+        displayType: product.displayType,
+        model: product.model,
+        modelNumber: product.modelNumber
+      });
+      console.log('Formatted TV name:', tvName); // Debug log
+      return <span className="font-medium">{tvName}</span>;
     }
 
     const details = [];

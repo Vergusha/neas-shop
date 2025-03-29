@@ -55,3 +55,33 @@ export const formatMobileName = (product: {
 
   return parts.join(' ');
 };
+
+export const formatTVName = (product: {
+  brand?: string;
+  diagonal?: string;
+  screenSize?: string;
+  resolution?: string;
+  refreshRate?: string;
+  displayType?: string;
+  model?: string;
+  modelNumber?: string;
+}): string => {
+  if (!product.brand) return '';
+  
+  // Use diagonal or screenSize, whichever is available
+  const size = product.diagonal || product.screenSize || '';
+  
+  const parts = [
+    product.brand,                      // Samsung
+    size ? `${size}"` : '',             // 55"
+    product.resolution || '',           // 4K
+    product.refreshRate || '',          // 120Hz
+    product.displayType || '',          // QLED
+    product.model || '',                // QN90B
+    product.modelNumber || ''           // Model number if available
+  ]
+    .filter(Boolean)  // Remove empty strings
+    .join(' ');
+  
+  return parts;
+};

@@ -40,6 +40,9 @@ interface ProductData {
   storageType?: string;
   ram?: string;
   operatingSystem?: string;
+  resolution?: string; // Add resolution field for TVs
+  displayType?: string; // Add displayType field for TVs
+  refreshRate?: string; // Add refreshRate field for TVs
 }
 
 const ProductPage: React.FC = () => {
@@ -434,18 +437,16 @@ const ProductPage: React.FC = () => {
       return nameComponents || product.name;
     }
 
-    // Форматирование для телевизоров: "Samsung 55" 4K UHD LED TV TU55DU7105KXXC"
+    // Форматирование для телевизоров: "Samsung 55" 4K 120Hz QLED QN90B"
     if (product.collection === 'tv') {
-      // Извлекаем и форматируем правильно название телевизора
-      const tvModelParts = product.model?.split(' ') || [];
-      // Получаем часть модели, которая содержит технологию (4K UHD, LED TV, etc.)
-      const displayTechnology = tvModelParts.length > 0 ? tvModelParts.join(' ') : '';
-      
       const nameComponents = [
         product.brand || '',                  // Samsung
         product.screenSize ? `${product.screenSize}"` : '', // 55"
-        displayTechnology || '',              // 4K UHD LED TV
-        product.modelNumber || ''             // TU55DU7105KXXC
+        product.resolution || '',             // 4K
+        product.refreshRate || '',            // 120Hz
+        product.displayType || '',            // QLED
+        product.model || '',                  // QN90B
+        product.modelNumber || ''             // Model number if available
       ]
         .filter(component => component && component.trim() !== '')
         .join(' ');
