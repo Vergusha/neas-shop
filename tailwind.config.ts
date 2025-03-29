@@ -17,6 +17,7 @@ const config: Config = {
         'shake': 'shake 0.3s',
         'slide-in': 'slideIn 0.3s ease-out forwards',
         'cart-flash': 'cartButtonFlash 0.5s ease',
+        'logo-scale': 'logoScale 0.3s ease-in-out',
       },
       keyframes: {
         shake: {
@@ -29,6 +30,10 @@ const config: Config = {
         cartButtonFlash: {
           '0%, 100%': { transform: 'scale(1)' },
           '50%': { transform: 'scale(1.2)' }
+        },
+        logoScale: {
+          '0%': { transform: 'scale(1)' },
+          '100%': { transform: 'scale(1.1)' }
         }
       },
       spacing: {
@@ -36,6 +41,12 @@ const config: Config = {
       },
       maxWidth: {
         'card-w': 'calc(100% - 2.5rem)', // Максимальная ширина контента карточки
+      },
+      transform: {
+        'logo-scale': 'scale(1.1)',
+      },
+      transition: {
+        'logo': 'transform 0.3s ease-in-out',
       }
     },
   },
