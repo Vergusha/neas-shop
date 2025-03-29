@@ -9,7 +9,7 @@ import ProductImageCarousel from './ProductImageCarousel';
 import { trackProductInteraction } from '../utils/productTracking';
 import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
 import { Product } from '../types/product';
-import { formatMacBookName } from '../utils/productFormatting';
+import { formatMacBookName, formatAudioName } from '../utils/productFormatting';
 
 interface ProductCardProps {
   product: Product;

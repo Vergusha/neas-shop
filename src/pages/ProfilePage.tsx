@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth, updateProfile } from 'firebase/auth';
-import { getDatabase, ref, get, set, onValue, update } from 'firebase/database';
-import { FaPencilAlt, FaHeart, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { getDatabase, ref, get, onValue, update } from 'firebase/database';
+import { FaPencilAlt, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import OrderDetailsComponent from '../components/OrderDetailsComponent';
 import AvatarEditor from '../components/AvatarEditor';
 import { isAdmin } from '../utils/constants';
@@ -359,17 +359,6 @@ const ProfilePage: React.FC = () => {
       return () => unsubscribe();
     }
   }, [user]);
-
-  const handleFavoriteClick = (productId: string) => {
-    let updatedFavorites;
-    if (favorites.includes(productId)) {
-      updatedFavorites = favorites.filter(id => id !== productId);
-    } else {
-      updatedFavorites = [...favorites, productId];
-    }
-    setFavorites(updatedFavorites);
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-  };
 
   const toggleOrderDetails = (orderId: string) => {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);

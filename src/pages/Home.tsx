@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import CategoryList from '../components/CategoryList';
 import ProductCard from '../components/ProductCard';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db, database } from '../firebaseConfig';
 import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
 import { Product } from '../types/product';
@@ -13,77 +13,135 @@ const Home = () => {
   useEffect(() => {
     const fetchPopularProducts = async () => {
       try {
-        // Правильно используем ref, query и ограничение в Firebase Realtime Database
         const popularProductsRef = ref(database, 'popularProducts');
-        // Используем query для создания запроса с ограничением
-        const popularProductsDbQuery = query(
-          popularProductsRef,
-          orderByChild('score'),
-          limitToLast(6)
-        );
         
-        // Получаем данные из базы
-        const snapshot = await get(popularProductsDbQuery);
-        
-        if (snapshot.exists()) {
-          const productsData = snapshot.val();
-          // Преобразуем объект в массив и сортируем по убыванию score
-          const productsArray = Object.entries(productsData)
-            .map(([key, value]: [string, any]) => ({
-              id: key,
-              ...value
-            }))
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 6);
+        try {
+          const popularProductsDbQuery = query(
+            popularProductsRef,
+            orderByChild('score'),
+            limitToLast(6)
+          );
           
-          // Загружаем полные данные продуктов из Firestore
-          const productsPromises = productsArray.map(async (item) => {
-            // Проверяем все коллекции продуктов
-            const collections = ['products', 'mobile', 'tv', 'gaming'];
-            
-            for (const collectionName of collections) {
-              try {
-                const productDoc = await getDoc(doc(db, collectionName, item.id));
-                if (productDoc.exists()) {
-                  const data = productDoc.data();
-                  return {
-                    ...data,
-                    id: item.id,
-                    score: item.score,
-                    // Добавляем обязательные поля из интерфейса Product
-                    description: data.description || '',
-                    name: data.name || 'Product not found',
-                    price: data.price || 0,
-                    image: data.image || ''
-                  } as Product;
-                }
-              } catch (err) {
-                console.error(`Error fetching product ${item.id} from ${collectionName}:`, err);
-              }
-            }
-            
-            // Если продукт не найден, возвращаем минимальное представление с обязательными полями
-            return {
-              id: item.id,
-              name: 'Product not found',
-              price: 0,
-              image: '',
-              description: 'Not available',
-              score: item.score
-            } as Product;
-          });
+          const snapshot = await get(popularProductsDbQuery);
           
-          const resolvedProducts = await Promise.all(productsPromises);
-          setPopularProducts(resolvedProducts);
-        } else {
-          console.log('No popular products found');
-          setPopularProducts([]);
+          if (snapshot.exists()) {
+            const productsData = snapshot.val();
+            const productsArray = Object.entries(productsData)
+              .map(([key, value]: [string, any]) => ({
+                id: key,
+                ...value
+              }))
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 6);
+            
+            await processPopularProducts(productsArray);
+            return;
+          }
+        } catch (queryError) {
+          console.log('Query with orderByChild failed, trying fallback approach:', queryError);
+          
+          const snapshot = await get(popularProductsRef);
+          
+          if (snapshot.exists()) {
+            const productsData = snapshot.val();
+            const productsArray = Object.entries(productsData)
+              .map(([key, value]: [string, any]) => ({
+                id: key,
+                ...value
+              }))
+              .sort((a, b) => (b.score || 0) - (a.score || 0))
+              .slice(0, 6);
+            
+            await processPopularProducts(productsArray);
+            return;
+          }
         }
+        
+        console.log('No popular products found, fetching recent products instead');
+        fetchRecentProducts();
       } catch (error) {
         console.error('Error fetching popular products:', error);
-        // В случае ошибки, используем пустой массив вместо запасного варианта
+        fetchRecentProducts();
+      }
+    };
+
+    const processPopularProducts = async (productsArray: any[]) => {
+      const productsPromises = productsArray.map(async (item) => {
+        const collections = ['products', 'mobile', 'tv', 'gaming', 'laptops', 'audio'];
+        
+        for (const collectionName of collections) {
+          try {
+            const productDoc = await getDoc(doc(db, collectionName, item.id));
+            if (productDoc.exists()) {
+              const data = productDoc.data();
+              return {
+                ...data,
+                id: item.id,
+                score: item.score,
+                description: data.description || '',
+                name: data.name || 'Product not found',
+                price: data.price || 0,
+                image: data.image || ''
+              } as Product;
+            }
+          } catch (err) {
+            console.error(`Error fetching product ${item.id} from ${collectionName}:`, err);
+          }
+        }
+        
+        return {
+          id: item.id,
+          name: 'Product not found',
+          price: 0,
+          image: '',
+          description: 'Not available',
+          score: item.score
+        } as Product;
+      });
+      
+      const resolvedProducts = await Promise.all(productsPromises);
+      setPopularProducts(resolvedProducts.filter(p => p.name !== 'Product not found'));
+      setLoading(false);
+    };
+
+    const fetchRecentProducts = async () => {
+      try {
+        const collections = ['products', 'mobile', 'tv', 'gaming', 'laptops'];
+        let recentProducts: Product[] = [];
+        
+        for (const collectionName of collections) {
+          const collectionRef = collection(db, collectionName);
+          const querySnapshot = await getDocs(collectionRef);
+          
+          querySnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            if (data.name && data.price && data.image) {
+              recentProducts.push({
+                id: doc.id,
+                name: data.name,
+                description: data.description || '',
+                price: typeof data.price === 'number' ? data.price : 
+                       typeof data.price === 'string' ? parseFloat(data.price) : 0,
+                image: data.image,
+                collection: collectionName,
+                ...data
+              } as Product);
+            }
+          });
+        }
+        
+        recentProducts.sort((a, b) => {
+          if (a.createdAt && b.createdAt) {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          }
+          return Math.random() - 0.5;
+        });
+        
+        setPopularProducts(recentProducts.slice(0, 6));
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching recent products:', error);
         setPopularProducts([]);
-      } finally {
         setLoading(false);
       }
     };
