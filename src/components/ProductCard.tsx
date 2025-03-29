@@ -9,7 +9,7 @@ import ProductImageCarousel from './ProductImageCarousel';
 import { trackProductInteraction } from '../utils/productTracking';
 import { getFavoriteStatus, toggleFavorite } from '../utils/favoritesService';
 import { Product } from '../types/product';
-import { formatMacBookName, formatAudioName } from '../utils/productFormatting';
+import { formatMacBookName, formatAudioName, formatMobileName } from '../utils/productFormatting';
 
 interface ProductCardProps {
   product: Product;
@@ -217,6 +217,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     if (product.collection === 'audio') {
       const audioName = formatAudioName(product);
       return <span className="font-medium">{audioName}</span>;
+    }
+
+    // Special formatting for Mobile products
+    if (product.collection === 'mobile') {
+      return <span className="font-medium">{formatMobileName(product)}</span>;
     }
 
     const details = [];

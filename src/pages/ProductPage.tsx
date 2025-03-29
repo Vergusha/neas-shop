@@ -408,14 +408,43 @@ const ProductPage: React.FC = () => {
   };
 
   const formatTitle = (product: ProductData): string => {
+    // Логируем данные продукта для отладки
+    console.log('Formatting title for product:', product);
+
+    // Существующий код для форматирования MacBook
     if (product.category === 'laptops' && product.brand === 'Apple') {
       return formatMacBookName(product);
     }
-    
+
+    // Существующий код для форматирования аудио
     if (product.collection === 'audio') {
       return formatAudioName(product);
     }
-    
+
+    // Для мобильных устройств формируем полное название в определенном порядке
+    if (product.collection === 'mobile') {
+      // Создаем массив компонентов названия в правильном порядке
+      const nameComponents = [
+        product.brand || '', // Бренд (например, Motorola)
+        product.model || '', // Модель (например, Moto G84)
+        product.modelNumber || '', // Номер модели, если есть
+        product.memory || '', // Память (например, 256GB)
+        product.color || '' // Цвет (например, Marshmallow Blue)
+      ];
+      
+      // Фильтруем пустые значения и объединяем в строку
+      const fullName = nameComponents
+        .filter(component => component && component.trim() !== '')
+        .join(' ');
+      
+      // Логируем результат для отладки
+      console.log('Generated mobile product full name:', fullName);
+      
+      // Если сгенерированное название пустое, возвращаем исходное название продукта
+      return fullName || product.name;
+    }
+
+    // Возвращаем стандартное название для других типов товаров
     return product.name;
   };
 

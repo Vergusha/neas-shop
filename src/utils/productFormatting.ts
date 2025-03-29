@@ -37,3 +37,21 @@ export const formatAudioName = (product: {
 
   return parts.join(' ');
 };
+
+export const formatMobileName = (product: {
+  brand?: string;
+  model?: string;
+  memory?: string;
+  color?: string;
+}): string => {
+  if (!product.brand || !product.model) return '';
+
+  const parts = [
+    product.brand,
+    product.model,
+    product.memory,
+    product.color
+  ].filter(Boolean);
+
+  return parts.join(' ');
+};
