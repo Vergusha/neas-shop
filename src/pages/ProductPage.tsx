@@ -664,26 +664,13 @@ const ProductPage: React.FC = () => {
                   </button>
                 </div>
 
-                <button 
+                <button
+                  className={`flex items-center justify-center gap-2 px-6 py-3 text-white bg-[#003D2D] rounded-lg hover:bg-[#005040] transition-all duration-200 active:scale-95 ${
+                    window.innerWidth <= 768 ? 'btn-circle p-4' : ''
+                  }`}
                   onClick={addToCart}
-                  disabled={!isAuthenticated}
-                  className={`
-                    px-6 h-10 rounded-lg transition-all duration-200
-                    flex items-center gap-2 relative overflow-hidden
-                    ${isAuthenticated 
-                      ? 'bg-[#003D2D] hover:bg-[#004D3D] text-white active:scale-95'
-                      : 'bg-gray-200 text-gray-600'
-                    }
-                  `}
-                  title={isAuthenticated ? 'Add to cart' : 'Login'}
                 >
-                  <ShoppingCart size={18} />
-                  <span className="text-sm font-medium">
-                    {isAuthenticated ? 'Add to Cart' : 'Login'}
-                  </span>
-                  {addedToCart && (
-                    <span className="absolute inset-0 rounded-lg bg-green-500/20 animate-ping"></span>
-                  )}
+                  {window.innerWidth <= 768 ? <ShoppingCart size={22} /> : 'Add to Cart'}
                 </button>
               </div>
             </div>
