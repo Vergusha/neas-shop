@@ -110,12 +110,17 @@ export const handleAvatarError = (event: React.SyntheticEvent<HTMLImageElement, 
  * @param url The new avatar URL to store
  * @param userId Optional user ID to include in the event payload
  */
-export const updateAvatarUrl = (url: string, userId?: string): void => {
+export const updateAvatarUrl = async (url: string, userId?: string): Promise<void> => {
   try {
-    // Update standalone avatarURL
+    // Проверяем длину URL перед сохранением
+    if (url.length > 1024) {
+      console.warn('Avatar URL too long, may cause issues with Firebase Auth');
+    }
+
+    // Сохраняем в localStorage в любом случае
     localStorage.setItem(AVATAR_KEY, url);
     
-    // Update in userProfile if it exists
+    // Обновляем в userProfile если существует
     const savedProfile = localStorage.getItem(USER_PROFILE_KEY);
     if (savedProfile) {
       const profileData = JSON.parse(savedProfile);
@@ -123,7 +128,7 @@ export const updateAvatarUrl = (url: string, userId?: string): void => {
       localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profileData));
     }
     
-    // Dispatch event for real-time updates across components
+    // Отправляем событие для обновления UI
     window.dispatchEvent(new CustomEvent('avatarUpdated', { 
       detail: { 
         avatarURL: url,

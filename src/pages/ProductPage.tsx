@@ -210,30 +210,34 @@ const ProductPage: React.FC = () => {
 
   // Function to fetch color variants
   const fetchColorVariants = async (currentProduct: ProductData) => {
-    if (!currentProduct.brand || !currentProduct.model) {
-      console.log("Missing brand or model - cannot fetch color variants");
+    if (!currentProduct.brand || !currentProduct.model || !currentProduct.processor || !currentProduct.modelNumber) {
+      console.log("Missing required fields for color variants:", {
+        brand: currentProduct.brand,
+        model: currentProduct.model,
+        processor: currentProduct.processor,
+        modelNumber: currentProduct.modelNumber
+      });
       return;
     }
     
     try {
-      console.log('Fetching color variants for:', {
-        brand: currentProduct.brand,
-        model: currentProduct.model,
-        modelNumber: currentProduct.modelNumber,
-        processor: currentProduct.processor
-      });
-
       const collectionRef = collection(db, 'laptops');
       
-      // For MacBooks, use minimal where clauses
-      const q = query(
-        collectionRef,
+      // Создаем массив условий, исключая undefined значения
+      const conditions = [
         where('brand', '==', currentProduct.brand),
-        where('model', '==', currentProduct.model),
-        where('processor', '==', currentProduct.processor),
-        where('modelNumber', '==', currentProduct.modelNumber)
-      );
+        where('model', '==', currentProduct.model)
+      ];
 
+      if (currentProduct.processor) {
+        conditions.push(where('processor', '==', currentProduct.processor));
+      }
+      if (currentProduct.modelNumber) {
+        conditions.push(where('modelNumber', '==', currentProduct.modelNumber));
+      }
+
+      const q = query(collectionRef, ...conditions);
+      
       const querySnapshot = await getDocs(q);
       const variants: Array<{id: string, color: string, image: string}> = [];
 

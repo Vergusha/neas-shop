@@ -27,35 +27,31 @@ const ProfilePage: React.FC = () => {
   const [previewAvatar, setPreviewAvatar] = useState(user?.photoURL || defaultAvatarSVG);
   const [isUploading, setIsUploading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
-  const [showAvatarEditor, setShowAvatarEditor] = useState(false); // Новое состояние для отображения редактора
+  const [showAvatarEditor, setShowAvatarEditor] = useState(false);
   const [customUserId, setCustomUserId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize Firebase Realtime Database
   const database = getDatabase();
   const { updateUserAvatar } = useAuth();
 
   useEffect(() => {
     if (user) {
-      console.log('User is logged in:', user);
       setNickname(user.displayName || '');
       setAvatarURL(user.photoURL || defaultAvatarSVG);
       setUserId(user.uid);
       fetchUserProfile();
       fetchOrderHistory();
     } else {
-      console.log('No user logged in, restoring from localStorage');
-      // Restore data from localStorage if user is not available
       const savedNickname = localStorage.getItem('nickname');
-      const savedFirstName = localStorage.getItem('firstName'); // Changed from realName
-      const savedLastName = localStorage.getItem('lastName'); // Added lastName
+      const savedFirstName = localStorage.getItem('firstName');
+      const savedLastName = localStorage.getItem('lastName');
       const savedPhoneNumber = localStorage.getItem('phoneNumber');
       const savedAvatarURL = localStorage.getItem('avatarURL');
       const savedFavorites = localStorage.getItem('favorites');
       const savedUserId = localStorage.getItem('userId');
       if (savedNickname) setNickname(savedNickname);
-      if (savedFirstName) setFirstName(savedFirstName); // Update firstName
-      if (savedLastName) setLastName(savedLastName); // Update lastName
+      if (savedFirstName) setFirstName(savedFirstName);
+      if (savedLastName) setLastName(savedLastName);
       if (savedPhoneNumber) setPhoneNumber(savedPhoneNumber);
       if (savedAvatarURL) setAvatarURL(savedAvatarURL);
       if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
@@ -63,9 +59,7 @@ const ProfilePage: React.FC = () => {
     }
   }, [user]);
 
-  // Separate useEffect for fetching order history even when user info is loaded from localStorage
   useEffect(() => {
-    // If userId is available (either from user object or localStorage), fetch order history
     if (userId) {
       fetchOrderHistory();
     }
@@ -116,11 +110,10 @@ const ProfilePage: React.FC = () => {
           setFirstName(data.firstName || '');
           setLastName(data.lastName || '');
           setPhoneNumber(data.phoneNumber || '');
-          setCustomUserId(emailPrefix); // Используем emailPrefix как ID
+          setCustomUserId(emailPrefix);
           setAvatarURL(data.avatarURL || defaultAvatarSVG);
           setPreviewAvatar(data.avatarURL || defaultAvatarSVG);
 
-          // Обновляем локальное хранилище
           localStorage.setItem('userProfile', JSON.stringify(data));
         }
       } catch (error) {
@@ -129,34 +122,26 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  // Add new useEffect for localStorage sync
   useEffect(() => {
-    // Try to restore from localStorage on mount
     const savedProfile = localStorage.getItem('userProfile');
     if (savedProfile) {
       const userData = JSON.parse(savedProfile);
       setCustomUserId(userData.customUserId || '');
-      // ...other state updates if needed
     }
   }, []);
 
   const fetchOrderHistory = async () => {
-    console.log("Fetching order history for userId:", userId);
-    
     if (userId) {
       const ordersRef = ref(database, `orders/${userId}`);
       try {
         const snapshot = await get(ordersRef);
         if (snapshot.exists()) {
           const ordersData = snapshot.val();
-          // Convert the object to an array and sort by date (newest first)
           const ordersArray = Object.values(ordersData).sort((a: any, b: any) => 
             new Date(b.date).getTime() - new Date(a.date).getTime()
           );
-          console.log('Order history data:', ordersArray);
           setOrderHistory(ordersArray);
         } else {
-          console.log('No order history data found for user ID:', userId);
           setOrderHistory([]);
         }
       } catch (error) {
@@ -164,21 +149,17 @@ const ProfilePage: React.FC = () => {
         setOrderHistory([]);
       }
     } else {
-      // For non-logged-in users, try to get anonymous orders
-      console.log("No userId available, checking for anonymous orders");
       const anonymousOrders = JSON.parse(localStorage.getItem('anonymousOrders') || '[]');
       if (anonymousOrders.length > 0) {
-        console.log("Found anonymous orders:", anonymousOrders);
         setOrderHistory(anonymousOrders);
       } else {
-        console.log("No anonymous orders found");
         setOrderHistory([]);
       }
     }
   };
 
   const checkNicknameAvailability = async (newNickname: string): Promise<boolean> => {
-    if (newNickname === nickname) return true; // Если никнейм не изменился
+    if (newNickname === nickname) return true;
     
     const db = getDatabase();
     const nicknameRef = ref(db, `nicknames/${newNickname.toLowerCase()}`);
@@ -192,13 +173,11 @@ const ProfilePage: React.FC = () => {
     try {
       setIsLoading(true);
 
-      // Проверяем доступность никнейма
       const isNicknameAvailable = await checkNicknameAvailability(nickname);
       if (!isNicknameAvailable) {
         throw new Error('This nickname is already taken');
       }
 
-      // Получаем emailPrefix для ID пользователя
       const emailPrefix = user.email?.split('@')[0].toLowerCase()
         .replace(/[^a-z0-9-_]/g, '')
         .replace(/\s+/g, '-');
@@ -207,18 +186,8 @@ const ProfilePage: React.FC = () => {
 
       const db = getDatabase();
       const userRef = ref(db, `users/${emailPrefix}`);
-      
-      // Если никнейм изменился, обновляем nicknames
-      if (nickname !== user.displayName) {
-        // Удаляем старый никнейм
-        if (user.displayName) {
-          await set(ref(db, `nicknames/${user.displayName.toLowerCase()}`), null);
-        }
-        // Добавляем новый никнейм
-        await set(ref(db, `nicknames/${nickname.toLowerCase()}`), user.uid);
-      }
 
-      // Обновляем данные пользователя
+      // Обновляем профиль с проверкой длины URL аватара
       const updatedUserData = {
         nickname,
         firstName,
@@ -228,16 +197,19 @@ const ProfilePage: React.FC = () => {
         lastUpdated: new Date().toISOString(),
       };
 
-      // Обновляем Firebase Auth профиль
-      await updateProfile(user, {
-        displayName: nickname,
-        photoURL: previewAvatar
-      });
+      // Обновляем Firebase Auth профиль только если URL не слишком длинный
+      if (previewAvatar.length <= 1024) {
+        await updateProfile(user, {
+          displayName: nickname,
+          photoURL: previewAvatar
+        });
+      } else {
+        console.warn('Avatar URL too long for Auth profile, updating only in database');
+      }
 
-      // Обновляем данные в базе
+      // Обновляем базу данных в любом случае
       await update(userRef, updatedUserData);
 
-      // Обновляем локальное хранилище
       const currentData = JSON.parse(localStorage.getItem('userProfile') || '{}');
       localStorage.setItem('userProfile', JSON.stringify({
         ...currentData,
@@ -270,28 +242,21 @@ const ProfilePage: React.FC = () => {
         throw new Error('No user ID found');
       }
 
-      // Используем uid пользователя вместо email prefix
       const userRef = ref(database, `users/${user.uid}`);
       
-      // Сначала обновляем базу данных
       await update(userRef, {
         avatarURL: imageData,
         lastUpdated: new Date().toISOString()
       });
 
-      // Затем обновляем через AuthProvider
       await updateUserAvatar(imageData);
 
-      // Обновляем локальное состояние
       setPreviewAvatar(imageData);
       setAvatarURL(imageData);
 
-      // Диспатчим событие обновления аватара
       window.dispatchEvent(new CustomEvent('avatarUpdated', {
         detail: { avatarURL: imageData }
       }));
-
-      console.log('Avatar updated successfully');
     } catch (error) {
       console.error('Error updating avatar:', error);
       alert('Failed to update avatar. Please try again.');
@@ -301,7 +266,6 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  // Обновляем useEffect для синхронизации аватара
   useEffect(() => {
     const syncAvatar = () => {
       if (user?.photoURL) {
@@ -338,7 +302,6 @@ const ProfilePage: React.FC = () => {
     };
   }, [user]);
 
-  // Добавляем слушатель изменений в базе данных
   useEffect(() => {
     if (user) {
       const userRef = ref(database, `users/${user.uid}`);
@@ -352,7 +315,6 @@ const ProfilePage: React.FC = () => {
             localStorage.setItem('avatarURL', data.avatarURL);
           }
           
-          // Update localStorage with new data
           localStorage.setItem('userProfile', JSON.stringify(data));
         }
       });
@@ -374,13 +336,8 @@ const ProfilePage: React.FC = () => {
 
   const toggleOrderDetails = (orderId: string) => {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
-    // Add debug logging when toggling order
     if (expandedOrderId !== orderId) {
       const order = orderHistory.find((o: any) => o.id === orderId);
-      console.log('Toggling order details for:', orderId);
-      console.log('Order data:', order);
-      
-      // Check if order has required properties
       if (order && (!order.items || !Array.isArray(order.items))) {
         console.error('Order is missing items array:', order);
       }
@@ -388,24 +345,25 @@ const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">Profile</h1>
+    <div className="container py-8 mx-auto">
+      <h1 className="mb-8 text-3xl font-bold text-gray-900">My Profile</h1>
       
-      {/* Profile section */}
-      <div className="bg-white p-4 rounded-lg shadow-md">
-        <div className="flex items-center mb-4">
-          <div className="relative">
+      {/* Profile Card */}
+      <div className="p-6 mb-8 bg-white shadow-md rounded-xl">
+        <div className="flex flex-col items-center md:flex-row md:items-start">
+          {/* Avatar Section */}
+          <div className="relative mb-6 md:mb-0 md:mr-8">
             <div className="avatar">
-              <div className="w-24 h-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden bg-neutral-content">
+              <div className="w-32 h-32 overflow-hidden rounded-full ring ring-[#003D2D] ring-offset-2">
                 {isUploading ? (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                  <div className="flex items-center justify-center w-full h-full bg-gray-100">
                     <span className="loading loading-spinner loading-md"></span>
                   </div>
                 ) : (
                   <img
                     src={previewAvatar}
                     alt="Avatar"
-                    className="w-full h-full object-cover cursor-pointer"
+                    className="object-cover w-full h-full transition-all duration-200 cursor-pointer hover:opacity-80"
                     onClick={handleAvatarClick}
                     onError={(e) => handleAvatarError(e)}
                   />
@@ -413,119 +371,144 @@ const ProfilePage: React.FC = () => {
               </div>
             </div>
             <button 
-              className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:bg-primary-focus transition-colors"
               onClick={handleAvatarClick}
+              className="absolute bottom-0 right-0 p-2 text-white transition-colors rounded-full shadow-lg bg-[#003D2D] hover:bg-[#004D3D]"
             >
               <FaPencilAlt className="w-4 h-4" />
             </button>
           </div>
-          
-          <div className="ml-4">
-            <h2 className="text-xl font-bold">{nickname || `${firstName} ${lastName}`.trim()}</h2>
-            <p className="text-sm text-gray-500">ID: {customUserId}</p>
-            <FaHeart
-              className="w-5 h-5 ml-2 cursor-pointer"
-              fill={favorites.includes('product-id') ? 'red' : 'none'}
-              stroke="red"
-              onClick={() => handleFavoriteClick('product-id')}
-            />
+
+          {/* User Info Section */}
+          <div className="flex-grow">
+            <div className="flex flex-col items-center mb-6 md:items-start">
+              <h2 className="mb-2 text-2xl font-bold text-gray-900">
+                {nickname || `${firstName} ${lastName}`.trim() || 'User'}
+              </h2>
+              <p className="text-sm text-gray-500">ID: {customUserId}</p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Form Fields */}
+              <div className="space-y-4">
+                <div className="relative">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Nickname
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={nickname}
+                      onChange={(e) => setNickname(e.target.value)}
+                      disabled={!isEditing}
+                      className="w-full px-4 py-2 transition-colors border rounded-lg outline-none disabled:bg-gray-50 focus:border-[#003D2D]"
+                    />
+                    {!isEditing && (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="absolute right-2 top-2 text-[#003D2D] hover:text-[#004D3D]"
+                      >
+                        <FaPencilAlt className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-2 transition-colors border rounded-lg outline-none disabled:bg-gray-50 focus:border-[#003D2D]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-2 transition-colors border rounded-lg outline-none disabled:bg-gray-50 focus:border-[#003D2D]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-2 transition-colors border rounded-lg outline-none disabled:bg-gray-50 focus:border-[#003D2D]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {isEditing && (
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-6 py-2 text-[#003D2D] border border-[#003D2D] rounded-lg hover:bg-gray-50"
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateProfile}
+                  className="px-6 py-2 text-white rounded-lg bg-[#003D2D] hover:bg-[#004D3D]"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="loading loading-spinner loading-sm"></span>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="mb-4 flex items-center">
-            <label htmlFor="nickname" className="block text-gray-700 w-1/3">Nickname</label>
-            <input
-              type="text"
-              id="nickname"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              className="w-2/3 input input-bordered"
-              disabled={!isEditing}
-            />
-            <FaPencilAlt
-              className="w-5 h-5 ml-2 cursor-pointer"
-              onClick={() => setIsEditing(true)}
-            />
-          </div>
-
-          <div className="mb-4 flex items-center">
-            <label htmlFor="firstName" className="block text-gray-700 w-1/3">First Name</label>
-            <input
-              type="text"
-              id="firstName"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="w-2/3 input input-bordered"
-              disabled={!isEditing}
-            />
-          </div>
-
-          <div className="mb-4 flex items-center">
-            <label htmlFor="lastName" className="block text-gray-700 w-1/3">Last Name</label>
-            <input
-              type="text"
-              id="lastName"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="w-2/3 input input-bordered"
-              disabled={!isEditing}
-            />
-          </div>
-
-          <div className="mb-4 flex items-center">
-            <label htmlFor="phoneNumber" className="block text-gray-700 w-1/3">Phone Number</label>
-            <input
-              type="text"
-              id="phoneNumber"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="w-2/3 input input-bordered"
-              disabled={!isEditing}
-            />
-          </div>
-        </div>
-
-        {isEditing && (
-          <button 
-            onClick={handleUpdateProfile} 
-            className="btn btn-primary w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? <span className="loading loading-spinner"></span> : 'Save Changes'}
-          </button>
-        )}
       </div>
-      
-      {/* Admin Panel - now before order history */}
+
+      {/* Admin Panel Section */}
       {user && isAdmin(user.email) && (
-        <div className="mt-8 mb-8">
+        <div className="p-6 mb-8 bg-white shadow-md rounded-xl">
+          <h2 className="mb-4 text-2xl font-bold text-gray-900">Admin Panel</h2>
           <AdminPanel />
         </div>
       )}
-      
-      {/* Order History - now after admin panel */}
-      <div className="bg-white p-4 rounded-lg shadow-md mt-8">
-        <h2 className="text-xl font-bold mb-4">Order History</h2>
+
+      {/* Order History Section */}
+      <div className="p-6 bg-white shadow-md rounded-xl">
+        <h2 className="mb-6 text-2xl font-bold text-gray-900">Order History</h2>
         {orderHistory.length > 0 ? (
-          <ul className="space-y-4">
+          <div className="space-y-4">
             {orderHistory.map((order, index) => (
-              <li key={order.id || index} className="border rounded-lg overflow-hidden">
-                {/* Order summary row (always visible) */}
+              <div key={order.id || index} className="overflow-hidden border rounded-lg">
                 <div 
-                  className="p-4 bg-gray-50 flex justify-between items-center cursor-pointer"
+                  className="flex items-center justify-between p-4 cursor-pointer bg-gray-50 hover:bg-gray-100"
                   onClick={() => toggleOrderDetails(order.id)}
                 >
                   <div>
                     <p className="font-semibold">Order #{order.orderNumber || `${index + 1}`}</p>
                     <p className="text-sm text-gray-500">
-                      {new Date(order.date).toLocaleDateString()} | 
-                      {order.items?.length || 0} items | 
+                      {new Date(order.date).toLocaleDateString()} • 
+                      {order.items?.length || 0} items • 
                       Total: {order.total?.toFixed(2) || 0} NOK
                     </p>
                   </div>
-                  <div className="flex items-center">
-                    <span className={`mr-2 px-2 py-1 rounded-full text-xs ${
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                       order.status === 'completed' ? 'bg-green-100 text-green-800' : 
                       order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
                       'bg-gray-100 text-gray-800'
@@ -535,34 +518,21 @@ const ProfilePage: React.FC = () => {
                     {expandedOrderId === order.id ? <FaChevronUp /> : <FaChevronDown />}
                   </div>
                 </div>
-                
-                {/* Expanded order details */}
+
                 {expandedOrderId === order.id && (
-                  <div className="border-t p-4">
-                    {/* Add a try-catch wrapper to catch render errors */}
-                    {(() => {
-                      try {
-                        return <OrderDetailsComponent order={order} />;
-                      } catch (error) {
-                        console.error('Error rendering order details:', error);
-                        return (
-                          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                            <p>Error displaying order details. Please try again later.</p>
-                          </div>
-                        );
-                      }
-                    })()}
+                  <div className="p-4 border-t">
+                    <OrderDetailsComponent order={order} />
                   </div>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         ) : (
-          <p>No order history available.</p>
+          <p className="text-center text-gray-500">No order history available.</p>
         )}
       </div>
-      
-      {/* Компонент AvatarEditor */}
+
+      {/* Avatar Editor Modal */}
       {showAvatarEditor && user && (
         <AvatarEditor
           initialImage={avatarURL}
