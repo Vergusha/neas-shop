@@ -885,10 +885,7 @@ const AdminPanel: React.FC = () => {
                 required
               >
                 <option value="">Select OS</option>
-                <option value="macOS Monterey">macOS Monterey</option>
-                <option value="macOS Ventura">macOS Ventura</option>
-                <option value="macOS Sonoma">macOS Sonoma</option>
-                <option value="macOS Sequoia">macOS Sequoia</option>
+                <option value="macOS">macOS</option>
               </select>
             </div>
           </>
