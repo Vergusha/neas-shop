@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 html, body, #root {
   height: 100%;
 }
@@ -60,6 +64,29 @@ body {
   img {
     @apply max-w-full h-auto;
   }
+
+  /* Основные цвета */
+  :root {
+    --color-primary: 52 152 219; /* #3498db в формате RGB */
+    --color-secondary: 46 204 113; /* #2ecc71 */
+    --color-accent: 241 196 15; /* #f1c40f */
+  }
+
+  /* Настройка экранов */
+  @custom-media --xs (min-width: 475px);
+  @custom-media --sm (min-width: 640px);
+  @custom-media --md (min-width: 768px);
+  @custom-media --lg (min-width: 1024px);
+  @custom-media --xl (min-width: 1280px);
+  @custom-media --2xl (min-width: 1536px);
+
+  :root {
+    --daisy-theme: light;
+  }
+  
+  .dark {
+    --daisy-theme: dark;
+  }
 }
 
 /* Responsive layout containers */
@@ -97,5 +124,76 @@ body {
   .responsive-grid {
     @apply gap-8;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+}
+
+@layer components {
+  /* Максимальная ширина контента */
+  .max-w-content { max-width: 1440px; }
+  .max-w-mobile { max-width: 600px; }
+  .max-w-tablet { max-width: 960px; }
+  .max-w-card-w { max-width: calc(100% - 2.5rem); }
+  
+  /* Отступы карточек */
+  .p-card-p { padding: 1.25rem; }
+  
+  /* Отступы безопасной зоны */
+  .pt-safe-top { padding-top: env(safe-area-inset-top); }
+  .pb-safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  
+  /* Минимальная высота */
+  .min-h-screen-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  
+  /* Сетки */
+  .grid-cols-auto-fit { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .grid-cols-auto-fill { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+}
+
+/* Анимации */
+@keyframes shake {
+  0%, 100% { transform: translate(1px, 1px) rotate(0deg); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes cartButtonFlash {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+@keyframes logoScale {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+
+@layer utilities {
+  .animate-shake {
+    animation: shake 0.3s;
+  }
+  
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out forwards;
+  }
+  
+  .animate-cart-flash {
+    animation: cartButtonFlash 0.5s ease;
+  }
+  
+  .animate-logo-scale {
+    animation: logoScale 0.3s ease-in-out;
+  }
+  
+  .transform-logo-scale {
+    transform: scale(1.1);
+  }
+  
+  .transition-logo {
+    transition: transform 0.3s ease-in-out;
   }
 }
