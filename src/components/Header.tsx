@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, ShoppingCart, Heart, User } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Bell, MessageSquare } from 'lucide-react';
 import logo from '../assets/logo.svg';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore'; // Remove 'update' from here
 import { db } from '../firebaseConfig';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import Toast from './Toast';
-import { getDatabase, ref, get, onValue } from 'firebase/database';
+import { getDatabase, ref, get, onValue, update } from 'firebase/database'; // Import update from here
 import { app } from '../firebaseConfig';
 import { database } from '../firebaseConfig';
 import { useAuth } from '../utils/AuthProvider';
@@ -22,6 +22,9 @@ const Header: React.FC = () => {
   const [notificationItem, setNotificationItem] = useState<string>('');
   const [cartOpen, setCartOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -257,6 +260,109 @@ const Header: React.FC = () => {
     return () => unsubscribe();
   }, [user?.email, user?.photoURL, updateUserAvatar]);
 
+  // Add notification listener
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchNotifications = async () => {
+      try {
+        const notificationsRef = ref(database, `users/${user.uid}/notifications`);
+        
+        // Set up listener for notifications
+        const unsubscribe = onValue(notificationsRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const notificationsData = snapshot.val();
+            const notificationsList = Object.keys(notificationsData).map(key => ({
+              id: key,
+              ...notificationsData[key],
+              read: notificationsData[key].read || false
+            }));
+            
+            // Sort by date, newest first
+            notificationsList.sort((a, b) => 
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            
+            setNotifications(notificationsList);
+            
+            // Count unread notifications
+            const unread = notificationsList.filter(notification => !notification.read).length;
+            setUnreadNotifications(unread);
+          } else {
+            setNotifications([]);
+            setUnreadNotifications(0);
+          }
+        });
+        
+        return () => unsubscribe();
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    
+    fetchNotifications();
+  }, [user]);
+
+  const markNotificationAsRead = async (notificationId: string) => {
+    if (!user) return;
+    
+    try {
+      const notificationRef = ref(database, `users/${user.uid}/notifications/${notificationId}`);
+      await update(notificationRef, { read: true });
+      
+      // Update local state
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, read: true } 
+            : notification
+        )
+      );
+      
+      // Update unread count
+      setUnreadNotifications(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const handleNotificationClick = (notification: any) => {
+    // Mark notification as read
+    markNotificationAsRead(notification.id);
+    
+    // Hide notifications dropdown
+    setShowNotifications(false);
+    
+    // Navigate to product and scroll to the review
+    navigate(`/product/${notification.productId}#review-${notification.reviewId}`);
+  };
+
+  const markAllNotificationsAsRead = async () => {
+    if (!user || notifications.length === 0) return;
+    
+    try {
+      const updates: Record<string, boolean> = {};
+      
+      notifications.forEach(notification => {
+        if (!notification.read) {
+          updates[`users/${user.uid}/notifications/${notification.id}/read`] = true;
+        }
+      });
+      
+      if (Object.keys(updates).length > 0) {
+        await update(ref(database), updates);
+      }
+      
+      // Update local state
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      );
+      setUnreadNotifications(0);
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+
   // Мемоизированный аватар с проверкой авторизации
   const userAvatar = useMemo(() => {
     // Показываем аватар только если пользователь авторизован
@@ -378,6 +484,74 @@ const Header: React.FC = () => {
 
           {/* Icons section */}
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Notifications bell */}
+            {user && (
+              <div className="relative">
+                <button 
+                  onClick={() => setShowNotifications(!showNotifications)} 
+                  className="btn btn-ghost btn-circle transition-all duration-500 ease-in-out hover:scale-110 relative"
+                >
+                  <Bell size={32} className="text-white" />
+                  {unreadNotifications > 0 && (
+                    <div className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full -top-2 -right-2">
+                      {unreadNotifications}
+                    </div>
+                  )}
+                </button>
+                
+                {/* Notifications dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80">
+                    <div className="p-3 border-b flex justify-between items-center">
+                      <h3 className="font-semibold">Notifications</h3>
+                      {unreadNotifications > 0 && (
+                        <button 
+                          onClick={markAllNotificationsAsRead}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+                    <div className="p-2 overflow-y-auto max-h-60">
+                      {notifications.length > 0 ? (
+                        notifications.map(notification => (
+                          <div 
+                            key={notification.id} 
+                            className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-blue-50' : ''}`}
+                            onClick={() => handleNotificationClick(notification)}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className={`rounded-full p-2 ${!notification.read ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                                <MessageSquare size={16} className={!notification.read ? 'text-blue-600' : 'text-gray-600'} />
+                              </div>
+                              <div className="flex-1">
+                                <p className={`text-sm ${!notification.read ? 'font-semibold' : ''}`}>
+                                  {notification.text}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {new Date(notification.createdAt).toLocaleDateString()} 
+                                  {' • '}
+                                  {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                              {!notification.read && (
+                                <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-gray-500">
+                          No notifications
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Favorites button */}
             <button 
               onClick={handleFavoriteClick} 

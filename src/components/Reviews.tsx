@@ -419,6 +419,31 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
     return () => window.removeEventListener('avatarUpdated', handleAvatarUpdate);
   }, [user]);
 
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash && window.location.hash.startsWith('#review-')) {
+        const reviewId = window.location.hash.replace('#review-', '');
+        const reviewElement = document.getElementById(`review-${reviewId}`);
+        
+        if (reviewElement) {
+          setTimeout(() => {
+            reviewElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            reviewElement.classList.add('highlight-review');
+            
+            setTimeout(() => {
+              reviewElement.classList.remove('highlight-review');
+            }, 2000);
+          }, 300);
+        }
+      }
+    };
+    
+    handleHashChange();
+    
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [reviews]);
+
   const handleDeleteReview = async () => {
     if (!user || !userReview) {
       return;
@@ -618,6 +643,48 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
       
       const replyRef = ref(database, `productReviews/${productId}/${reviewId}/replies/${replyId}`);
       await set(replyRef, replyData);
+      
+      const reviewRef = ref(database, `productReviews/${productId}/${reviewId}`);
+      const reviewSnapshot = await get(reviewRef);
+      
+      if (reviewSnapshot.exists()) {
+        const reviewData = reviewSnapshot.val();
+        
+        if (reviewData.userId && reviewData.userId !== user.uid) {
+          let productName = "a product";
+          try {
+            const productRef = ref(database, `products/${productId}`);
+            const productSnapshot = await get(productRef);
+            
+            if (productSnapshot.exists()) {
+              const productData = productSnapshot.val();
+              if (productData.name) {
+                productName = productData.name;
+              }
+            }
+          } catch (error) {
+            console.error('Error getting product name:', error);
+          }
+          
+          const notificationId = `reply_${Date.now()}`;
+          const notificationData = {
+            id: notificationId,
+            type: 'reply',
+            text: `${isAdmin ? 'An administrator' : (user.displayName || 'Someone')} replied to your review of ${productName}.`,
+            userId: reviewData.userId,
+            fromUserId: user.uid,
+            fromUserName: isAdmin ? 'Администрация' : (user.displayName || 'Anonymous'),
+            productId,
+            reviewId,
+            replyId,
+            read: false,
+            createdAt: new Date().toISOString()
+          };
+          
+          const notificationRef = ref(database, `users/${reviewData.userId}/notifications/${notificationId}`);
+          await set(notificationRef, notificationData);
+        }
+      }
       
       setReplyText('');
       setReplyingToId(null);
@@ -836,7 +903,11 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
           <p className="text-gray-500 text-center py-8">No reviews yet. Be the first to review this product!</p>
         ) : (
           reviews.map(review => (
-            <div key={review.id} className="bg-white p-6 rounded-lg shadow-md">
+            <div 
+              id={`review-${review.id}`} 
+              key={review.id} 
+              className="bg-white p-6 rounded-lg shadow-md transition-all duration-700"
+            >
               <div className="flex justify-between">
                 <div className="flex items-center gap-2 mb-2">
                   {review.userAvatar && review.userAvatar !== 'undefined' && review.userAvatar !== 'null' ? (

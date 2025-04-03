@@ -172,6 +172,17 @@ body {
   100% { transform: scale(1.1); }
 }
 
+/* Add highlight animation for reviews */
+@keyframes highlight-pulse {
+  0% { box-shadow: 0 0 0 rgba(59, 130, 246, 0); }
+  50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+  100% { box-shadow: 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+.highlight-review {
+  animation: highlight-pulse 1.5s ease-out;
+}
+
 @layer utilities {
   .animate-shake {
     animation: shake 0.3s;
