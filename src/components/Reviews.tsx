@@ -3,11 +3,21 @@ import { getAuth } from 'firebase/auth';
 import { ref, get, set, onValue, update, remove } from 'firebase/database';
 import { database } from '../firebaseConfig';
 import Rating from './Rating';
-import { User, Clock, ThumbsUp, Edit, Trash2 } from 'lucide-react';
+import { User, Clock, ThumbsUp, Edit, Trash2, MessageSquare, X } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { defaultAvatarSVG, handleAvatarError } from '../utils/AvatarHelper';
 import { handleFirestoreError } from '../firebaseConfig';
+
+interface Reply {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  text: string;
+  date: string;
+  isAdmin?: boolean;
+}
 
 interface Review {
   id: string;
@@ -20,6 +30,7 @@ interface Review {
   helpful?: number;
   helpfulBy?: string[];
   createdAt?: string;
+  replies?: Record<string, Reply>;
 }
 
 interface ReviewsProps {
@@ -38,6 +49,10 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [helpfulReviews, setHelpfulReviews] = useState<Set<string>>(new Set());
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const auth = getAuth();
   const user = auth.currentUser;
@@ -126,6 +141,32 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
       }
     };
   }, [productId, user]);
+
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+
+    const checkAdminStatus = async () => {
+      try {
+        const userRef = ref(database, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          setIsAdmin(userData.role === 'admin');
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user]);
 
   const resetProductRating = async () => {
     try {
@@ -519,19 +560,107 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
     }
   };
 
-  // Add this useEffect to prevent automatic scrolling when component mounts
+  const handleSubmitReply = async (reviewId: string) => {
+    if (!user) {
+      alert('You must be signed in to reply to reviews.');
+      return;
+    }
+    
+    if (replyText.trim().length < 3) {
+      alert('Reply text must be at least 3 characters.');
+      return;
+    }
+    
+    setIsSubmittingReply(true);
+    
+    try {
+      let userAvatarUrl = '';
+      try {
+        const userRef = ref(database, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          if (userData.avatarURL) {
+            userAvatarUrl = userData.avatarURL;
+          }
+        }
+      } catch (dbError) {
+        console.error('Error getting avatar from database:', dbError);
+      }
+      
+      if (!userAvatarUrl && user.photoURL) {
+        userAvatarUrl = user.photoURL;
+      }
+      
+      if (!userAvatarUrl) {
+        const savedAvatar = localStorage.getItem('avatarURL');
+        if (savedAvatar && savedAvatar !== 'null' && savedAvatar !== 'undefined') {
+          userAvatarUrl = savedAvatar;
+        }
+      }
+      
+      if (!userAvatarUrl) {
+        userAvatarUrl = defaultAvatarSVG;
+      }
+      
+      const replyId = `reply_${user.uid.slice(0, 4)}_${Date.now()}`;
+      
+      const replyData: Reply = {
+        id: replyId,
+        userId: user.uid,
+        userName: isAdmin ? 'Администрация' : (user.displayName || 'Anonymous'),
+        userAvatar: userAvatarUrl,
+        text: replyText.trim(),
+        date: new Date().toISOString(),
+        isAdmin: isAdmin
+      };
+      
+      const replyRef = ref(database, `productReviews/${productId}/${reviewId}/replies/${replyId}`);
+      await set(replyRef, replyData);
+      
+      setReplyText('');
+      setReplyingToId(null);
+      
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      alert(`Failed to submit reply: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  const handleDeleteReply = async (reviewId: string, replyId: string) => {
+    if (!user) return;
+    
+    try {
+      const replyRef = ref(database, `productReviews/${productId}/${reviewId}/replies/${replyId}`);
+      const snapshot = await get(replyRef);
+      
+      if (snapshot.exists()) {
+        const replyData = snapshot.val();
+        
+        if (isAdmin || replyData.userId === user.uid) {
+          await remove(replyRef);
+        } else {
+          alert('You can only delete your own replies.');
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting reply:', error);
+      alert(`Failed to delete reply: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   useEffect(() => {
-    // Prevent automatic scrolling to reviews section
     const preventAutoScroll = () => {
       if (window.location.hash === '#reviews') {
         window.scrollTo(0, 0);
       }
     };
     
-    // Execute once after component is mounted
     preventAutoScroll();
     
-    // Remove any hash fragment from URL without scrolling
     if (window.location.hash) {
       const scrollPosition = window.pageYOffset;
       window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
@@ -736,7 +865,17 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
               
               <p className="text-gray-700">{review.text}</p>
               
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-between mt-4">
+                {user && (
+                  <button 
+                    className={`flex items-center gap-1 text-sm 
+                      ${replyingToId === review.id ? 'text-green-600 font-medium' : 'text-green-600 hover:text-green-700'}`}
+                    onClick={() => setReplyingToId(replyingToId === review.id ? null : review.id)}
+                  >
+                    <MessageSquare size={14} />
+                    <span>{replyingToId === review.id ? 'Cancel Reply' : 'Reply'}</span>
+                  </button>
+                )}
                 <button 
                   className={`flex items-center gap-1 text-sm 
                     ${helpfulReviews.has(review.id) 
@@ -754,6 +893,95 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                   </span>
                 </button>
               </div>
+
+              {replyingToId === review.id && user && (
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Write a reply</h4>
+                  <textarea
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    className="textarea textarea-bordered w-full h-20 text-sm"
+                    placeholder="Write your reply here..."
+                  ></textarea>
+                  <div className="flex justify-end gap-2 mt-2">
+                    <button 
+                      className="btn btn-sm btn-outline"
+                      onClick={() => {
+                        setReplyingToId(null);
+                        setReplyText('');
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none"
+                      onClick={() => handleSubmitReply(review.id)}
+                      disabled={isSubmittingReply || replyText.trim().length < 3}
+                    >
+                      {isSubmittingReply ? (
+                        <>
+                          <span className="loading loading-spinner loading-xs mr-1"></span>
+                          Posting...
+                        </>
+                      ) : 'Post reply'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {review.replies && Object.keys(review.replies).length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                    <MessageSquare size={14} className="text-green-600" />
+                    <span>Replies ({Object.keys(review.replies).length})</span>
+                  </h4>
+                  <div className="space-y-3 pl-4 border-l-2 border-gray-100">
+                    {Object.values(review.replies).map((reply) => (
+                      <div key={reply.id} className={`p-3 rounded-md ${reply.isAdmin ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}>
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-2">
+                            {reply.userAvatar && reply.userAvatar !== 'undefined' && reply.userAvatar !== 'null' ? (
+                              <img 
+                                src={reply.userAvatar} 
+                                alt={reply.userName}
+                                className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                                onError={handleAvatarError}
+                              />
+                            ) : (
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${reply.isAdmin ? 'bg-green-500' : 'bg-gray-300'}`}>
+                                <User size={16} className="text-white" />
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-medium text-sm">{reply.userName}</span>
+                              {reply.isAdmin && (
+                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  Admin
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">
+                              {new Date(reply.date).toLocaleDateString()}
+                            </span>
+                            {(user && (isAdmin || reply.userId === user.uid)) && (
+                              <button 
+                                className="text-red-400 hover:text-red-600 transition-colors"
+                                onClick={() => handleDeleteReply(review.id, reply.id)}
+                                title="Delete reply"
+                              >
+                                <X size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm mt-1 text-gray-700">{reply.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}
