@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaMobileAlt, FaLaptop, FaGamepad, FaTv } from 'react-icons/fa';
 import { getTheme } from '../utils/themeUtils';
@@ -6,7 +6,17 @@ import { getTheme } from '../utils/themeUtils';
 const CategoryList: React.FC = () => {
   const location = useLocation();
   const currentPath = location.pathname;
-  const currentTheme = getTheme();
+  const [currentTheme, setCurrentTheme] = useState(getTheme());
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
   
   // Define all categories with their paths and icons
   const categories = [
@@ -31,7 +41,7 @@ const CategoryList: React.FC = () => {
         
         const bgColor = isActive 
           ? currentTheme === 'dark' ? 'bg-[#d45288] text-gray-900' : 'bg-[#003D2D] text-white'
-          : 'bg-white dark:bg-gray-800 hover:shadow-lg transition-shadow';
+          : currentTheme === 'dark' ? 'bg-gray-800' : 'bg-white';
         
         const textColor = isActive 
           ? currentTheme === 'dark' ? 'text-gray-900' : 'text-white'
@@ -45,7 +55,7 @@ const CategoryList: React.FC = () => {
           <Link 
             key={category.name} 
             to={category.path} 
-            className={`flex flex-col items-center p-4 rounded-lg shadow-md ${bgColor}`}
+            className={`flex flex-col items-center p-4 rounded-lg shadow-md ${bgColor} hover:shadow-lg transition-all`}
           >
             <div className={iconColor}>{category.icon}</div>
             <span className={`text-center ${textColor}`}>{category.name}</span>
