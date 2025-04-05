@@ -28,6 +28,7 @@ import KeywordDebugger from './utils/KeywordDebugger'; // Добавляем и�
 import LaptopsPage from './pages/LaptopsPage'; // Add this import
 import './styles/ProductCardStyles.css';
 import './styles/HeaderStyles.css';
+import './styles/CartStyles.css'; // Add the import for cart styles
 
 // Оптимизированные настройки для маршрутизации
 const router_future = {

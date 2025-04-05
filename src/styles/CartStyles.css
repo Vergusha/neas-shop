@@ -1,0 +1,115 @@
+/* Mobile-first cart page styles */
+
+/* Custom cart card style for mobile */
+.cart-item-mobile {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cart-item-mobile:last-child {
+  border-bottom: none;
+}
+
+.cart-item-mobile .image {
+  width: 4rem;
+  height: 4rem;
+  flex-shrink: 0;
+}
+
+.cart-item-mobile .image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cart-item-mobile .details {
+  flex: 1;
+  margin-left: 1rem;
+}
+
+.cart-item-mobile .price-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* Quantity controls */
+.quantity-control {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.quantity-control button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background-color: #f3f4f6;
+  transition: all 0.2s;
+}
+
+.quantity-control button:hover {
+  background-color: #e5e7eb;
+}
+
+.quantity-control span {
+  width: 2rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+/* Order summary styling */
+.order-summary {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 768px) {
+  .order-summary {
+    margin-top: 0;
+  }
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Enhanced mobile styles */
+@media (max-width: 640px) {
+  .cart-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .order-summary {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 10;
+  }
+  
+  .checkout-button {
+    padding: 0.75rem;
+    font-size: 1rem;
+  }
+}
+
+/* Improved focus states for better accessibility */
+.input:focus, 
+.btn:focus {
+  outline: 2px solid rgba(0, 61, 45, 0.5);
+  outline-offset: 2px;
+}

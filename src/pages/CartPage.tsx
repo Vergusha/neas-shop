@@ -315,7 +315,49 @@ const CartPage: React.FC = () => {
             </div>
           ) : (
             <div className="mb-6 overflow-hidden bg-white rounded-lg shadow-md">
-              <table className="min-w-full divide-y divide-gray-200">
+              {/* Mobile view - Card layout for smaller screens */}
+              <div className="block sm:hidden">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="p-4 border-b border-gray-200 last:border-b-0">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-16 h-16">
+                        <img className="object-contain w-16 h-16" src={item.image} alt={item.name} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium">{item.name}</h3>
+                        <p className="mt-1 text-sm text-gray-500">{Number(item.price).toFixed(2)} NOK</p>
+                        <div className="flex items-center mt-2">
+                          <button 
+                            className="p-1 rounded-full hover:bg-gray-200"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <span className="w-8 mx-2 text-center">{item.quantity}</span>
+                          <button 
+                            className="p-1 rounded-full hover:bg-gray-200"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <p className="font-medium">{Number(item.price * item.quantity).toFixed(2)} NOK</p>
+                        <button 
+                          className="mt-2 text-red-600 hover:text-red-900"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Desktop view - Table layout for larger screens */}
+              <table className="hidden min-w-full divide-y divide-gray-200 sm:table">
                 <thead className="bg-gray-50">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
@@ -387,12 +429,14 @@ const CartPage: React.FC = () => {
           )}
 
           {cartItems.length > 0 && (
-            <button 
-              className="mb-6 btn btn-outline btn-error"
-              onClick={clearCart}
-            >
-              Clear Cart
-            </button>
+            <div className="flex justify-end mb-6">
+              <button 
+                className="btn btn-outline btn-error btn-sm"
+                onClick={clearCart}
+              >
+                Clear Cart
+              </button>
+            </div>
           )}
           
           {/* Customer information form - always displayed */}
