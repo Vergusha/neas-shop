@@ -57,6 +57,29 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
   const auth = getAuth();
   const user = auth.currentUser;
 
+  // Add a utility function to format dates consistently in English
+  const formatDateTime = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        return 'Unknown date';
+      }
+      
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
+  };
+
   useEffect(() => {
     const reviewsRef = ref(database, `productReviews/${productId}`);
     
@@ -737,14 +760,14 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
 
   return (
     <div className="mt-8" id="reviews">
-      <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
+      <h2 className="mb-4 text-2xl font-bold">Customer Reviews</h2>
       
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <div className="flex flex-col md:flex-row items-center gap-6">
+      <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+        <div className="flex flex-col items-center gap-6 md:flex-row">
           <div className="text-center">
             <div className="text-4xl font-bold">{averageRating.toFixed(1)}</div>
             <Rating value={averageRating} size="lg" />
-            <div className="text-sm text-gray-500 mt-1">{reviews.length} reviews</div>
+            <div className="mt-1 text-sm text-gray-500">{reviews.length} reviews</div>
           </div>
           
           <div className="flex-1">
@@ -756,13 +779,13 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                 <div key={stars} className="flex items-center gap-2 mb-2">
                   <div className="flex items-center w-12">
                     <span className="text-sm font-medium">{stars}</span>
-                    <svg className="w-4 h-4 text-yellow-300 ml-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 20">
+                    <svg className="w-4 h-4 ml-1 text-yellow-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 20">
                       <path d="M20.924 7.625a1.523 1.523 0 0 0-1.238-1.044l-5.051-.734-2.259-4.577a1.534 1.534 0 0 0-2.752 0L7.365 5.847l-5.051.734A1.535 1.535 0 0 0 1.463 9.2l3.656 3.563-.863 5.031a1.532 1.532 0 0 0 2.226 1.616L11 17.033l4.518 2.375a1.534 1.534 0 0 0 2.226-1.617l-.863-5.03L20.537 9.2a1.523 1.523 0 0 0 .387-1.575Z"/>
                     </svg>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div className="w-full h-3 bg-gray-200 rounded-full">
                     <div 
-                      className="bg-yellow-300 h-3 rounded-full transition-all duration-300"
+                      className="h-3 transition-all duration-300 bg-yellow-300 rounded-full"
                       style={{ width: `${percentage}%` }}
                     ></div>
                   </div>
@@ -779,8 +802,8 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
       
       {user ? (
         userReview && !isEditing ? (
-          <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-            <div className="flex justify-between items-center mb-4">
+          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold">Your Review</h3>
               <div className="flex gap-2">
                 <button 
@@ -803,14 +826,14 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
             </div>
             
             <p className="text-gray-700">{userReview.text}</p>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="mt-2 text-xs text-gray-500">
               Posted on {new Date(userReview.date).toLocaleDateString()}
             </p>
             
             {showDeleteConfirm && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-                  <h3 className="font-bold text-lg mb-4">Delete Review</h3>
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
+                  <h3 className="mb-4 text-lg font-bold">Delete Review</h3>
                   <p className="mb-6">Are you sure you want to delete your review? This action cannot be undone.</p>
                   <div className="flex justify-end gap-3">
                     <button 
@@ -827,7 +850,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                     >
                       {isDeleting ? (
                         <>
-                          <span className="loading loading-spinner loading-xs mr-2"></span>
+                          <span className="mr-2 loading loading-spinner loading-xs"></span>
                           Deleting...
                         </>
                       ) : 'Delete Review'}
@@ -838,13 +861,13 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
             )}
           </div>
         ) : (
-          <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h3 className="font-bold mb-4">
+          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+            <h3 className="mb-4 font-bold">
               {isEditing ? 'Edit Your Review' : 'Write a Review'}
             </h3>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Rating</label>
               <Rating 
                 value={newRating} 
                 readonly={false} 
@@ -854,22 +877,22 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
             </div>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Review</label>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Review</label>
               <textarea
                 value={newReviewText}
                 onChange={(e) => setNewReviewText(e.target.value)}
-                className="textarea textarea-bordered w-full h-24"
+                className="w-full h-24 textarea textarea-bordered"
                 placeholder="Share your experience with this product..."
               ></textarea>
             </div>
             
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+              <div className="px-4 py-2 mb-4 text-red-700 bg-red-100 border border-red-400 rounded">
                 {error}
               </div>
             )}
             
-            <div className="flex gap-2 justify-end">
+            <div className="flex justify-end gap-2">
               {isEditing && (
                 <button 
                   className="btn btn-outline"
@@ -893,20 +916,20 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
           </div>
         )
       ) : (
-        <div className="bg-blue-50 text-blue-700 p-4 rounded-md mb-6">
-          <p>Please <a href="/login" className="underline font-medium">sign in</a> to write a review.</p>
+        <div className="p-4 mb-6 text-blue-700 rounded-md bg-blue-50">
+          <p>Please <a href="/login" className="font-medium underline">sign in</a> to write a review.</p>
         </div>
       )}
       
       <div className="space-y-4">
         {reviews.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No reviews yet. Be the first to review this product!</p>
+          <p className="py-8 text-center text-gray-500">No reviews yet. Be the first to review this product!</p>
         ) : (
           reviews.map(review => (
             <div 
               id={`review-${review.id}`} 
               key={review.id} 
-              className="bg-white p-6 rounded-lg shadow-md transition-all duration-700"
+              className="p-6 transition-all duration-700 bg-white rounded-lg shadow-md"
             >
               <div className="flex justify-between">
                 <div className="flex items-center gap-2 mb-2">
@@ -914,11 +937,11 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                     <img 
                       src={review.userAvatar} 
                       alt={review.userName}
-                      className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                      className="object-cover w-10 h-10 border border-gray-200 rounded-full"
                       onError={handleAvatarError}
                     />
                   ) : (
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center border border-gray-300">
+                    <div className="flex items-center justify-center w-10 h-10 bg-gray-200 border border-gray-300 rounded-full">
                       <User size={20} className="text-gray-500" />
                     </div>
                   )}
@@ -926,7 +949,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                 </div>
                 <div className="flex items-center gap-1 text-sm text-gray-500">
                   <Clock size={14} />
-                  <span>{new Date(review.date).toLocaleDateString()}</span>
+                  <span>{formatDateTime(review.date)}</span>
                 </div>
               </div>
               
@@ -966,12 +989,12 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
               </div>
 
               {replyingToId === review.id && user && (
-                <div className="mt-4 pt-3 border-t border-gray-100">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Write a reply</h4>
+                <div className="pt-3 mt-4 border-t border-gray-100">
+                  <h4 className="mb-2 text-sm font-medium text-gray-700">Write a reply</h4>
                   <textarea
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    className="textarea textarea-bordered w-full h-20 text-sm"
+                    className="w-full h-20 text-sm textarea textarea-bordered"
                     placeholder="Write your reply here..."
                   ></textarea>
                   <div className="flex justify-end gap-2 mt-2">
@@ -985,13 +1008,13 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                       Cancel
                     </button>
                     <button 
-                      className="btn btn-sm bg-green-600 hover:bg-green-700 text-white border-none"
+                      className="text-white bg-green-600 border-none btn btn-sm hover:bg-green-700"
                       onClick={() => handleSubmitReply(review.id)}
                       disabled={isSubmittingReply || replyText.trim().length < 3}
                     >
                       {isSubmittingReply ? (
                         <>
-                          <span className="loading loading-spinner loading-xs mr-1"></span>
+                          <span className="mr-1 loading loading-spinner loading-xs"></span>
                           Posting...
                         </>
                       ) : 'Post reply'}
@@ -1001,21 +1024,21 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
               )}
 
               {review.replies && Object.keys(review.replies).length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="pt-3 mt-3 border-t border-gray-100">
                   <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
                     <MessageSquare size={14} className="text-green-600" />
                     <span>Replies ({Object.keys(review.replies).length})</span>
                   </h4>
-                  <div className="space-y-3 pl-4 border-l-2 border-gray-100">
+                  <div className="pl-4 space-y-3 border-l-2 border-gray-100">
                     {Object.values(review.replies).map((reply) => (
                       <div key={reply.id} className={`p-3 rounded-md ${reply.isAdmin ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}>
-                        <div className="flex justify-between items-start">
+                        <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2">
                             {reply.userAvatar && reply.userAvatar !== 'undefined' && reply.userAvatar !== 'null' ? (
                               <img 
                                 src={reply.userAvatar} 
                                 alt={reply.userName}
-                                className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                                className="object-cover w-8 h-8 border border-gray-200 rounded-full"
                                 onError={handleAvatarError}
                               />
                             ) : (
@@ -1024,7 +1047,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                               </div>
                             )}
                             <div>
-                              <span className="font-medium text-sm">{reply.userName}</span>
+                              <span className="text-sm font-medium">{reply.userName}</span>
                               {reply.isAdmin && (
                                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                   Admin
@@ -1034,11 +1057,11 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">
-                              {new Date(reply.date).toLocaleDateString()}
+                              {formatDateTime(reply.date)}
                             </span>
                             {(user && (isAdmin || reply.userId === user.uid)) && (
                               <button 
-                                className="text-red-400 hover:text-red-600 transition-colors"
+                                className="text-red-400 transition-colors hover:text-red-600"
                                 onClick={() => handleDeleteReply(review.id, reply.id)}
                                 title="Delete reply"
                               >
@@ -1047,7 +1070,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                             )}
                           </div>
                         </div>
-                        <p className="text-sm mt-1 text-gray-700">{reply.text}</p>
+                        <p className="mt-1 text-sm text-gray-700">{reply.text}</p>
                       </div>
                     ))}
                   </div>
