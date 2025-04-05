@@ -183,8 +183,8 @@ const Breadcrumbs: React.FC = () => {
   }
   
   return (
-    <div className="container mx-auto px-4 py-2">
-      <div className="text-sm breadcrumbs">
+    <div className="container px-4 py-2 mx-auto">
+      <div className="text-sm">
         <ul className="flex flex-row items-center">
           {breadcrumbs.map((breadcrumb, index) => (
             <li key={breadcrumb.path} className="flex items-center">
