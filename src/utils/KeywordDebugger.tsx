@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { useNavigate } from 'react-router-dom';
 
 interface MatchedProduct {
   id: string;
@@ -16,6 +17,7 @@ const KeywordDebugger: React.FC = () => {
   const [results, setResults] = useState<MatchedProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const navigate = useNavigate();
 
   const searchByKeyword = async () => {
     if (!searchTerm.trim()) return;
@@ -67,6 +69,10 @@ const KeywordDebugger: React.FC = () => {
     }
   };
 
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
+  };
+
   return (
     <div className="container p-4 mx-auto">
       <h1 className="mb-4 text-xl font-bold">Search Keyword Debugger</h1>
@@ -110,13 +116,21 @@ const KeywordDebugger: React.FC = () => {
                 </div>
                 <div className="mt-2">
                   <details>
-                    <summary className="text-sm cursor-pointer text-blue-500">Show all keywords ({product.keywords.length})</summary>
+                    <summary className="text-sm text-blue-500 cursor-pointer">Show all keywords ({product.keywords.length})</summary>
                     <div className="flex flex-wrap gap-1 p-2 mt-1 bg-gray-100 rounded">
                       {product.keywords.map((keyword: string, i: number) => (
                         <span key={i} className="px-2 py-1 text-xs bg-gray-200 rounded">{keyword}</span>
                       ))}
                     </div>
                   </details>
+                </div>
+                <div className="mt-2">
+                  <button 
+                    onClick={() => handleProductClick(product.id)}
+                    className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+                  >
+                    View Product
+                  </button>
                 </div>
               </div>
             ))}

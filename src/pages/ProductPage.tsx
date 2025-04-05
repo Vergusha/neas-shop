@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useTransition } from 'react'; // Добавляем useTransition
+import { useParams, useNavigate, useLocation } from 'react-router-dom'; // Добавляем useLocation
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { ref, onValue } from 'firebase/database';
@@ -48,6 +48,8 @@ interface ProductData {
 const ProductPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation(); // Для отслеживания изменений маршрута
+  const [isPending, startTransition] = useTransition(); // Для плавных переходов
   const [product, setProduct] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -76,13 +78,32 @@ const ProductPage: React.FC = () => {
     window.scrollTo(0, 0);
   }, [id]); // Re-execute when product ID changes
 
+  // Оптимизированная функция для предзагрузки данных о цветовых вариантах
+  useEffect(() => {
+    // Предзагружаем изображения для вариантов, чтобы они были готовы сразу
+    colorVariants.forEach(variant => {
+      if (variant.image && variant.id !== id) {
+        const img = new Image();
+        img.src = variant.image;
+      }
+    });
+  }, [colorVariants, id]);
+
+  // Оптимизируем загрузку товара
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id) return;
       
-      try {
+      // Добавляем индикатор загрузки только при первой загрузке или при полном изменении товара
+      // (не при смене цвета того же товара)
+      const isSameProductDifferentColor = product && 
+        colorVariants.some(variant => variant.id === id);
+      
+      if (!isSameProductDifferentColor) {
         setLoading(true);
+      }
 
+      try {
         // Сначала проверяем все возможные коллекции для поиска товара
         const collections = ['laptops', 'gaming', 'tv', 'audio', 'mobile'];
         
@@ -121,7 +142,10 @@ const ProductPage: React.FC = () => {
       }
     };
 
-    fetchProduct();
+    // Запускаем загрузку внутри startTransition для улучшения UX
+    startTransition(() => {
+      fetchProduct();
+    });
   }, [id]);
 
   useEffect(() => {
@@ -318,13 +342,13 @@ const ProductPage: React.FC = () => {
   // Function to handle color variant selection
   const handleColorVariantSelect = (variantId: string) => {
     if (variantId !== id) {
-      // При переходе к новому цветовому варианту не нужно показывать индикатор загрузки заранее,
-      // так как это вызывает перерисовку и возможную вспышку интерфейса
-      
-      // Используем navigate без опции replace: true для лучшей работы с историей браузера
-      navigate(`/product/${variantId}`);
-      
-      // Не нужно явно вызывать scrollTo, React Router сам обработает это
+      // Используем startTransition для плавного перехода
+      startTransition(() => {
+        // Используем navigate без опции replace: true для лучшей работы с историей браузера
+        navigate(`/product/${variantId}`);
+        
+        // Не нужно явно вызывать scrollTo, React Router сам обработает это
+      });
     }
   };
 
@@ -591,6 +615,10 @@ const ProductPage: React.FC = () => {
 
   return (
     <div className="container py-8 mx-auto">
+      {/* Добавляем индикатор загрузки, который показывается только во время перехода */}
+      {isPending && (
+        <div className="fixed top-0 left-0 w-full h-1 bg-blue-500 animate-pulse"></div>
+      )}
       {/* Pass collection info to session storage for breadcrumbs to use */}
       {product?.collection && (
         <div style={{ display: 'none' }}>
@@ -664,6 +692,7 @@ const ProductPage: React.FC = () => {
                   variants={colorVariants}
                   currentVariantId={id || ''}
                   onSelectVariant={handleColorVariantSelect}
+                  isPending={isPending} // Передаем состояние загрузки
                 />
               </div>
             )}

@@ -37,6 +37,9 @@ const Header: React.FC = () => {
   const auth = getAuth();
   const { user, updateUserAvatar } = useAuth(); // Добавляем updateUserAvatar из контекста
 
+  // Add a ref to track if avatar refresh has already been attempted
+  const avatarRefreshAttempted = React.useRef<{[key: string]: boolean}>({});
+
   useEffect(() => {
     const fetchSearchResults = async () => {
       if (searchQuery.trim() === '') {
@@ -68,9 +71,17 @@ const Header: React.FC = () => {
     fetchSearchResults();
   }, [searchQuery]);
 
-  // Add this function to force refresh the user's avatar
+  // Modify the refreshUserAvatar function to prevent repeated refreshes
   const refreshUserAvatar = async () => {
     if (!user) return;
+    
+    const uid = user.uid;
+    // Only attempt refresh once per user session
+    if (avatarRefreshAttempted.current[uid]) {
+      return;
+    }
+    
+    avatarRefreshAttempted.current[uid] = true;
     
     try {
       // Get the latest avatar URL from Firebase
@@ -79,22 +90,18 @@ const Header: React.FC = () => {
       
       if (snapshot.exists()) {
         const userData = snapshot.val();
-        if (userData.avatarURL) {
-          // Update state with the latest avatar
-          await updateUserAvatar(userData.avatarURL);
+        if (userData.avatarURL && (!user.photoURL || userData.avatarURL !== user.photoURL)) {
+          // Update state with the latest avatar (use a small local cache to prevent immediate repeats)
+          localStorage.setItem('lastAvatarRefresh', userData.avatarURL);
           
-          // Update localStorage
-          localStorage.setItem('avatarURL', userData.avatarURL);
-          
-          // Update userProfile in localStorage if it exists
-          const savedProfile = localStorage.getItem('userProfile');
-          if (savedProfile) {
-            const profileData = JSON.parse(savedProfile);
-            profileData.avatarURL = userData.avatarURL;
-            localStorage.setItem('userProfile', JSON.stringify(profileData));
+          try {
+            await updateUserAvatar(userData.avatarURL);
+            console.log('Avatar refreshed from Firebase:', userData.avatarURL.substring(0, 50) + '...');
+          } catch (error) {
+            // If updateUserAvatar throws, we still want to update localStorage
+            localStorage.setItem('avatarURL', userData.avatarURL);
+            console.warn('Could not update avatar via Auth provider, but set in localStorage');
           }
-          
-          console.log('Avatar refreshed from Firebase:', userData.avatarURL);
         }
       }
     } catch (error) {
@@ -264,6 +271,18 @@ const Header: React.FC = () => {
 
     return () => unsubscribe();
   }, [user?.email, user?.photoURL, updateUserAvatar]);
+
+  // Optimize the effect for syncing avatar to prevent frequent refreshes
+  useEffect(() => {
+    if (!user?.email) return;
+    
+    // Use this effect only on initial authentication
+    refreshUserAvatar().catch(console.error);
+    
+    // Don't need the onValue listener here as it may cause repeated updates
+    // The avatar will be refreshed when user logs in 
+    
+  }, [user?.uid]); // Only depend on user ID, not email or photoURL
 
   // Add notification listener
   useEffect(() => {

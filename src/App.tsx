@@ -29,7 +29,7 @@ import LaptopsPage from './pages/LaptopsPage'; // Add this import
 import './styles/ProductCardStyles.css';
 import './styles/HeaderStyles.css';
 
-// Add future flags configuration
+// Оптимизированные настройки для маршрутизации
 const router_future = {
   v7_startTransition: true,
   v7_relativeSplatPath: true
@@ -55,9 +55,8 @@ const App = () => {
   }, []);
 
   return (
-    <AuthProvider>
-      {/* Add the future prop to your Router */}
-      <Router future={router_future}>
+    <Router future={router_future}>
+      <AuthProvider>
         <LoginRedirect />
         <div className="flex flex-col min-h-screen">
           <Header />
@@ -66,7 +65,10 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/mobile" element={<MobilePage />} />
-              <Route path="/product/:id" element={<ProductPage />} />
+              <Route 
+                path="/product/:id" 
+                element={<ProductPage />} 
+              />
               <Route path="/data-accessories" element={<DataPage />} />
               <Route path="/gaming" element={<GamingPage />} />
               <Route path="/tv-audio" element={<TvPage />} />
@@ -115,8 +117,8 @@ const App = () => {
           </main>
           <Footer />
         </div>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 };
 

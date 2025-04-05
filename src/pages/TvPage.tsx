@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { FaFilter } from 'react-icons/fa';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
-import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
 import { applyFilters } from '../utils/filterUtils';
 
@@ -76,6 +77,7 @@ const createFilters = (products: Product[]): FilterOption[] => {
 };
 
 const TvPage: React.FC = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error] = useState<string | null>(null);
@@ -201,8 +203,14 @@ const TvPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="py-8 text-center col-span-full">
-              No products found matching the selected filters.
+            <div className="text-center py-10">
+              <p className="text-gray-500">No products match your selection.</p>
+              <button 
+                onClick={() => setActiveFilters({})} 
+                className="mt-4 btn btn-outline btn-primary"
+              >
+                Clear Filters
+              </button>
             </div>
           )}
         </div>

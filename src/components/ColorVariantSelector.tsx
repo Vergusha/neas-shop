@@ -11,12 +11,14 @@ interface ColorVariantSelectorProps {
   variants: ColorVariant[];
   currentVariantId: string;
   onSelectVariant: (variantId: string) => void;
+  isPending?: boolean; // Добавляем prop для индикации загрузки
 }
 
 const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
   variants,
   currentVariantId,
-  onSelectVariant
+  onSelectVariant,
+  isPending = false
 }) => {
   // Предзагрузка изображений для улучшения производительности
   useEffect(() => {
@@ -50,7 +52,7 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
           return (
             <div
               key={variant.id}
-              className={`product-color-variant ${isCurrentVariant ? 'active' : ''}`}
+              className={`product-color-variant ${isCurrentVariant ? 'active' : ''} ${isPending ? 'opacity-70 pointer-events-none' : ''}`}
               onClick={() => handleVariantClick(variant.id)}
               title={`${variant.color} - Click to view this variant`}
               data-testid={`color-variant-${variant.color}`}
@@ -59,7 +61,7 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
                 <img 
                   src={variant.image} 
                   alt={variant.color}
-                  className="w-full h-full object-contain"
+                  className="object-contain w-full h-full"
                   loading="eager" // Приоритетная загрузка
                 />
               </div>
