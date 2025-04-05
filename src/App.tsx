@@ -1,4 +1,7 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+// Add this import for the router's future flags
+import { UNSAFE_ENHANCE_TRANSITION_STUB_SOURCE } from 'react-router-dom';
+
 import Header from './components/Header';
 import Footer from './components/Footer';
 import MobilePage from './pages/MobilePage';
@@ -26,6 +29,12 @@ import LaptopsPage from './pages/LaptopsPage'; // Add this import
 import './styles/ProductCardStyles.css';
 import './styles/HeaderStyles.css';
 
+// Add future flags configuration
+const router_future = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true
+};
+
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const auth = getAuth();
   const user = auth.currentUser;
@@ -47,7 +56,8 @@ const App = () => {
 
   return (
     <AuthProvider>
-      <Router>
+      {/* Add the future prop to your Router */}
+      <Router future={router_future}>
         <LoginRedirect />
         <div className="flex flex-col min-h-screen">
           <Header />
