@@ -9,6 +9,10 @@ module.exports = {
       ringColor: {
         DEFAULT: 'transparent',
       },
+      colors: {
+        primary: '#003D2D',
+        'primary-focus': '#004D3D',
+      },
     },
   },
   variants: {
@@ -20,7 +24,7 @@ module.exports = {
   plugins: [require("daisyui")],
   daisyui: {
     themes: ["light", "dark"],
-    darkTheme: "light", // Изменено с "dark" на "light"
+    darkTheme: "light",
     base: true,
     styled: true,
     utils: true,

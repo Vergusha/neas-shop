@@ -507,7 +507,7 @@ const Header: React.FC = () => {
                       {unreadNotifications > 0 && (
                         <button 
                           onClick={markAllNotificationsAsRead}
-                          className="text-xs text-blue-600 hover:underline"
+                          className="text-xs text-[#003D2D] hover:underline"
                         >
                           Mark all as read
                         </button>
@@ -518,12 +518,12 @@ const Header: React.FC = () => {
                         notifications.map(notification => (
                           <div 
                             key={notification.id} 
-                            className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-blue-50' : ''}`}
+                            className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-[#edf7f5]' : ''}`}
                             onClick={() => handleNotificationClick(notification)}
                           >
                             <div className="flex items-start gap-2">
-                              <div className={`rounded-full p-2 ${!notification.read ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                                <MessageSquare size={16} className={!notification.read ? 'text-blue-600' : 'text-gray-600'} />
+                              <div className={`rounded-full p-2 ${!notification.read ? 'bg-[#d5eae6]' : 'bg-gray-100'}`}>
+                                <MessageSquare size={16} className={!notification.read ? 'text-[#003D2D]' : 'text-gray-600'} />
                               </div>
                               <div className="flex-1">
                                 <p className={`text-sm ${!notification.read ? 'font-semibold' : ''}`}>
@@ -536,7 +536,7 @@ const Header: React.FC = () => {
                                 </p>
                               </div>
                               {!notification.read && (
-                                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                                <div className="w-2 h-2 bg-[#003D2D] rounded-full"></div>
                               )}
                             </div>
                           </div>
