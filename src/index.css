@@ -188,9 +188,11 @@ body {
   animation: highlight-pulse 1.5s ease-out;
 }
 
-/* Убираем фиолетовую обводку с кнопок корзины */
+/* Убираем фиолетовую обводку с кнопок корзины и избранного */
 .btn-add-to-cart:focus,
-.btn-add-to-cart:focus-visible {
+.btn-add-to-cart:focus-visible,
+.btn-circle:focus,
+.btn-circle:focus-visible {
   outline: none !important;
   box-shadow: none !important;
   border-color: transparent !important;
@@ -201,6 +203,25 @@ body {
 .product-card .btn:focus-visible {
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* Completely remove any outlines from cart buttons */
+.btn-primary.btn-circle:focus,
+.btn-primary.btn-circle:focus-visible,
+.btn-add-to-cart:focus,
+.btn-add-to-cart:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  border: none !important;
+}
+
+/* Apply to all buttons in product cards */
+.product-card button:focus,
+.product-card button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 @layer utilities {

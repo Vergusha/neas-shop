@@ -357,11 +357,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
             <div className="absolute flex flex-col gap-2 top-6 right-3 sm:right-6">
               <button
                 onClick={handleAddToCart}
-                className="shadow-md btn btn-primary btn-circle focus:outline-none focus:ring-0 focus:shadow-none"
+                className={`p-2 hover:scale-110 transition-all ${!user ? 'opacity-50' : ''}`}
                 aria-label="Add to cart"
                 disabled={!user}
               >
-                <FaShoppingCart size={20} />
+                <FaShoppingCart className="w-5 h-5 text-primary" />
               </button>
               <button
                 onClick={handleFavoriteClick}
