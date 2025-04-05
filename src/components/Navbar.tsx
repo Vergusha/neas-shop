@@ -231,10 +231,13 @@ const Navbar: React.FC = () => {
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     setCurrentTheme(newTheme);
+    
+    // Add event to notify app that theme has changed
+    window.dispatchEvent(new Event('themeChanged'));
   };
 
   return (
-    <nav className="bg-gray-100 p-4"> {/* Изменено с bg-gray-800 на bg-gray-100 */}
+    <nav className={`${currentTheme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'} p-4`}>
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-primary text-lg font-bold">Shop</Link> {/* Изменено с text-white на text-primary */}
         <div className="relative">
@@ -243,27 +246,31 @@ const Navbar: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
-            className="input input-bordered input-sm w-64"
+            className={`input input-bordered input-sm w-64 ${
+              currentTheme === 'dark' ? 'bg-gray-700 text-gray-200 border-gray-600' : ''
+            }`}
             placeholder="Search products..."
           />
           <button
             onClick={() => handleSearch(searchQuery)}
             className="absolute right-0 top-0 mt-2 mr-2"
           >
-            <FaSearch className="text-gray-500" />
+            <FaSearch className={currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-500'} />
           </button>
           {isLoading && <div className="absolute right-0 top-0 mt-2 mr-2"><span className="loading loading-spinner loading-sm"></span></div>}
           {searchResults.length > 0 && (
-            <div className="absolute left-0 mt-2 w-full bg-white shadow-lg rounded-lg z-10">
+            <div className={`absolute left-0 mt-2 w-full shadow-lg rounded-lg z-10 ${
+              currentTheme === 'dark' ? 'bg-gray-800 border border-gray-600' : 'bg-white'
+            }`}>
               <ul>
                 {searchResults.map(result => (
-                  <li key={result.id} className="p-2 hover:bg-gray-100">
+                  <li key={result.id} className={`p-2 ${currentTheme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
                     <Link to={`/product/${result.id}`} className="flex items-center">
                       <img src={result.image} alt={result.name} className="w-10 h-10 object-cover mr-2" />
                       <div>
-                        <p className="text-sm font-medium">{result.name}</p>
-                        <p className="text-xs text-gray-500">{result.brand}</p>
-                        <p className="text-xs text-gray-500">{result.price} NOK</p>
+                        <p className={`text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-200' : ''}`}>{result.name}</p>
+                        <p className={`text-xs ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{result.brand}</p>
+                        <p className={`text-xs ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{result.price} NOK</p>
                       </div>
                     </Link>
                   </li>
@@ -320,7 +327,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
       </div>
-      <ul className="menu text-gray-800"> {/* Добавлен text-gray-800 */}
+      <ul className={`menu ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}> {/* Добавлен text-gray-800 */}
         <li><Link to="/mobile">Mobile Phones</Link></li>
         <li><Link to="/tv-audio">TVs</Link></li>
         <li><Link to="/gaming">Gaming</Link></li>

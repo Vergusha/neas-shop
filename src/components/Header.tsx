@@ -501,13 +501,18 @@ const Header: React.FC = () => {
     // Also add/remove dark class for additional styling if needed
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
+      document.body.classList.add('dark-mode');
     } else {
       document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark-mode');
     }
+    
+    // Add event to notify app that theme has changed
+    window.dispatchEvent(new Event('themeChanged'));
   };
 
   return (
-    <header className="bg-[#003D2D] shadow-md relative">
+    <header className={`bg-[#003D2D] shadow-md relative ${currentTheme === 'dark' ? 'dark-header' : ''}`}>
       <div className="container py-2 sm:py-4">
         {/* Top row: Logo, Search, and buttons */}
         <div className="header-top-row">
@@ -793,7 +798,7 @@ const Header: React.FC = () => {
         {/* Mobile Search bar - visible only on small screens */}
         <div className="md:hidden header-search-container">
           <form onSubmit={handleSearch} className="relative flex items-center w-full">
-            <Search className="absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2" size={20} />
+            <Search className={`absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2 ${currentTheme === 'dark' ? 'text-gray-300' : ''}`} size={20} />
             <input
               type="text"
               placeholder="Search for anything..."
@@ -809,18 +814,22 @@ const Header: React.FC = () => {
                   setShowResults(true);
                 }
               }}
-              className="w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                currentTheme === 'dark' ? 'bg-gray-700 text-white border-gray-600' : ''
+              }`}
             />
             
             {/* Mobile search results */}
             {showResults && searchResults.length > 0 && (
               <div 
-                className="absolute left-0 right-0 z-20 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg search-results-dropdown"
+                className={`absolute left-0 right-0 z-20 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg search-results-dropdown ${
+                  currentTheme === 'dark' ? 'bg-gray-800 border-gray-600' : ''
+                }`}
               >
                 {searchResults.map((result) => (
-                  <div key={result.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => navigate(`/product/${result.id}`)}>
+                  <div key={result.id} className={`p-2 cursor-pointer ${currentTheme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`} onClick={() => navigate(`/product/${result.id}`)}>
                     <img src={result.image} alt={result.name} className="inline-block w-8 h-8 mr-2" />
-                    <span>{result.name}</span>
+                    <span className={currentTheme === 'dark' ? 'text-gray-200' : ''}>{result.name}</span>
                   </div>
                 ))}
               </div>

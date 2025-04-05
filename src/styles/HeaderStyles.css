@@ -9,6 +9,46 @@
   z-index: 50;
 }
 
+/* Dark mode specific styles */
+[data-theme="dark"] .search-results-dropdown {
+  background-color: #1f2937; /* bg-gray-800 */
+  border-color: #4b5563; /* border-gray-600 */
+}
+
+[data-theme="dark"] .search-results-dropdown div:hover {
+  background-color: #374151; /* bg-gray-700 */
+}
+
+[data-theme="dark"] .search-results-dropdown span {
+  color: #e5e7eb; /* text-gray-200 */
+}
+
+/* Cart and notifications dropdown in dark mode */
+[data-theme="dark"] .cart-dropdown,
+[data-theme="dark"] .notifications-dropdown {
+  background-color: #1f2937; /* bg-gray-800 */
+  border-color: #4b5563; /* border-gray-600 */
+}
+
+[data-theme="dark"] .cart-dropdown h3,
+[data-theme="dark"] .notifications-dropdown h3 {
+  color: #e5e7eb; /* text-gray-200 */
+}
+
+[data-theme="dark"] .cart-dropdown p,
+[data-theme="dark"] .notifications-dropdown p {
+  color: #d1d5db; /* text-gray-300 */
+}
+
+[data-theme="dark"] .p-3.bg-gray-50 {
+  background-color: #111827 !important; /* bg-gray-900 */
+}
+
+[data-theme="dark"] .btn-neas-green {
+  background-color: #004D3D !important;
+  border-color: #004D3D !important;
+}
+
 /* Container tweaks for larger screens */
 @media (min-width: 640px) {
   .header-layout-wrapper {
@@ -207,4 +247,19 @@
   .header-search-container {
     margin-top: 0.75rem;
   }
+}
+
+/* Dark mode styles for dropdowns */
+[data-theme="dark"] .user-menu-dropdown {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .user-menu-dropdown .text-gray-700,
+[data-theme="dark"] .user-menu-dropdown .text-gray-900 {
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .user-menu-dropdown .hover\:bg-gray-50:hover {
+  background-color: #374151 !important;
 }

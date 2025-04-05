@@ -26,6 +26,77 @@ body {
   flex-grow: 1;
 }
 
+/* Dark mode improvements */
+[data-theme="dark"] {
+  /* Improve text readability in dark mode */
+  --color-text-primary: 229 231 235; /* text-gray-200 in RGB */
+  --color-text-secondary: 209 213 219; /* text-gray-300 in RGB */
+}
+
+[data-theme="dark"] .menu {
+  --tw-bg-opacity: 1;
+  background-color: rgba(31, 41, 55, var(--tw-bg-opacity)) !important; /* bg-gray-800 */
+  --tw-text-opacity: 1;
+  color: rgba(229, 231, 235, var(--tw-text-opacity)) !important; /* text-gray-200 */
+}
+
+[data-theme="dark"] .bg-gray-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgba(31, 41, 55, var(--tw-bg-opacity)) !important; /* bg-gray-800 */
+}
+
+[data-theme="dark"] .text-gray-800 {
+  --tw-text-opacity: 1;
+  color: rgba(229, 231, 235, var(--tw-text-opacity)) !important; /* text-gray-200 */
+}
+
+[data-theme="dark"] .text-primary {
+  --tw-text-opacity: 1;
+  color: rgba(149, 198, 114, var(--tw-text-opacity)) !important; /* Light green color */
+}
+
+/* Fix card colors in dark mode */
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .card {
+  --tw-bg-opacity: 1;
+  background-color: rgba(31, 41, 55, var(--tw-bg-opacity)) !important; /* bg-gray-800 */
+  --tw-text-opacity: 1;
+  color: rgba(229, 231, 235, var(--tw-text-opacity)) !important; /* text-gray-200 */
+}
+
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-gray-900 {
+  --tw-text-opacity: 1;
+  color: rgba(229, 231, 235, var(--tw-text-opacity)) !important; /* text-gray-200 */
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  --tw-bg-opacity: 1;
+  background-color: rgba(55, 65, 81, var(--tw-bg-opacity)) !important; /* bg-gray-700 */
+  --tw-border-opacity: 1;
+  border-color: rgba(75, 85, 99, var(--tw-border-opacity)) !important; /* border-gray-600 */
+  --tw-text-opacity: 1;
+  color: rgba(229, 231, 235, var(--tw-text-opacity)) !important; /* text-gray-200 */
+}
+
+[data-theme="dark"] .border-gray-300 {
+  --tw-border-opacity: 1;
+  border-color: rgba(75, 85, 99, var(--tw-border-opacity)) !important; /* border-gray-600 */
+}
+
+[data-theme="dark"] .hover\:bg-gray-100:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgba(55, 65, 81, var(--tw-bg-opacity)) !important; /* bg-gray-700 */
+}
+
+/* Fix profile dropdown colors */
+[data-theme="dark"] .user-menu-item:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgba(31, 41, 55, var(--tw-bg-opacity)) !important; /* bg-gray-800 */
+}
+
 @keyframes fade-in-down {
   from {
     opacity: 0;
@@ -96,6 +167,13 @@ body {
   
   .dark {
     --daisy-theme: dark;
+  }
+
+  /* Add improved text styles for dark mode */
+  html[data-theme="dark"] {
+    --color-text-base: 229 231 235;
+    --color-text-muted: 209 213 219;
+    --color-text-inverted: 17 24 39;
   }
 }
 
@@ -227,6 +305,24 @@ body {
 
   .user-menu-icon {
     @apply flex items-center justify-center w-8 h-8 mr-3 rounded-full;
+  }
+
+  /* Improved dark mode for product card styles */
+  [data-theme="dark"] .product-card {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(75, 85, 99, 0.2);
+  }
+
+  [data-theme="dark"] .product-card .card-body {
+    border-top: 1px solid rgba(75, 85, 99, 0.2);
+  }
+
+  [data-theme="dark"] .product-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  [data-theme="dark"] .product-card-glow:hover {
+    box-shadow: 0 0 20px rgba(149, 198, 114, 0.2);
   }
 }
 
