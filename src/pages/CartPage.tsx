@@ -442,33 +442,35 @@ const CartPage: React.FC = () => {
             </div>
           )}
           
-          {/* Customer information form - always displayed */}
-          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
-            <h2 className="mb-4 text-lg font-bold">Customer Information</h2>
-            <div className="mb-4">
-              <label htmlFor="customerName" className="block mb-2 text-gray-700">Full Name *</label>
-              <input
-                type="text"
-                id="customerName"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className={`w-full input input-bordered ${formErrors.name ? 'input-error' : ''}`}
-                required
-              />
-              {formErrors.name && <p className="mt-1 text-xs text-red-500">{formErrors.name}</p>}
-            </div>
-            <div className="mb-4">
-              <label htmlFor="customerPhone" className="block mb-2 text-gray-700">Phone Number *</label>
-              <input
-                type="tel"
-                id="customerPhone"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className={`w-full input input-bordered ${formErrors.phone ? 'input-error' : ''}`}
-                placeholder="+47 123 45 678"
-                required
-              />
-              {formErrors.phone && <p className="mt-1 text-xs text-red-500">{formErrors.phone}</p>}
+          {/* Customer information form - more compact version */}
+          <div className="p-4 mb-6 bg-white rounded-lg shadow-md">
+            <h2 className="mb-3 text-lg font-bold">Customer Information</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="customerName" className="block mb-1 text-sm text-gray-700">Full Name *</label>
+                <input
+                  type="text"
+                  id="customerName"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className={`w-full input input-sm input-bordered ${formErrors.name ? 'input-error' : ''}`}
+                  required
+                />
+                {formErrors.name && <p className="mt-1 text-xs text-red-500">{formErrors.name}</p>}
+              </div>
+              <div>
+                <label htmlFor="customerPhone" className="block mb-1 text-sm text-gray-700">Phone Number *</label>
+                <input
+                  type="tel"
+                  id="customerPhone"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className={`w-full input input-sm input-bordered ${formErrors.phone ? 'input-error' : ''}`}
+                  placeholder="+47 123 45 678"
+                  required
+                />
+                {formErrors.phone && <p className="mt-1 text-xs text-red-500">{formErrors.phone}</p>}
+              </div>
             </div>
           </div>
         </div>
