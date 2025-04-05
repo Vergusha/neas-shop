@@ -157,3 +157,61 @@
   outline: 2px solid rgba(0, 61, 45, 0.5);
   outline-offset: 2px;
 }
+
+/* Optimized table styles for desktop */
+@media (min-width: 640px) {
+  /* More compact table layout */
+  .cart-table {
+    font-size: 0.9rem;
+  }
+  
+  /* Hover effect for table rows */
+  .cart-table tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+  
+  /* Image container */
+  .cart-product-image {
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    overflow: hidden;
+  }
+  
+  /* Product name max width */
+  .cart-product-name {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Compact quantity controls */
+  .cart-qty-control {
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .cart-qty-control button {
+    padding: 0.25rem;
+    border-radius: 9999px;
+    background-color: #f3f4f6;
+  }
+  
+  .cart-qty-control span {
+    width: 1.75rem;
+    text-align: center;
+  }
+}
+
+/* Ensure the clear cart button looks nice */
+.clear-cart-btn {
+  transition: all 0.2s;
+}
+
+.clear-cart-btn:hover {
+  background-color: #fee2e2; /* Light red background on hover */
+}

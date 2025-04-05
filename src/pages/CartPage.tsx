@@ -358,67 +358,68 @@ const CartPage: React.FC = () => {
                 ))}
               </div>
               
-              {/* Desktop view - Table layout for larger screens */}
+              {/* Desktop view - Table layout for larger screens - more compact */}
               <table className="hidden min-w-full divide-y divide-gray-200 sm:table">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    <th scope="col" className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Product
                     </th>
-                    <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    <th scope="col" className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Price
                     </th>
-                    <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Quantity
+                    <th scope="col" className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                      Qty
                     </th>
-                    <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    <th scope="col" className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Total
                     </th>
-                    <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Actions
+                    <th scope="col" className="w-10 px-4 py-2 text-xs font-medium tracking-wider text-center text-gray-500 uppercase">
+                      <span className="sr-only">Actions</span>
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {cartItems.map((item) => (
-                    <tr key={item.id} className="relative">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 w-16 h-16">
-                            <img className="object-contain w-16 h-16" src={item.image} alt={item.name} />
+                    <tr key={item.id} className="transition-colors hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0 w-12 h-12">
+                            <img className="object-contain w-12 h-12" src={item.image} alt={item.name} />
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 line-clamp-1">{item.name}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{Number(item.price).toFixed(2)} NOK</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center space-x-1">
                           <button 
-                            className="p-1 rounded-full hover:bg-gray-200"
+                            className="p-1 text-xs bg-gray-100 rounded-full hover:bg-gray-200"
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           >
-                            <Minus size={16} />
+                            <Minus size={12} />
                           </button>
-                          <span className="w-8 mx-2 text-center">{item.quantity}</span>
+                          <span className="w-6 text-sm text-center">{item.quantity}</span>
                           <button 
-                            className="p-1 rounded-full hover:bg-gray-200"
+                            className="p-1 text-xs bg-gray-100 rounded-full hover:bg-gray-200"
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           >
-                            <Plus size={16} />
+                            <Plus size={12} />
                           </button>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{Number(item.price * item.quantity).toFixed(2)} NOK</div>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{Number(item.price * item.quantity).toFixed(2)} NOK</div>
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                      <td className="px-4 py-3 text-center whitespace-nowrap">
                         <button 
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 transition-transform hover:text-red-900 hover:scale-110"
                           onClick={() => removeItem(item.id)}
+                          aria-label="Remove item"
                         >
                           <Trash2 size={16} />
                         </button>
