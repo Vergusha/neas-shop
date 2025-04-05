@@ -348,19 +348,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     <Link to={`/product/${product.id}`} className="block h-full">
       <div className="product-card-wrapper">
         <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card h-[420px] sm:h-[450px] lg:h-[480px] flex flex-col">
-          <figure className="relative pt-4 px-3 sm:px-6 h-40 sm:h-48 lg:h-56">
+          <figure className="relative h-40 px-3 pt-4 sm:px-6 sm:h-48 lg:h-56">
             <ProductImageCarousel 
               images={getProductImages()} 
               productName={product.name}
               onClick={handleClick}
             />
-            <div className="absolute top-6 right-3 sm:right-6 flex flex-col gap-2">
+            <div className="absolute flex flex-col gap-2 top-6 right-3 sm:right-6">
               <button
                 onClick={handleAddToCart}
-                className={`btn btn-circle btn-primary ${!user ? 'opacity-50' : ''} ${isInCart ? 'btn-success' : ''} ${cartButtonFlash ? 'cart-flash' : ''}`}
-                title={!user ? 'Please login to add to cart' : 'Add to cart'}
+                className="shadow-md btn btn-primary btn-circle focus:outline-none focus:ring-0 focus:shadow-none"
+                aria-label="Add to cart"
+                disabled={!user}
               >
-                <FaShoppingCart className={`w-5 h-5 ${cartButtonFlash ? 'text-[#F0E965]' : ''}`} />
+                <FaShoppingCart size={20} />
               </button>
               <button
                 onClick={handleFavoriteClick}
@@ -372,8 +373,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
             </div>
           </figure>
           
-          <div className="card-body p-4 sm:p-6 flex flex-col flex-1">
-            <div className="h-6 flex items-center gap-2">
+          <div className="flex flex-col flex-1 p-4 card-body sm:p-6">
+            <div className="flex items-center h-6 gap-2">
               <Rating value={product.rating || 0} size="sm" />
               <span className="text-xs text-gray-500">
                 {(product.reviewCount && product.reviewCount > 0) ? 

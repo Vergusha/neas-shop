@@ -1,11 +1,21 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      ringColor: {
+        DEFAULT: 'transparent',
+      },
+    },
+  },
+  variants: {
+    extend: {
+      ringColor: ['focus', 'active'],
+      ringOpacity: ['focus', 'active'],
+    },
   },
   plugins: [require("daisyui")],
   daisyui: {

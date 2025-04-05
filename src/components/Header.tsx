@@ -428,25 +428,25 @@ const Header: React.FC = () => {
       <div className="container py-2 sm:py-4">
         <div className="flex items-center justify-between gap-4">
           {/* Main content wrapper */}
-          <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center flex-1 gap-4">
             {/* Logo with responsive switching */}
-            <a href="/" className="shrink-0 block transition-all duration-500 ease-in-out origin-center transform hover:scale-110">
+            <a href="/" className="block transition-all duration-500 ease-in-out origin-center transform shrink-0 hover:scale-110">
               <img
                 src={logo}
                 alt="Logo"
-                className="hidden sm:block w-auto h-6 sm:h-8 md:h-10"
+                className="hidden w-auto h-6 sm:block sm:h-8 md:h-10"
               />
               <img
                 src="/symbol.svg"
                 alt="Logo"
-                className="block sm:hidden w-auto h-8"
+                className="block w-auto h-8 sm:hidden"
               />
             </a>
 
             {/* Search bar */}
             <div className="relative w-full sm:max-w-[400px] md:max-w-[500px] lg:max-w-[600px]">
-              <form onSubmit={handleSearch} className="relative w-full flex items-center">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
+              <form onSubmit={handleSearch} className="relative flex items-center w-full">
+                <Search className="absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2" size={20} />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -489,7 +489,7 @@ const Header: React.FC = () => {
               <div className="relative">
                 <button 
                   onClick={() => setShowNotifications(!showNotifications)} 
-                  className="btn btn-ghost btn-circle transition-all duration-500 ease-in-out hover:scale-110 relative"
+                  className="relative transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
                 >
                   <Bell size={32} className="text-white" /> {/* Возвращен цвет text-white */}
                   {unreadNotifications > 0 && (
@@ -502,7 +502,7 @@ const Header: React.FC = () => {
                 {/* Notifications dropdown */}
                 {showNotifications && (
                   <div className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80">
-                    <div className="p-3 border-b flex justify-between items-center">
+                    <div className="flex items-center justify-between p-3 border-b">
                       <h3 className="font-semibold">Notifications</h3>
                       {unreadNotifications > 0 && (
                         <button 
@@ -529,14 +529,14 @@ const Header: React.FC = () => {
                                 <p className={`text-sm ${!notification.read ? 'font-semibold' : ''}`}>
                                   {notification.text}
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="mt-1 text-xs text-gray-500">
                                   {new Date(notification.createdAt).toLocaleDateString()} 
                                   {' • '}
                                   {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                               </div>
                               {!notification.read && (
-                                <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                               )}
                             </div>
                           </div>
@@ -562,11 +562,11 @@ const Header: React.FC = () => {
             </button>
             
             {/* Cart button with dropdown */}
-            <div className="relative pt-2">
+            <div className="relative">
               <button 
                 onClick={toggleCartPreview} 
-                className={`btn btn-ghost btn-circle relative transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
-                title={!user ? 'Please login to use cart' : 'Cart'}
+                className="relative transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
+                title="Cart"
               >
                 <ShoppingCart size={32} className="text-white" /> {/* Возвращен цвет text-white */}
                 {user && cartItemCount > 0 && (

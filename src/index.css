@@ -60,12 +60,12 @@ body {
   }
   
   body {
-    @apply antialiased text-base;
+    @apply text-base antialiased;
     text-size-adjust: 100%;
   }
   
   img {
-    @apply max-w-full h-auto;
+    @apply h-auto max-w-full;
   }
 
   /* Основные цвета */
@@ -96,7 +96,7 @@ body {
 
 /* Responsive layout containers */
 .container {
-  @apply w-full mx-auto px-4;
+  @apply w-full px-4 mx-auto;
   max-width: min(100% - 2rem, 1440px);
 }
 
@@ -186,6 +186,21 @@ body {
 
 .highlight-review {
   animation: highlight-pulse 1.5s ease-out;
+}
+
+/* Убираем фиолетовую обводку с кнопок корзины */
+.btn-add-to-cart:focus,
+.btn-add-to-cart:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+/* Также применяем к кнопкам в карточках продуктов */
+.product-card .btn:focus,
+.product-card .btn:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 @layer utilities {

@@ -18,7 +18,7 @@ export default defineConfig({
     outDir: 'dist', // Changed from 'build' to 'dist' for Firebase deployment
   },
   server: {
-    port: 3000,
+    port: 7777,
     open: true
   }
 })
