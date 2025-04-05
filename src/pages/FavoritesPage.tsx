@@ -24,67 +24,83 @@ const FavoritesPage: React.FC = () => {
   const auth = getAuth();
   const user = auth.currentUser;
 
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      try {
-        setLoading(true);
-        let favoriteIds: string[] = [];
+  // Fetch favorites from database
+  const fetchFavorites = async () => {
+    try {
+      setLoading(true);
+      let favoriteIds: string[] = [];
 
-        if (user) {
-          // Get favorites from Realtime Database
-          const favRef = ref(database, `users/${user.uid}/favorites`);
-          const snapshot = await get(favRef);
-          if (snapshot.exists()) {
-            favoriteIds = Object.keys(snapshot.val());
-          }
-        } else {
-          // Fallback to localStorage for non-logged in users
-          favoriteIds = JSON.parse(localStorage.getItem('favorites') || '[]');
+      if (user) {
+        // Get favorites from Realtime Database
+        const favRef = ref(database, `users/${user.uid}/favorites`);
+        const snapshot = await get(favRef);
+        if (snapshot.exists()) {
+          favoriteIds = Object.keys(snapshot.val());
         }
+      } else {
+        // Fallback to localStorage for non-logged in users
+        favoriteIds = JSON.parse(localStorage.getItem('favorites') || '[]');
+      }
 
-        if (favoriteIds.length === 0) {
-          setFavorites([]);
-          setLoading(false);
-          return;
-        }
-
-        // Fetch products from all collections
-        const collections = ['mobile', 'tv', 'gaming', 'laptops', 'smart-home', 'data']; // Added 'laptops'
-        const favoriteProducts: Product[] = [];
-
-        for (const collectionName of collections) {
-          const collectionRef = collection(db, collectionName);
-          const querySnapshot = await getDocs(collectionRef);
-          
-          querySnapshot.docs.forEach(doc => {
-            if (favoriteIds.includes(doc.id)) {
-              favoriteProducts.push({
-                id: doc.id,
-                ...doc.data(),
-                name: doc.data().name || 'Unnamed Product',
-                description: doc.data().description || 'No description',
-                price: Number(doc.data().price) || 0,
-                image: doc.data().image || '',
-                brand: doc.data().brand || '',
-                category: collectionName
-              } as Product);
-            }
-          });
-        }
-
-        setFavorites(favoriteProducts);
-      } catch (error) {
-        console.error('Error fetching favorites:', error);
-      } finally {
+      if (favoriteIds.length === 0) {
+        setFavorites([]);
         setLoading(false);
+        return;
+      }
+
+      // Fetch products from all collections
+      const collections = ['mobile', 'tv', 'gaming', 'laptops', 'smart-home', 'data']; // Added 'laptops'
+      const favoriteProducts: Product[] = [];
+
+      for (const collectionName of collections) {
+        const collectionRef = collection(db, collectionName);
+        const querySnapshot = await getDocs(collectionRef);
+        
+        querySnapshot.docs.forEach(doc => {
+          if (favoriteIds.includes(doc.id)) {
+            favoriteProducts.push({
+              id: doc.id,
+              ...doc.data(),
+              name: doc.data().name || 'Unnamed Product',
+              description: doc.data().description || 'No description',
+              price: Number(doc.data().price) || 0,
+              image: doc.data().image || '',
+              brand: doc.data().brand || '',
+              category: collectionName
+            } as Product);
+          }
+        });
+      }
+
+      setFavorites(favoriteProducts);
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFavorites();
+    
+    // Listen for favorites updates with enhanced handling for immediate UI updates
+    const handleFavoritesUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      
+      // If we have the immediate flag, update UI immediately without refetching
+      if (customEvent.detail?.immediate && customEvent.detail?.productId && !customEvent.detail?.isFavorite) {
+        // Remove the product from favorites immediately
+        setFavorites(prevFavorites => 
+          prevFavorites.filter(product => product.id !== customEvent.detail.productId)
+        );
+      } else {
+        // For non-immediate updates or additions, refetch all favorites
+        fetchFavorites();
       }
     };
-
-    fetchFavorites();
-
-    // Listen for favorites updates
-    window.addEventListener('favoritesUpdated', fetchFavorites);
-    return () => window.removeEventListener('favoritesUpdated', fetchFavorites);
+    
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
+    return () => window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
   }, [user]);
 
   if (loading) {

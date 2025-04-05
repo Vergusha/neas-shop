@@ -218,6 +218,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
       };
 
       const newIsFavorite = await toggleFavorite(product.id, productData);
+      
+      // We still want to update the local state of this card to show the correct favorite icon
       setIsFavorite(newIsFavorite);
       
       if (newIsFavorite) {
