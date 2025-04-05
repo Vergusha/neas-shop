@@ -40,7 +40,7 @@ const CategoryList: React.FC = () => {
         const isActive = isPathActive(category.path);
         
         const bgColor = isActive 
-          ? currentTheme === 'dark' ? 'bg-[#d45288] text-gray-900' : 'bg-[#003D2D] text-white'
+          ? currentTheme === 'dark' ? 'bg-[#95c672] text-gray-900' : 'bg-[#003D2D] text-white'
           : currentTheme === 'dark' ? 'bg-gray-800' : 'bg-white';
         
         const textColor = isActive 
@@ -49,7 +49,7 @@ const CategoryList: React.FC = () => {
         
         const iconColor = isActive
           ? currentTheme === 'dark' ? 'text-gray-900' : 'text-white'
-          : currentTheme === 'dark' ? 'text-[#d45288]' : 'text-[#003D2D]';
+          : currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003D2D]';
         
         return (
           <Link 

@@ -56,18 +56,23 @@
 }
 
 /* Header background remains dark but buttons and accents use the pink color */
-[data-theme="dark"] header.bg-[#003D2D] {
-  background-color: #d45288 !important; /* Change from #eebbca to #d45288 */
+[data-theme="dark"] header.bg-[#003D2D],
+[data-theme="dark"] header.bg-[#d45288],
+[data-theme="dark"] header.bg-[#eebbca] {
+  background-color: #95c672 !important;
 }
 
 /* Update button styles in dark header */
+[data-theme="dark"] header.bg-[#003D2D] button svg,
+[data-theme="dark"] header.bg-[#d45288] button svg,
 [data-theme="dark"] header.bg-[#eebbca] button svg,
-[data-theme="dark"] header.bg-[#d45288] button svg {
-  color: #1f2937 !important; /* Dark text for contrast on pink background */
+[data-theme="dark"] header.bg-[#95c672] button svg {
+  color: #1f2937 !important; /* Dark text for contrast on green background */
 }
 
 [data-theme="dark"] header.bg-[#eebbca] .theme-controller + svg,
-[data-theme="dark"] header.bg-[#d45288] .theme-controller + svg {
+[data-theme="dark"] header.bg-[#d45288] .theme-controller + svg,
+[data-theme="dark"] header.bg-[#95c672] .theme-controller + svg {
   color: #1f2937 !important;
 }
 

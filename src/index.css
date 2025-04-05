@@ -31,20 +31,20 @@ body {
   /* Improve text readability in dark mode */
   --color-text-primary: 229 231 235; /* text-gray-200 in RGB */
   --color-text-secondary: 209 213 219; /* text-gray-300 in RGB */
-  --primary-color: #d45288; /* Change from #eebbca to #d45288 */
-  --primary-focus-color: #c04a7a; /* Slightly darker pink for hover/focus states */
-  --primary-glow-color: rgba(212, 82, 136, 0.5); /* Pink glow effect */
+  --primary-color: #95c672; /* Change from #d45288 to #95c672 */
+  --primary-focus-color: #7fb356; /* Slightly darker green for hover/focus states */
+  --primary-glow-color: rgba(149, 198, 114, 0.5); /* Green glow effect */
 }
 
 [data-theme="dark"] .btn-neas-green {
-  background-color: #d45288 !important;
-  border-color: #d45288 !important;
+  background-color: #95c672 !important;
+  border-color: #95c672 !important;
   color: #1f2937 !important; /* darker text for contrast */
 }
 
 [data-theme="dark"] .btn-neas-green:hover {
-  background-color: #c04a7a !important;
-  border-color: #c04a7a !important;
+  background-color: #7fb356 !important;
+  border-color: #7fb356 !important;
 }
 
 [data-theme="dark"] .menu {
@@ -66,49 +66,49 @@ body {
 
 [data-theme="dark"] .text-primary {
   --tw-text-opacity: 1;
-  color: rgba(212, 82, 136, var(--tw-text-opacity)) !important; /* #d45288 in RGB */
+  color: rgba(149, 198, 114, var(--tw-text-opacity)) !important; /* #95c672 in RGB */
 }
 
 [data-theme="dark"] .text-[#003D2D] {
-  color: #d45288 !important;
+  color: #95c672 !important;
 }
 
 [data-theme="dark"] .border-[#003D2D] {
-  border-color: #d45288 !important;
+  border-color: #95c672 !important;
 }
 
 [data-theme="dark"] .bg-[#003D2D] {
-  background-color: #d45288 !important;
+  background-color: #95c672 !important;
 }
 
 [data-theme="dark"] .bg-gradient-to-r.from-[#003D2D] {
-  --tw-gradient-from: #d45288 !important;
-  --tw-gradient-to: #c04a7a !important;
+  --tw-gradient-from: #95c672 !important;
+  --tw-gradient-to: #7fb356 !important;
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
 }
 
 [data-theme="dark"] .hover\:bg-[#003D2D]:hover {
-  background-color: #d45288 !important;
+  background-color: #95c672 !important;
 }
 
 [data-theme="dark"] .hover\:border-[#003D2D]:hover {
-  border-color: #d45288 !important;
+  border-color: #95c672 !important;
 }
 
 [data-theme="dark"] .hover\:text-[#003D2D]:hover {
-  color: #d45288 !important;
+  color: #95c672 !important;
 }
 
 /* Fix buttons in dark mode */
 [data-theme="dark"] .btn-primary {
-  background-color: #d45288 !important;
-  border-color: #d45288 !important;
+  background-color: #95c672 !important;
+  border-color: #95c672 !important;
   color: #1f2937 !important; /* Dark text for better contrast */
 }
 
 [data-theme="dark"] .btn-primary:hover {
-  background-color: #c04a7a !important;
-  border-color: #c04a7a !important;
+  background-color: #7fb356 !important;
+  border-color: #7fb356 !important;
 }
 
 /* Fix card colors in dark mode */
@@ -155,8 +155,8 @@ body {
 
 /* Add specific styling for header and footer in dark mode */
 [data-theme="dark"] .bg-\[\#003D2D\] {
-  background-color: #d45288 !important;
-  color: #1f2937 !important; /* Dark text for contrast on pink background */
+  background-color: #95c672 !important;
+  color: #1f2937 !important; /* Dark text for contrast on green background */
 }
 
 [data-theme="dark"] footer a {
@@ -182,30 +182,30 @@ body {
 /* Fix breadcrumb hover color in dark mode */
 [data-theme="dark"] .hover\:text-primary:hover,
 [data-theme="dark"] a:hover {
-  color: #d45288 !important;
+  color: #95c672 !important;
 }
 
 /* Fix filter button color in dark mode */
 [data-theme="dark"] .btn-primary {
-  background-color: #d45288 !important;
-  border-color: #d45288 !important;
+  background-color: #95c672 !important;
+  border-color: #95c672 !important;
   color: #1f2937 !important;
 }
 
 [data-theme="dark"] .btn-primary:hover {
-  background-color: #c04a7a !important;
-  border-color: #c04a7a !important;
+  background-color: #7fb356 !important;
+  border-color: #7fb356 !important;
 }
 
 /* Fix the Sale badge in dark mode */
 [data-theme="dark"] .badge-primary,
 [data-theme="dark"] .sale-badge {
-  background-color: #d45288 !important;
+  background-color: #95c672 !important;
   color: #1f2937 !important;
 }
 
 [data-theme="dark"] .product-card .sale-badge {
-  background-color: #d45288 !important;
+  background-color: #95c672 !important;
   color: #1f2937 !important; /* dark text for better contrast */
 }
 
@@ -532,7 +532,7 @@ body {
   }
 
   [data-theme="dark"] .product-card .sale-badge {
-    background-color: #d45288;
+    background-color: #95c672;
     color: #1f2937; /* dark text for better contrast */
   }
 
@@ -560,7 +560,7 @@ body {
   }
 
   [data-theme="dark"] .product-card-glow:hover {
-    box-shadow: 0 0 20px rgba(212, 82, 136, 0.3); /* Change to pink glow */
+    box-shadow: 0 0 20px rgba(149, 198, 114, 0.3); /* Change to green glow */
   }
 
   /* Category layout styles */
@@ -589,7 +589,7 @@ body {
   }
 
   [data-theme="dark"] .category-card.active {
-    background-color: #d45288;
+    background-color: #95c672;
     color: #1f2937;
   }
 
@@ -634,9 +634,9 @@ body {
 }
 
 @keyframes highlight-pulse-dark {
-  0% { box-shadow: 0 0 0 rgba(212, 82, 136, 0); }
-  50% { box-shadow: 0 0 20px rgba(212, 82, 136, 0.5); }
-  100% { box-shadow: 0 0 0 rgba(212, 82, 136, 0); }
+  0% { box-shadow: 0 0 0 rgba(149, 198, 114, 0); }
+  50% { box-shadow: 0 0 20px rgba(149, 198, 114, 0.5); }
+  100% { box-shadow: 0 0 0 rgba(149, 198, 114, 0); }
 }
 
 /* Убираем фиолетовую обводку с кнопок корзины и избранного */
@@ -679,78 +679,78 @@ body {
 [data-theme="dark"] button.btn-primary,
 [data-theme="dark"] .btn-primary,
 [data-theme="dark"] button.btn.btn-primary {
-  background-color: #d45288 !important;
-  border-color: #d45288 !important;
+  background-color: #95c672 !important;
+  border-color: #95c672 !important;
   color: #1f2937 !important;
 }
 
 [data-theme="dark"] button.btn-primary:hover,
 [data-theme="dark"] .btn-primary:hover,
 [data-theme="dark"] button.btn.btn-primary:hover {
-  background-color: #c04a7a !important;
-  border-color: #c04a7a !important;
+  background-color: #7fb356 !important;
+  border-color: #7fb356 !important;
 }
 
 /* Specifically target "Show Filter" buttons which might have additional classes */
 [data-theme="dark"] button:has(svg[class*="FaFilter"]),
 [data-theme="dark"] button:has(.filter-icon) {
-  background-color: #d45288 !important;
-  border-color: #d45288 !important;
+  background-color: #95c672 !important;
+  border-color: #95c672 !important;
   color: #1f2937 !important;
 }
 
 [data-theme="dark"] button:has(svg[class*="FaFilter"]):hover,
 [data-theme="dark"] button:has(.filter-icon):hover {
-  background-color: #c04a7a !important;
-  border-color: #c04a7a !important;
+  background-color: #7fb356 !important;
+  border-color: #7fb356 !important;
 }
 
-/* Ensure all primary buttons in dark mode use pink */
+/* Ensure all primary buttons in dark mode use green */
 [data-theme="dark"] .daisy-btn-primary, 
 [data-theme="dark"] .btn.btn-primary {
-  background-color: #d45288 !important;
-  border-color: #d45288 !important;
+  background-color: #95c672 !important;
+  border-color: #95c672 !important;
   color: #1f2937 !important;
 }
 
 [data-theme="dark"] .daisy-btn-primary:hover,
 [data-theme="dark"] .btn.btn-primary:hover {
-  background-color: #c04a7a !important;
-  border-color: #c04a7a !important;
+  background-color: #7fb356 !important;
+  border-color: #7fb356 !important;
 }
 
 /* Fix green text and button colors in dark mode */
 [data-theme="dark"] .text-green-600,
 [data-theme="dark"] .text-green-700 {
-  color: #d45288 !important;
+  color: #95c672 !important;
 }
 
 [data-theme="dark"] .text-green-600:hover,
 [data-theme="dark"] .text-green-700:hover {
-  color: #c04a7a !important;
+  color: #7fb356 !important;
 }
 
 [data-theme="dark"] .bg-green-50 {
-  background-color: rgba(212, 82, 136, 0.1) !important;
+  background-color: rgba(149, 198, 114, 0.1) !important;
 }
 
 [data-theme="dark"] .bg-green-600,
 [data-theme="dark"] .bg-green-700 {
-  background-color: #d45288 !important;
+  background-color: #95c672 !important;
 }
 
 [data-theme="dark"] .hover\:bg-green-600:hover,
 [data-theme="dark"] .hover\:bg-green-700:hover {
-  background-color: #c04a7a !important;
+  background-color: #7fb356 !important;
 }
 
 [data-theme="dark"] .bg-green-600:hover,
 [data-theme="dark"] .bg-green-700:hover {
-  background-color: #c04a7a !important;
+  background-color: #7fb356 !important;
 }
 
 [data-theme="dark"] .border-green-200 {
-  border-color: rgba(212, 82, 136, 0.4) !important;
+  border-color: rgba(149, 198, 114, 0.4) !important;
 }
 
 @layer utilities {
@@ -783,7 +783,7 @@ body {
   }
 
   [data-theme="dark"] .product-card-glow:hover {
-    box-shadow: 0 0 20px rgba(212, 82, 136, 0.3); /* Pink glow in dark mode */
+    box-shadow: 0 0 20px rgba(149, 198, 114, 0.3); /* Green glow in dark mode */
   }
 }
 

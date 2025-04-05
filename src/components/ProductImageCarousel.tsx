@@ -129,7 +129,7 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
             key={idx}
             className={`w-2 h-2 rounded-full ${
               idx === currentIndex 
-                ? 'bg-[#003D2D] dark:bg-[#eebbca]' // Use explicit colors for light/dark modes
+                ? 'bg-[#003D2D] dark:bg-[#95c672]' // Change from #eebbca to #95c672
                 : 'bg-gray-300 dark:bg-gray-600'
             }`}
             onClick={(e) => {

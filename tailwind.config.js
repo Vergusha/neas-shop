@@ -12,10 +12,10 @@ module.exports = {
       colors: {
         primary: '#003D2D',
         'primary-focus': '#004D3D',
-        'dark-primary': '#eebbca', // Add this new color for dark mode
+        'dark-primary': '#95c672',
       },
       backgroundColor: theme => ({
-        'dark-button-primary': '#eebbca',
+        'dark-button-primary': '#95c672',
       }),
     },
   },
@@ -32,8 +32,8 @@ module.exports = {
       {
         dark: {
           ...require("daisyui/src/theming/themes")["[data-theme=dark]"],
-          "primary": "#eebbca", // Change from #004D3D to #eebbca
-          "primary-focus": "#e0a1b7", // Slightly darker shade for hover states
+          "primary": "#95c672", // Change from #eebbca to #95c672
+          "primary-focus": "#7fb356", // Slightly darker shade for hover states
           "primary-content": "#ffffff",
           "secondary": "#95c672",
           "accent": "#e7cc50",

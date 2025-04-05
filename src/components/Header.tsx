@@ -12,6 +12,10 @@ import { database } from '../firebaseConfig';
 import { useAuth } from '../utils/AuthProvider';
 import UserAvatar from './UserAvatar';
 import '../styles/HeaderStyles.css';
+import { Link } from 'react-router-dom';
+import { FaShoppingCart, FaUser, FaBell } from 'react-icons/fa';
+import { IoMdSunny, IoMdMoon } from 'react-icons/io';
+import { toggleTheme, getTheme } from '../utils/themeUtils';
 
 const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -513,7 +517,7 @@ const Header: React.FC = () => {
 
   return (
     <header className={`shadow-md relative ${
-      currentTheme === 'dark' ? 'bg-[#d45288] dark-header' : 'bg-[#003D2D]'
+      currentTheme === 'dark' ? 'bg-[#95c672] dark-header' : 'bg-[#003D2D]'
     }`}>
       <div className="container py-2 sm:py-4">
         {/* Top row: Logo, Search, and buttons */}
