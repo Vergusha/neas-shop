@@ -483,7 +483,7 @@ const Header: React.FC = () => {
           </div>
 
           {/* Icons section */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-1">
             {/* Notifications bell */}
             {user && (
               <div className="relative">
