@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/ColorVariants.css';
+import { getTheme } from '../utils/themeUtils';
 
 interface ColorVariant {
   id: string;
@@ -20,6 +21,19 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
   onSelectVariant,
   isPending = false
 }) => {
+  // Track current theme
+  const [currentTheme, setCurrentTheme] = useState(getTheme());
+  
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
+
   // Предзагрузка изображений для улучшения производительности
   useEffect(() => {
     // Предзагрузим все изображения вариантов
@@ -44,7 +58,9 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
   
   return (
     <div className="mt-6">
-      {/* Removed the duplicate heading */}
+      <h3 className="mb-2 text-sm font-medium">
+        {currentTheme === 'dark' ? 'Choose Color:' : 'Available Colors:'}
+      </h3>
       <div className="flex flex-wrap gap-3">
         {variants.map((variant) => {
           const isCurrentVariant = variant.id === currentVariantId;

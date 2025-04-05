@@ -36,8 +36,8 @@
 }
 
 [data-theme="dark"] .product-color-variant.active {
-  border-color: #eebbca; /* Pink border in dark mode */
-  box-shadow: 0 0 0 3px rgba(238, 187, 202, 0.5); /* Pink glow in dark mode */
+  border-color: #d45288; /* Pink border in dark mode (change from #eebbca to #d45288) */
+  box-shadow: 0 0 0 3px rgba(212, 82, 136, 0.5); /* Pink glow (updated to #d45288) */
 }
 
 .product-color-image {
@@ -49,6 +49,11 @@
   justify-content: center;
   padding: 0.5rem; /* Add padding for better spacing */
   background-color: #f9fafb; /* Light background for image container */
+}
+
+/* Ensure image container background also changes in dark mode */
+[data-theme="dark"] .product-color-image {
+  background-color: #374151; /* Darker background for image container in dark mode */
 }
 
 .product-color-image img {
@@ -77,7 +82,7 @@
 
 /* Change the indicator color in dark mode */
 [data-theme="dark"] .active-indicator {
-  background-color: #eebbca; /* Pink indicator in dark mode */
+  background-color: #d45288; /* Updated pink indicator in dark mode */
 }
 
 .active-indicator::after {
