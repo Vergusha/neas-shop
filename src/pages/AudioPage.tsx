@@ -25,6 +25,7 @@ const AudioPage: React.FC = () => {
   const [filters, setFilters] = useState<FilterOption[]>([]);
   const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> | [number, number] }>({});
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [showFilters, setShowFilters] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -111,11 +112,23 @@ const AudioPage: React.FC = () => {
       <h1 className="mb-4 text-2xl font-bold">Audio Products</h1>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div>
-          <ProductFilters
-            filters={filters}
-            activeFilters={activeFilters}
-            onFilterChange={handleFilterChange}
-          />
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-medium">Filters</h2>
+            <button 
+              onClick={() => setShowFilters && setShowFilters(!showFilters)}
+              className="btn bg-primary hover:bg-primary-focus text-white flex items-center gap-2 btn-sm"
+            >
+              <FaFilter />
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </button>
+          </div>
+          {showFilters && (
+            <ProductFilters
+              filters={filters}
+              activeFilters={activeFilters}
+              onFilterChange={handleFilterChange}
+            />
+          )}
         </div>
         <div className="col-span-2">
           {filteredProducts.length > 0 ? (

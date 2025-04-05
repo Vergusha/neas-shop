@@ -153,30 +153,30 @@ const TvPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen">
         <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-red-500 text-center py-8">{error}</div>;
+    return <div className="py-8 text-center text-red-500">{error}</div>;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container px-4 py-8 mx-auto">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">TV & Audio</h1>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn btn-primary flex items-center gap-2"
+          className="flex items-center gap-2 text-white btn bg-primary hover:bg-primary-focus"
         >
           <FaFilter />
           {showFilters ? 'Hide Filters' : 'Show Filters'}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
         {showFilters && (
           <div className="md:col-span-1">
             <ProductFilters
@@ -189,17 +189,17 @@ const TvPage: React.FC = () => {
 
         <div className={`${showFilters ? 'md:col-span-3' : 'md:col-span-4'}`}>
           {filteredProducts.length > 0 ? (
-            <div className="px-12 sm:px-16 overflow-x-hidden">
+            <div className="px-12 overflow-x-hidden sm:px-16">
               <div className="flex flex-row flex-wrap">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className="w-full sm:w-1/2 lg:w-1/3 mb-6">
+                  <div key={product.id} className="w-full mb-6 sm:w-1/2 lg:w-1/3">
                     <ProductCard key={product.id} product={product} />
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="col-span-full text-center py-8">
+            <div className="py-8 text-center col-span-full">
               No products found matching the selected filters.
             </div>
           )}

@@ -217,10 +217,10 @@ const HomePage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Products</h1>
+        <h1 className="text-2xl font-bold">Featured Products</h1>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn btn-primary flex items-center gap-2"
+          className="btn bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
         >
           <FaFilter />
           {showFilters ? 'Hide Filters' : 'Show Filters'}

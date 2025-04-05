@@ -203,7 +203,7 @@ const MobilePage: React.FC = () => {
         <h1 className="text-2xl font-bold">Mobile Phones</h1>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn btn-primary flex items-center gap-2"
+          className="btn bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
         >
           <FaFilter />
           {showFilters ? 'Hide Filters' : 'Show Filters'}

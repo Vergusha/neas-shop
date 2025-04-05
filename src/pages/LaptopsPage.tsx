@@ -223,16 +223,13 @@ const LaptopsPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Laptops</h1>
-        <div className="flex gap-2">
-          {/* Removed the buttons for All Laptops, MacBook, and Windows */}
-          <button 
-            onClick={() => setShowFilters(!showFilters)}
-            className="btn btn-primary btn-sm flex items-center gap-2"
-          >
-            <FaFilter />
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </button>
-        </div>
+        <button 
+          onClick={() => setShowFilters(!showFilters)}
+          className="btn bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
+        >
+          <FaFilter />
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
