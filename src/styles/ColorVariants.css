@@ -1,67 +1,91 @@
 /* Product color variant styles - удаляем старые стили цветовых кругов */
 
-/* Product color variant styles */
+/* Improved Product color variant styles */
 .product-color-variant {
   position: relative;
-  width: 4rem;
-  height: 5rem;
-  border-radius: 0.5rem;
+  width: 5rem; /* Increased width for better visibility */
+  height: 6.5rem; /* Increased height to add more room for the text */
+  border-radius: 0.75rem; /* Slightly more rounded corners */
   cursor: pointer;
   transition: all 0.2s ease;
   border: 2px solid transparent;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  align-items: center; /* Center-align content */
+  justify-content: space-between; /* Add spacing between image and text */
+  background-color: #ffffff; /* Add a white background for better contrast */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
 }
 
 .product-color-variant:hover {
-  transform: scale(1.05);
+  transform: scale(1.08); /* Slightly larger hover effect */
   z-index: 10;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
 }
 
 .product-color-variant.active {
-  border-color: #003D2D;
-  box-shadow: 0 0 0 2px rgba(0, 61, 45, 0.5);
+  border-color: #003D2D; /* Highlight active variant with primary color */
+  box-shadow: 0 0 0 3px rgba(0, 61, 45, 0.5); /* Add a glow effect */
 }
 
 .product-color-image {
   flex: 1;
   width: 100%;
-  background-color: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem; /* Add padding for better spacing */
+  background-color: #f9fafb; /* Light background for image container */
+  max-height: 70%; /* Limit image height to make room for text */
+}
+
+.product-color-image img {
+  max-width: 90%; /* Ensure images fit well within the container */
+  max-height: 90%; /* Prevent images from overflowing */
+  object-fit: contain; /* Maintain aspect ratio */
+}
+
+.product-color-name {
+  font-size: 0.85rem; /* Larger font size */
+  font-weight: 700; /* Bolder font weight */
+  text-align: center;
+  padding: 0.5rem 0.3rem; /* Increased padding for more space */
+  background-color: rgba(0, 0, 0, 0.08); /* Slightly darker background */
+  color: #003D2D; /* Dark green text color matching the theme */
+  border-top: 1px solid rgba(0, 0, 0, 0.2); /* Darker separator line */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  letter-spacing: 0.02em; /* Better letter spacing */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7); /* Enhanced text shadow */
+  line-height: 1.3; /* Increased line height for text */
+  position: relative; /* Allow positioning relative to container */
+  bottom: 0; /* Stick to bottom */
+  min-height: 2.2rem; /* Minimum height for text area */
+  display: flex; /* Allows for vertical centering */
+  align-items: center; /* Vertically center text */
+  justify-content: center; /* Horizontally center text */
+}
+
+.active-indicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1rem;
+  height: 1rem;
+  background-color: #003D2D; /* Primary color for active indicator */
+  border-radius: 50%; /* Circular indicator */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.product-color-name {
-  font-size: 0.65rem;
-  text-align: center;
-  padding: 0.2rem 0;
-  background-color: rgba(0, 0, 0, 0.03);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-
-.active-indicator {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 0.75rem;
-  height: 0.75rem;
-  background-color: #003D2D;
-  border-radius: 0 0 0 0.5rem;
-}
-
 .active-indicator::after {
   content: '';
-  position: absolute;
-  top: 0.25rem;
-  left: 0.25rem;
-  width: 0.25rem;
-  height: 0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
   border-right: 2px solid white;
   border-bottom: 2px solid white;
   transform: rotate(45deg);
