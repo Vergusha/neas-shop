@@ -122,4 +122,41 @@
     margin-top: 1rem;
     width: 100%;
   }
+
+  .notifications-dropdown,
+  .cart-dropdown {
+    position: fixed;
+    top: 4rem; /* Below the header */
+    right: 0;
+    left: 0;
+    margin: 0 auto;
+    width: 90%; /* Centered and responsive */
+    max-width: 400px;
+    z-index: 50;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+
+  .notifications-dropdown .p-3,
+  .cart-dropdown .p-3 {
+    padding: 1rem;
+  }
+
+  .notifications-dropdown .max-h-60,
+  .cart-dropdown .max-h-60 {
+    max-height: 50vh; /* Adjust height for mobile */
+    overflow-y: auto;
+  }
+
+  .cart-dropdown .p-4 {
+    padding: 1rem;
+  }
+
+  .cart-dropdown .p-3.bg-gray-50 {
+    padding: 1rem;
+    background-color: #f9fafb;
+  }
 }

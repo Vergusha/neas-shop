@@ -505,7 +505,7 @@ const Header: React.FC = () => {
                 {showNotifications && (
                   <div 
                     ref={notificationsDropdownRef}
-                    className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80"
+                    className="notifications-dropdown absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80 sm:relative sm:w-auto"
                   >
                     <div className="flex items-center justify-between p-3 border-b">
                       <h3 className="font-semibold">Notifications</h3>
@@ -584,7 +584,7 @@ const Header: React.FC = () => {
               
               {/* Cart preview dropdown */}
               {user && cartOpen && cartItemCount > 0 && (
-                <div ref={cartDropdownRef} className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80">
+                <div ref={cartDropdownRef} className="cart-dropdown absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80 sm:relative sm:w-auto">
                   <div className="p-4 border-b">
                     <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
                   </div>
