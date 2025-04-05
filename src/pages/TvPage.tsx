@@ -171,11 +171,11 @@ const TvPage: React.FC = () => {
       
       <div className="flex justify-between items-center mb-4">
         <div>
-          <span className="text-sm text-gray-500">{filteredProducts.length} products found</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">{filteredProducts.length} products found</span>
         </div>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn btn-sm bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
+          className="btn btn-sm btn-primary dark:bg-[#eebbca] dark:text-gray-900 dark:border-[#eebbca] dark:hover:bg-[#e0a1b7] dark:hover:border-[#e0a1b7] flex items-center gap-2"
         >
           <FaFilter />
           {showFilters ? 'Hide Filters' : 'Show Filters'}

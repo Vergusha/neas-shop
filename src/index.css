@@ -179,6 +179,36 @@ body {
   background-color: rgba(31, 41, 55, 0.1) !important; /* Light dark hover effect */
 }
 
+/* Fix breadcrumb hover color in dark mode */
+[data-theme="dark"] .hover\:text-primary:hover,
+[data-theme="dark"] a:hover {
+  color: #eebbca !important;
+}
+
+/* Fix filter button color in dark mode */
+[data-theme="dark"] .btn-primary {
+  background-color: #eebbca !important;
+  border-color: #eebbca !important;
+  color: #1f2937 !important;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+  background-color: #e0a1b7 !important;
+  border-color: #e0a1b7 !important;
+}
+
+/* Fix the Sale badge in dark mode */
+[data-theme="dark"] .badge-primary,
+[data-theme="dark"] .sale-badge {
+  background-color: #eebbca !important;
+  color: #1f2937 !important;
+}
+
+[data-theme="dark"] .product-card .sale-badge {
+  background-color: #eebbca !important;
+  color: #1f2937 !important; /* dark text for better contrast */
+}
+
 @keyframes fade-in-down {
   from {
     opacity: 0;

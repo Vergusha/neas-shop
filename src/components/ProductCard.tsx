@@ -37,6 +37,7 @@ interface ProductCardProps {
     modelNumber?: string;
     rating?: number;
     reviewCount?: number;
+    originalPrice?: number;
     [key: string]: any;
   };
 }
@@ -346,6 +347,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
     return <p className="text-xs text-gray-500 line-clamp-3">{description}</p>;
   };
 
+  // Calculate discount percentage (assuming product might have originalPrice field)
+  const originalPrice = product.originalPrice || product.price * 1.1; // Fallback if no originalPrice
+  const discountPercentage = originalPrice > product.price 
+    ? Math.round(((originalPrice - product.price) / originalPrice) * 100)
+    : 0;
+
+  // Calculate if product is on sale (10% or more discount)
+  const isOnSale = discountPercentage >= 10;
+
   return (
     <Link to={`/product/${product.id}`} className="block h-full">
       <div className="product-card-wrapper">
@@ -374,8 +384,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
                 <FaHeart className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} />
               </button>
             </div>
-            {product.price && product.price <= 999 && (
-              <div className="absolute px-2 py-1 text-xs font-bold text-white rounded-full top-4 left-4 bg-primary">
+            {isOnSale && (
+              <div className="sale-badge absolute top-2 right-2 z-10 bg-[#003D2D] dark:bg-[#eebbca] text-white dark:text-gray-900 text-xs font-semibold px-2 py-1 rounded-full">
                 Sale!
               </div>
             )}

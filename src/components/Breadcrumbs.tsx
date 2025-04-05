@@ -190,7 +190,12 @@ const Breadcrumbs: React.FC = () => {
             <li key={breadcrumb.path} className="flex items-center">
               {index > 0 && <ChevronRight size={14} className="mx-1" />}
               {index < breadcrumbs.length - 1 ? (
-                <Link to={breadcrumb.path} className="hover:text-primary">{breadcrumb.name}</Link>
+                <Link 
+                  to={breadcrumb.path} 
+                  className="hover:text-primary dark:hover:text-[#eebbca]"
+                >
+                  {breadcrumb.name}
+                </Link>
               ) : (
                 <span className="text-gray-500 truncate max-w-[300px]">{breadcrumb.name}</span>
               )}

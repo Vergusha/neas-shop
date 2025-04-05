@@ -126,17 +126,21 @@ const GamingPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Gaming Products</h1>
+      
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gaming & Peripherals</h1>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          {filteredProducts.length} products found
+        </div>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
+          className="btn btn-sm btn-primary dark:bg-[#eebbca] dark:text-gray-900 dark:border-[#eebbca] dark:hover:bg-[#e0a1b7] dark:hover:border-[#e0a1b7] flex items-center gap-2"
         >
           <FaFilter />
           {showFilters ? 'Hide Filters' : 'Show Filters'}
         </button>
       </div>
-
+      
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {showFilters && (
           <div className="md:col-span-1">
