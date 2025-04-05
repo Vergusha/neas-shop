@@ -6,11 +6,23 @@ import { db, database } from '../firebaseConfig';
 import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
 import { Product } from '../types/product';
 import './Home.css'; // Import the CSS file for custom styles
+import { getTheme } from '../utils/themeUtils'; // Import the getTheme function
 
 const Home = () => {
   const [popularProducts, setPopularProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const productRowRef = useRef<HTMLDivElement>(null);
+  const [currentTheme, setCurrentTheme] = useState(getTheme());
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
 
   const scrollProducts = (direction: 'left' | 'right') => {
     if (productRowRef.current) {
@@ -189,21 +201,26 @@ const Home = () => {
               <span className="loading loading-spinner loading-lg"></span>
             </div>
           ) : (
-            <div className="relative">
+            <div className="popular-products-container relative">
               <button
                 onClick={() => scrollProducts('left')}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-md hidden sm:block"
+                className={`carousel-arrow carousel-arrow-left ${
+                  currentTheme === 'dark' ? 'carousel-arrow-dark' : ''
+                }`}
                 aria-label="Scroll left"
               >
-                &#8249;
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
               </button>
+              
               <div
                 ref={productRowRef}
-                className="flex flex-row flex-nowrap overflow-x-auto pb-4 product-row hide-scrollbar"
+                className="flex flex-row flex-nowrap overflow-x-auto pb-4 product-row hide-scrollbar px-2"
               >
                 {popularProducts.length > 0 ? (
                   popularProducts.map(product => (
-                    <div key={product.id} className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 flex-shrink-0">
+                    <div key={product.id} className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 flex-shrink-0 px-2">
                       <ProductCard product={product} />
                     </div>
                   ))
@@ -213,12 +230,17 @@ const Home = () => {
                   </div>
                 )}
               </div>
+              
               <button
                 onClick={() => scrollProducts('right')}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-md hidden sm:block"
+                className={`carousel-arrow carousel-arrow-right ${
+                  currentTheme === 'dark' ? 'carousel-arrow-dark' : ''
+                }`}
                 aria-label="Scroll right"
               >
-                &#8250;
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
               </button>
             </div>
           )}

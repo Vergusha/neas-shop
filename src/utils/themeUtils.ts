@@ -1,43 +1,66 @@
 // Theme options supported by our application
 export type Theme = 'light' | 'dark' | 'synthwave';
 
-// Set theme in both localStorage and HTML data attribute
-export const setTheme = (theme: Theme): void => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('theme', theme);
-    document.documentElement.setAttribute('data-theme', theme);
-    
-    // Also add/remove dark class for additional styling if needed
-    if (theme === 'dark' || theme === 'synthwave') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
-    // Dispatch event to notify components about theme change
-    window.dispatchEvent(new Event('themeChanged'));
+/**
+ * Returns the current theme based on localStorage
+ * @returns 'light' or 'dark' depending on current theme
+ */
+export const getTheme = (): 'light' | 'dark' => {
+  // Check localStorage first
+  const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
+  
+  // If theme is set in localStorage, return it
+  if (savedTheme === 'light' || savedTheme === 'dark') {
+    return savedTheme;
   }
-};
-
-// Get the current theme from localStorage or return default
-export const getTheme = (): Theme => {
-  if (typeof window !== 'undefined') {
-    return (localStorage.getItem('theme') as Theme) || 'light';
+  
+  // Otherwise check if the user has a system preference for dark mode
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
   }
+  
+  // Default to light theme if nothing else matches
   return 'light';
 };
 
-// Toggle between light and dark themes
-export const toggleTheme = (): void => {
-  const currentTheme = getTheme();
-  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-  setTheme(newTheme);
+/**
+ * Sets the theme in localStorage and updates HTML data-theme attribute
+ * @param theme 'light' or 'dark'
+ */
+export const setTheme = (theme: 'light' | 'dark'): void => {
+  // Save to localStorage
+  localStorage.setItem('theme', theme);
+  
+  // Update HTML attribute
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  // Add or remove dark class
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('dark-mode');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark-mode');
+  }
+  
+  // Dispatch event to notify components
+  window.dispatchEvent(new Event('themeChanged'));
 };
 
-// Initialize theme on application load
+/**
+ * Toggles between light and dark themes
+ */
+export const toggleTheme = (): void => {
+  const currentTheme = getTheme();
+  setTheme(currentTheme === 'light' ? 'dark' : 'light');
+};
+
+/**
+ * Initialize theme on application load
+ */
 export const initializeTheme = (): void => {
   if (typeof window !== 'undefined') {
-    const savedTheme = localStorage.getItem('theme') as Theme;
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
     if (savedTheme) {
       setTheme(savedTheme);
     } else {

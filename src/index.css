@@ -359,6 +359,95 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
+/* Custom carousel navigation arrows for product rows */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+  display: none; /* Hidden by default on mobile */
+}
+
+.carousel-arrow svg {
+  width: 24px;
+  height: 24px;
+  stroke: #333;
+  transition: stroke 0.3s ease;
+}
+
+.carousel-arrow:hover {
+  background-color: rgba(255, 255, 255, 1);
+  opacity: 1;
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.carousel-arrow-left {
+  left: -12px;
+}
+
+.carousel-arrow-right {
+  right: -12px;
+}
+
+.carousel-arrow-dark {
+  background-color: rgba(55, 65, 81, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.carousel-arrow-dark svg {
+  stroke: #d1d5db;
+}
+
+.carousel-arrow-dark:hover {
+  background-color: rgba(55, 65, 81, 1);
+}
+
+/* Make sure they are visible on desktop */
+@media (min-width: 640px) {
+  .carousel-arrow {
+    display: flex;
+  }
+}
+
+/* Position the arrows better for a container with padding */
+.popular-products-container {
+  padding-left: 10px;
+  padding-right: 10px;
+  margin-left: -10px;
+  margin-right: -10px;
+}
+
+/* Adapt the container padding for larger screens */
+@media (min-width: 768px) {
+  .popular-products-container {
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-left: -20px;
+    margin-right: -20px;
+  }
+  
+  .carousel-arrow-left {
+    left: 0px;
+  }
+  
+  .carousel-arrow-right {
+    right: 0px;
+  }
+}
+
 @layer components {
   /* Максимальная ширина контента */
   .max-w-content { max-width: 1440px; }
