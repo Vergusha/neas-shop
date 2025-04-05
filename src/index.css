@@ -1,8 +1,11 @@
-@import "tailwindcss";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Make sure DaisyUI is applied */
+:root {
+  --rounded-btn: 0.5rem; /* This sets default rounded-btn value */
+}
 
 html, body, #root {
   height: 100%;
@@ -72,13 +75,15 @@ body {
     --color-accent: 241 196 15; /* #f1c40f */
   }
 
-  /* Настройка экранов */
-  @custom-media --xs (min-width: 475px);
-  @custom-media --sm (min-width: 640px);
-  @custom-media --md (min-width: 768px);
-  @custom-media --lg (min-width: 1024px);
-  @custom-media --xl (min-width: 1280px);
-  @custom-media --2xl (min-width: 1536px);
+  /* Instead use Tailwind's standard breakpoint approach */
+  :root {
+    --breakpoint-xs: 475px;
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+  }
 
   :root {
     --daisy-theme: light;
@@ -95,13 +100,13 @@ body {
   max-width: min(100% - 2rem, 1440px);
 }
 
-@screen sm {
+@media (min-width: 640px) {
   .container {
     @apply px-6;
   }
 }
 
-@screen lg {
+@media (min-width: 1024px) {
   .container {
     @apply px-8;
   }

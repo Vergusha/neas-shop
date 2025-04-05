@@ -1,11 +1,24 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
+import { resolve } from 'path'
 
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  css: {
-    postcss: './postcss.config.js',  // Убедитесь, что используете правильный путь к конфигу
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src')
+    }
   },
-  // Другие настройки...
-  // Vite автоматически загружает .env файлы
-});
+  css: {
+    devSourcemap: true,
+  },
+  build: {
+    sourcemap: true,
+    outDir: 'dist', // Changed from 'build' to 'dist' for Firebase deployment
+  },
+  server: {
+    port: 3000,
+    open: true
+  }
+})
