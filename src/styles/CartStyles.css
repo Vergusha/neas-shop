@@ -6,6 +6,8 @@
   align-items: center;
   padding: 1rem;
   border-bottom: 1px solid #e5e7eb;
+  position: relative;
+  padding-top: 1.5rem; /* Add extra space at top for delete button */
 }
 
 .cart-item-mobile:last-child {
@@ -33,6 +35,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+}
+
+/* Position the delete button for mobile cart items */
+.cart-item-mobile .delete-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
 }
 
 /* Quantity controls */
@@ -105,6 +114,41 @@
     padding: 0.75rem;
     font-size: 1rem;
   }
+
+  .cart-item {
+    padding-right: 2.5rem; /* Allow space for the delete button */
+  }
+}
+
+/* Center the clear cart button */
+.clear-cart-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Improved hover states for buttons */
+.cart-quantity-button:hover {
+  background-color: #e5e7eb;
+}
+
+.cart-delete-button {
+  color: #dc2626;
+  transition: all 0.2s ease;
+}
+
+.cart-delete-button:hover {
+  color: #b91c1c;
+  transform: scale(1.1);
+}
+
+/* Add hover effect to clear cart button */
+.btn-clear-cart {
+  transition: all 0.2s ease;
+}
+
+.btn-clear-cart:hover {
+  transform: scale(1.05);
 }
 
 /* Improved focus states for better accessibility */

@@ -318,7 +318,15 @@ const CartPage: React.FC = () => {
               {/* Mobile view - Card layout for smaller screens */}
               <div className="block sm:hidden">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="p-4 border-b border-gray-200 last:border-b-0">
+                  <div key={item.id} className="relative p-4 border-b border-gray-200 last:border-b-0">
+                    {/* Position delete button at the top right corner */}
+                    <button 
+                      className="absolute text-red-600 top-2 right-2 hover:text-red-900"
+                      onClick={() => removeItem(item.id)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    
                     <div className="flex items-center gap-3">
                       <div className="flex-shrink-0 w-16 h-16">
                         <img className="object-contain w-16 h-16" src={item.image} alt={item.name} />
@@ -342,14 +350,8 @@ const CartPage: React.FC = () => {
                           </button>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end">
+                      <div className="text-right">
                         <p className="font-medium">{Number(item.price * item.quantity).toFixed(2)} NOK</p>
-                        <button 
-                          className="mt-2 text-red-600 hover:text-red-900"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -379,7 +381,7 @@ const CartPage: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {cartItems.map((item) => (
-                    <tr key={item.id}>
+                    <tr key={item.id} className="relative">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 w-16 h-16">
@@ -429,7 +431,7 @@ const CartPage: React.FC = () => {
           )}
 
           {cartItems.length > 0 && (
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-center mb-6">
               <button 
                 className="btn btn-outline btn-error btn-sm"
                 onClick={clearCart}
