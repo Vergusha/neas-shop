@@ -54,3 +54,72 @@
   min-height: 3rem;
   padding: 0;
 }
+
+/* Add these styles to fix the search positioning on desktop */
+.header-search-container {
+  width: 100%;
+}
+
+/* Mobile layout - logo should be on the left of buttons */
+.header-top-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* Make search bar take full width and appear below on mobile */
+.header-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .header-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .header-layout {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .header-search-container {
+    order: initial;
+    flex-grow: 1;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
+
+/* Mobile layout adjustments */
+@media (max-width: 640px) {
+  .header-top-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .header-logo {
+    flex-shrink: 0;
+  }
+
+  .header-icons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .header-search-container {
+    margin-top: 1rem;
+    width: 100%;
+  }
+}
