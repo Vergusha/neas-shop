@@ -327,6 +327,38 @@ body {
   }
 }
 
+/* Custom carousel navigation arrows for product rows */
+.product-row-nav-btn {
+  display: none; /* Hidden by default on mobile */
+}
+
+@media (min-width: 640px) {
+  .product-row-nav-btn {
+    display: block; /* Show only on screens wider than sm breakpoint */
+  }
+}
+
+/* Improve scrolling behavior on mobile */
+.product-row {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 1rem;
+}
+
+.product-row > * {
+  scroll-snap-align: start;
+}
+
+/* Hide scrollbars on most browsers while keeping functionality */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 @layer components {
   /* Максимальная ширина контента */
   .max-w-content { max-width: 1440px; }

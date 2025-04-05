@@ -192,7 +192,7 @@ const Home = () => {
             <div className="relative">
               <button
                 onClick={() => scrollProducts('left')}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-md"
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-md hidden sm:block"
                 aria-label="Scroll left"
               >
                 &#8249;
@@ -215,7 +215,7 @@ const Home = () => {
               </div>
               <button
                 onClick={() => scrollProducts('right')}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-md"
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-md hidden sm:block"
                 aria-label="Scroll right"
               >
                 &#8250;
