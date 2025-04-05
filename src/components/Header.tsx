@@ -28,6 +28,10 @@ const Header: React.FC = () => {
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchResultsRef = useRef<HTMLDivElement>(null);
+  const cartButtonRef = useRef<HTMLButtonElement>(null);
+  const cartDropdownRef = useRef<HTMLDivElement>(null);
+  const notificationsButtonRef = useRef<HTMLButtonElement>(null);
+  const notificationsDropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const auth = getAuth();
   const { user, updateUserAvatar } = useAuth(); // Добавляем updateUserAvatar из контекста
@@ -423,6 +427,42 @@ const Header: React.FC = () => {
     return cart.slice(0, 3); // Get first 3 items for preview
   };
 
+  // Add event listener to close cart dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        cartOpen && 
+        cartButtonRef.current && 
+        cartDropdownRef.current && 
+        !cartButtonRef.current.contains(event.target as Node) && 
+        !cartDropdownRef.current.contains(event.target as Node)
+      ) {
+        setCartOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [cartOpen]);
+
+  // Add event listener to close notifications dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        showNotifications && 
+        notificationsButtonRef.current && 
+        notificationsDropdownRef.current && 
+        !notificationsButtonRef.current.contains(event.target as Node) && 
+        !notificationsDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
+
   return (
     <header className="bg-[#003D2D] shadow-md relative"> {/* Возвращен оригинальный цвет bg-[#003D2D] */}
       <div className="container py-2 sm:py-4">
@@ -488,6 +528,7 @@ const Header: React.FC = () => {
             {user && (
               <div className="relative">
                 <button 
+                  ref={notificationsButtonRef}
                   onClick={() => setShowNotifications(!showNotifications)} 
                   className="relative transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
                 >
@@ -501,7 +542,10 @@ const Header: React.FC = () => {
                 
                 {/* Notifications dropdown */}
                 {showNotifications && (
-                  <div className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80">
+                  <div 
+                    ref={notificationsDropdownRef}
+                    className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80"
+                  >
                     <div className="flex items-center justify-between p-3 border-b">
                       <h3 className="font-semibold">Notifications</h3>
                       {unreadNotifications > 0 && (
@@ -564,6 +608,7 @@ const Header: React.FC = () => {
             {/* Cart button with dropdown */}
             <div className="relative">
               <button 
+                ref={cartButtonRef}
                 onClick={toggleCartPreview} 
                 className="relative transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
                 title="Cart"
@@ -578,7 +623,7 @@ const Header: React.FC = () => {
               
               {/* Cart preview dropdown */}
               {user && cartOpen && cartItemCount > 0 && (
-                <div className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80">
+                <div ref={cartDropdownRef} className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80">
                   <div className="p-4 border-b">
                     <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
                   </div>
