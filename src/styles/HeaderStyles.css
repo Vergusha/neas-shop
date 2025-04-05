@@ -58,6 +58,7 @@
 /* Add these styles to fix the search positioning on desktop */
 .header-search-container {
   width: 100%;
+  position: relative; /* Ensure position context for dropdown */
 }
 
 /* Mobile layout - logo should be on the left of buttons */
@@ -95,7 +96,32 @@
     order: initial;
     flex-grow: 1;
     max-width: 500px;
-    margin: 0 auto;
+    margin: 0 1.5rem; /* Add horizontal margin for better spacing */
+  }
+  
+  /* Fix for the navbar buttons on desktop */
+  .header-icons {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .header-icons button,
+  .header-icons a {
+    position: relative;
+    z-index: 5; /* Ensure buttons stay above other elements */
+  }
+  
+  /* Fix dropdowns on desktop */
+  .notifications-dropdown,
+  .cart-dropdown,
+  .user-menu-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 0.5rem;
+    width: 300px;
+    z-index: 20;
   }
 }
 

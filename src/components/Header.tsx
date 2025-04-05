@@ -489,7 +489,7 @@ const Header: React.FC = () => {
         {/* Top row: Logo and buttons */}
         <div className="header-top-row">
           {/* Logo */}
-          <a href="/" className="header-logo block transition-all duration-500 ease-in-out origin-center transform shrink-0 hover:scale-110">
+          <a href="/" className="block transition-all duration-500 ease-in-out origin-center transform header-logo shrink-0 hover:scale-110">
             <img
               src={logo}
               alt="Logo"
@@ -503,7 +503,7 @@ const Header: React.FC = () => {
           </a>
 
           {/* Navbar buttons */}
-          <div className="header-icons flex items-center gap-1 sm:gap-1">
+          <div className="flex items-center gap-1 header-icons sm:gap-1">
             {/* Notifications bell */}
             {user && (
               <div className="relative">
@@ -524,7 +524,7 @@ const Header: React.FC = () => {
                 {showNotifications && (
                   <div 
                     ref={notificationsDropdownRef}
-                    className="notifications-dropdown absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80 sm:relative sm:w-auto"
+                    className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl notifications-dropdown w-80 sm:relative sm:w-auto"
                   >
                     <div className="flex items-center justify-between p-3 border-b">
                       <h3 className="font-semibold">Notifications</h3>
@@ -603,7 +603,7 @@ const Header: React.FC = () => {
               
               {/* Cart preview dropdown */}
               {user && cartOpen && cartItemCount > 0 && (
-                <div ref={cartDropdownRef} className="cart-dropdown absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80 sm:relative sm:w-auto">
+                <div ref={cartDropdownRef} className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl cart-dropdown w-80 sm:relative sm:w-auto">
                   <div className="p-4 border-b">
                     <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
                   </div>
@@ -780,6 +780,8 @@ const Header: React.FC = () => {
               className="w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </form>
+          
+          {/* Search results dropdown */}
           {showResults && searchResults.length > 0 && (
             <div 
               ref={searchResultsRef}
