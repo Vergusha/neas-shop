@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
 
   return (
     <footer className={`${
-      currentTheme === 'dark' ? 'bg-[#eebbca] text-gray-900' : 'bg-[#003D2D] text-white'
+      currentTheme === 'dark' ? 'bg-[#d45288] text-gray-900' : 'bg-[#003D2D] text-white'
     } py-6`}>
       <div className="container mx-auto px-4">
         <div className="flex flex-wrap">

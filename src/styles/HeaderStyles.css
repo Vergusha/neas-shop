@@ -45,27 +45,29 @@
 }
 
 [data-theme="dark"] .btn-neas-green {
-  background-color: #eebbca !important;
-  border-color: #eebbca !important;
+  background-color: #d45288 !important;
+  border-color: #d45288 !important;
   color: #1f2937 !important; /* darker text on pink background for better contrast */
 }
 
 [data-theme="dark"] .btn-neas-green:hover {
-  background-color: #e0a1b7 !important;
-  border-color: #e0a1b7 !important;
+  background-color: #c04a7a !important;
+  border-color: #c04a7a !important;
 }
 
 /* Header background remains dark but buttons and accents use the pink color */
 [data-theme="dark"] header.bg-[#003D2D] {
-  background-color: #1f2937 !important; /* Keep header dark */
+  background-color: #d45288 !important; /* Change from #eebbca to #d45288 */
 }
 
 /* Update button styles in dark header */
-[data-theme="dark"] header.bg-[#eebbca] button svg {
+[data-theme="dark"] header.bg-[#eebbca] button svg,
+[data-theme="dark"] header.bg-[#d45288] button svg {
   color: #1f2937 !important; /* Dark text for contrast on pink background */
 }
 
-[data-theme="dark"] header.bg-[#eebbca] .theme-controller + svg {
+[data-theme="dark"] header.bg-[#eebbca] .theme-controller + svg,
+[data-theme="dark"] header.bg-[#d45288] .theme-controller + svg {
   color: #1f2937 !important;
 }
 
@@ -90,11 +92,11 @@
 
 /* Navigation buttons in dark mode */
 [data-theme="dark"] .user-menu-icon {
-  background-color: rgba(238, 187, 202, 0.15) !important;
+  background-color: rgba(212, 82, 136, 0.15) !important; /* Updated to #d45288 with opacity */
 }
 
 [data-theme="dark"] .user-menu-icon svg {
-  color: #eebbca !important;
+  color: #d45288 !important;
 }
 
 /* Container tweaks for larger screens */

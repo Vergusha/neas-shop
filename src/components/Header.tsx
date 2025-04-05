@@ -513,7 +513,7 @@ const Header: React.FC = () => {
 
   return (
     <header className={`shadow-md relative ${
-      currentTheme === 'dark' ? 'bg-[#eebbca] dark-header' : 'bg-[#003D2D]'
+      currentTheme === 'dark' ? 'bg-[#d45288] dark-header' : 'bg-[#003D2D]'
     }`}>
       <div className="container py-2 sm:py-4">
         {/* Top row: Logo, Search, and buttons */}
@@ -693,7 +693,7 @@ const Header: React.FC = () => {
                 <div className="absolute right-0 z-20 w-64 mt-2 overflow-hidden transition-all duration-300 bg-white rounded-lg shadow-xl animate-fade-in-down">
                   {user ? (
                     <>
-                      <div className={`px-6 pt-4 pb-3 bg-gradient-to-r ${currentTheme === 'dark' ? 'from-gray-700 to-[#eebbca]' : 'from-[#003d2d] to-[#95c672]'}`}>
+                      <div className={`px-6 pt-4 pb-3 bg-gradient-to-r ${currentTheme === 'dark' ? 'from-gray-700 to-[#d45288]' : 'from-[#003d2d] to-[#95c672]'}`}>
                         <div className="flex items-center gap-3">
                           {user.photoURL ? (
                             <img 
@@ -729,8 +729,8 @@ const Header: React.FC = () => {
                           }}
                           className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
                         >
-                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(238,187,202,0.15)]' : 'bg-[rgba(149,198,114,0.15)]'}`}>
-                            <User size={16} className={`${currentTheme === 'dark' ? 'text-[#eebbca]' : 'text-[#95c672]'}`} />
+                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(212,82,136,0.15)]' : 'bg-[rgba(149,198,114,0.15)]'}`}>
+                            <User size={16} className={`${currentTheme === 'dark' ? 'text-[#d45288]' : 'text-[#95c672]'}`} />
                           </div>
                           <span className="font-medium text-gray-700">Profile</span>
                         </a>
@@ -751,7 +751,7 @@ const Header: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <div className={`px-6 pt-4 pb-3 bg-gradient-to-r ${currentTheme === 'dark' ? 'from-gray-700 to-[#eebbca]' : 'from-[#003d2d] to-[#95c672]'}`}>
+                      <div className={`px-6 pt-4 pb-3 bg-gradient-to-r ${currentTheme === 'dark' ? 'from-gray-700 to-[#d45288]' : 'from-[#003d2d] to-[#95c672]'}`}>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center justify-center w-12 h-12 text-xl font-semibold text-white bg-gray-500 border-2 border-white rounded-full shadow-md">
                             <User size={24} />
@@ -769,8 +769,8 @@ const Header: React.FC = () => {
                           }}
                           className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
                         >
-                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(238,187,202,0.15)]' : 'bg-[rgba(149,198,114,0.15)]'}`}>
-                            <LogIn size={16} className={`${currentTheme === 'dark' ? 'text-[#eebbca]' : 'text-[#95c672]'}`} />
+                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(212,82,136,0.15)]' : 'bg-[rgba(149,198,114,0.15)]'}`}>
+                            <LogIn size={16} className={`${currentTheme === 'dark' ? 'text-[#d45288]' : 'text-[#95c672]'}`} />
                           </div>
                           <span className="font-medium text-gray-700">Sign In</span>
                         </a>
@@ -783,8 +783,8 @@ const Header: React.FC = () => {
                           }}
                           className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
                         >
-                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(238,187,202,0.15)]' : 'bg-[rgba(149,198,114,0.15)]'}`}>
-                            <User size={16} className={`${currentTheme === 'dark' ? 'text-[#eebbca]' : 'text-[#95c672]'}`} />
+                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(212,82,136,0.15)]' : 'bg-[rgba(149,198,114,0.15)]'}`}>
+                            <User size={16} className={`${currentTheme === 'dark' ? 'text-[#d45288]' : 'text-[#95c672]'}`} />
                           </div>
                           <span className="font-medium text-gray-700">Register</span>
                         </a>
