@@ -104,10 +104,8 @@ const ProductPage: React.FC = () => {
             if (productData.image3) images.push(productData.image3);
             setProductImages(images);
 
-            // Если это ноутбук, загружаем цветовые варианты
-            if (collectionName === 'laptops') {
-              await fetchColorVariants(productData);
-            }
+            // Загружаем цветовые варианты для любого типа товара
+            await fetchColorVariants(productData);
             
             return; // Выходим после нахождения продукта
           }
@@ -170,62 +168,146 @@ const ProductPage: React.FC = () => {
     }
   }, [id]);
 
-  // Function to fetch color variants
+  // Function to fetch color variants for any product type
   const fetchColorVariants = async (currentProduct: ProductData) => {
-    if (!currentProduct.brand || !currentProduct.model || !currentProduct.processor || !currentProduct.modelNumber) {
+    if (!currentProduct.collection || !currentProduct.brand || !currentProduct.model) {
       console.log("Missing required fields for color variants:", {
+        collection: currentProduct.collection,
         brand: currentProduct.brand,
-        model: currentProduct.model,
-        processor: currentProduct.processor,
-        modelNumber: currentProduct.modelNumber
+        model: currentProduct.model
       });
       return;
     }
     
     try {
-      const collectionRef = collection(db, 'laptops');
+      const collectionRef = collection(db, currentProduct.collection);
       
-      // Создаем массив условий, исключая undefined значения
-      const conditions = [
+      // Extract the exact model from the product ID
+      const productId = currentProduct.id || '';
+      
+      // For iPhone, we need to distinguish between models like iPhone 15 and iPhone 15 Pro
+      // Get model name without "pro", "plus", etc. suffixes for exact matching
+      let baseModelName = '';
+      if (currentProduct.collection === 'mobile' && currentProduct.brand === 'Apple') {
+        // Split the ID to extract the model parts (e.g., "apple-iphone-15-128gb-blue")
+        const parts = productId.split('-');
+        
+        // Find the part that contains the model number (e.g., "15" or "15-pro")
+        // For iPhone, it's typically after "iphone" in the ID
+        const iphoneIndex = parts.findIndex(part => part.toLowerCase() === 'iphone');
+        if (iphoneIndex >= 0 && iphoneIndex + 1 < parts.length) {
+          // For iPhone 15, iPhone 15 Pro, iPhone 15 Pro Max, etc.
+          // We want to capture "15", "15-pro", "15-pro-max" as the full model identifier
+          let modelParts = [];
+          let i = iphoneIndex + 1;
+          
+          // First part is definitely part of the model (e.g., "15")
+          modelParts.push(parts[i]);
+          
+          // Check if next parts are "pro", "plus", "max", etc.
+          i++;
+          while (i < parts.length && 
+                (parts[i].toLowerCase() === 'pro' || 
+                 parts[i].toLowerCase() === 'plus' || 
+                 parts[i].toLowerCase() === 'max')) {
+            modelParts.push(parts[i]);
+            i++;
+          }
+          
+          baseModelName = modelParts.join('-');
+          console.log(`Extracted iPhone model: ${baseModelName}`);
+        }
+      }
+      
+      console.log(`Looking for variants of model: ${baseModelName || currentProduct.model}`);
+      
+      // Create a specific query based on product type
+      let conditions = [
         where('brand', '==', currentProduct.brand),
-        where('model', '==', currentProduct.model)
       ];
-
-      if (currentProduct.processor) {
-        conditions.push(where('processor', '==', currentProduct.processor));
-      }
-      if (currentProduct.modelNumber) {
-        conditions.push(where('modelNumber', '==', currentProduct.modelNumber));
-      }
-
-      const q = query(collectionRef, ...conditions);
       
+      // For mobile phones, we need to be very specific
+      if (currentProduct.collection === 'mobile') {
+        // For memory capacity
+        if (currentProduct.memory) {
+          conditions.push(where('memory', '==', currentProduct.memory));
+        }
+      } 
+      // For other product types
+      // ...existing code...
+      
+      const q = query(collectionRef, ...conditions);
       const querySnapshot = await getDocs(q);
       const variants: Array<{id: string, color: string, image: string}> = [];
 
-      console.log(`Found ${querySnapshot.size} potential variants`);
+      console.log(`Found ${querySnapshot.size} potential variants to filter`);
 
       querySnapshot.forEach((docSnapshot) => {
         const data = docSnapshot.data();
+        const variantId = docSnapshot.id;
         
-        // Check if this is a valid variant with matching specs
-        const isMatchingVariant = 
-          data.ram === currentProduct.ram &&
-          data.storageType === currentProduct.storageType &&
-          data.screenSize === currentProduct.screenSize;
+        // Apply additional filtering based on product type
+        let isMatchingVariant = true;
+        
+        // For mobile phones, ensure exact model pattern
+        if (currentProduct.collection === 'mobile') {
+          if (currentProduct.brand === 'Apple' && baseModelName) {
+            // For iPhones, extract the model part from the variant ID
+            const parts = variantId.split('-');
+            const iphoneIndex = parts.findIndex(part => part.toLowerCase() === 'iphone');
+            
+            let variantModelParts = [];
+            if (iphoneIndex >= 0 && iphoneIndex + 1 < parts.length) {
+              let i = iphoneIndex + 1;
+              variantModelParts.push(parts[i]);
+              
+              i++;
+              while (i < parts.length && 
+                    (parts[i].toLowerCase() === 'pro' || 
+                     parts[i].toLowerCase() === 'plus' || 
+                     parts[i].toLowerCase() === 'max')) {
+                variantModelParts.push(parts[i]);
+                i++;
+              }
+            }
+            
+            const variantModelName = variantModelParts.join('-');
+            
+            // Check if the model parts match exactly
+            isMatchingVariant = (variantModelName === baseModelName) && 
+                                (data.memory === currentProduct.memory);
+            
+            console.log(`Checking ${variantId}: model ${variantModelName} vs ${baseModelName}, memory match: ${data.memory === currentProduct.memory}, isMatch: ${isMatchingVariant}`);
+          } else {
+            // For non-Apple phones, use the original model field
+            isMatchingVariant = data.model === currentProduct.model && 
+                              data.memory === currentProduct.memory;
+          }
+        }
+        // For laptops, TVs, etc. - keep existing logic
+        // ...existing code...
 
-        if (isMatchingVariant) {
-          console.log(`Found matching variant: ${data.color}`);
-          variants.push({
+        if (isMatchingVariant && data.color) {
+          const variant = {
             id: docSnapshot.id,
             color: data.color || '',
             image: data.image || ''
-          });
+          };
+
+          // Add only unique variants based on color
+          if (!variants.some(v => v.color === variant.color)) {
+            console.log(`Found matching variant: ${variantId} - ${data.color}`);
+            variants.push(variant);
+          } else {
+            console.log(`Skipping duplicate color: ${data.color}`);
+          }
         }
       });
 
+      // Sort variants by color name
       variants.sort((a, b) => a.color.localeCompare(b.color));
-      console.log('Final variants:', variants);
+      
+      console.log(`Final ${variants.length} variants:`, variants.map(v => v.color).join(', '));
       setColorVariants(variants);
 
     } catch (error) {
@@ -574,12 +656,17 @@ const ProductPage: React.FC = () => {
               )}
             </div>
             
-            {/* Color variant selector */}
-            <ColorVariantSelector 
-              variants={colorVariants}
-              currentVariantId={id || ''}
-              onSelectVariant={handleColorVariantSelect}
-            />
+            {/* Color variant selector - show for any product with variants */}
+            {colorVariants.length > 1 && (
+              <div className="mt-4">
+                <h3 className="mb-2 text-sm font-medium text-gray-700">Available Colors:</h3>
+                <ColorVariantSelector 
+                  variants={colorVariants}
+                  currentVariantId={id || ''}
+                  onSelectVariant={handleColorVariantSelect}
+                />
+              </div>
+            )}
           </div>
           
           <div className="w-full md:w-3/5 md:pl-8">

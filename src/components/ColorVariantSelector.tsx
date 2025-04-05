@@ -42,7 +42,7 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
   
   return (
     <div className="mt-6">
-      <h3 className="text-sm font-medium mb-2">Available Colors:</h3>
+      {/* Removed the duplicate heading */}
       <div className="flex flex-wrap gap-3">
         {variants.map((variant) => {
           const isCurrentVariant = variant.id === currentVariantId;
