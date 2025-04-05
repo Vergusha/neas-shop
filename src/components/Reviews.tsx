@@ -906,7 +906,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                 </button>
               )}
               <button 
-                className="btn btn-primary"
+                className="btn bg-[#003d2d] border-[#003d2d] hover:bg-[#00513b] text-white"
                 onClick={handleSubmitReview}
                 disabled={isSubmitting}
               >
