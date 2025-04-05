@@ -424,7 +424,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-[#003D2D] shadow-md relative">
+    <header className="bg-[#003D2D] shadow-md relative"> {/* Возвращен оригинальный цвет bg-[#003D2D] */}
       <div className="container py-2 sm:py-4">
         <div className="flex items-center justify-between gap-4">
           {/* Main content wrapper */}
@@ -491,7 +491,7 @@ const Header: React.FC = () => {
                   onClick={() => setShowNotifications(!showNotifications)} 
                   className="btn btn-ghost btn-circle transition-all duration-500 ease-in-out hover:scale-110 relative"
                 >
-                  <Bell size={32} className="text-white" />
+                  <Bell size={32} className="text-white" /> {/* Возвращен цвет text-white */}
                   {unreadNotifications > 0 && (
                     <div className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full -top-2 -right-2">
                       {unreadNotifications}
@@ -558,7 +558,7 @@ const Header: React.FC = () => {
               className={`btn btn-ghost btn-circle transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
               title={!user ? 'Please login to use favorites' : 'Favorites'}
             >
-              <Heart size={32} className="text-white" />
+              <Heart size={32} className="text-white" /> {/* Возвращен цвет text-white */}
             </button>
             
             {/* Cart button with dropdown */}
@@ -568,7 +568,7 @@ const Header: React.FC = () => {
                 className={`btn btn-ghost btn-circle relative transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
                 title={!user ? 'Please login to use cart' : 'Cart'}
               >
-                <ShoppingCart size={32} className="text-white" />
+                <ShoppingCart size={32} className="text-white" /> {/* Возвращен цвет text-white */}
                 {user && cartItemCount > 0 && (
                   <div className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full -top-2 -right-2">
                     {cartItemCount}

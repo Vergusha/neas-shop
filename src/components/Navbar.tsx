@@ -220,9 +220,9 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-gray-800 p-4">
+    <nav className="bg-gray-100 p-4"> {/* Изменено с bg-gray-800 на bg-gray-100 */}
       <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-white text-lg font-bold">Shop</Link>
+        <Link to="/" className="text-primary text-lg font-bold">Shop</Link> {/* Изменено с text-white на text-primary */}
         <div className="relative">
           <input
             type="text"
@@ -259,7 +259,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/cart" className="text-white relative">
+          <Link to="/cart" className="text-primary relative"> {/* Изменено с text-white на text-primary */}
             <FaShoppingCart />
             {cartCount > 0 && (
               <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{cartCount}</span>
@@ -267,21 +267,21 @@ const Navbar: React.FC = () => {
           </Link>
           {user ? (
             <>
-              <Link to="/profile" className="text-white"><FaUser /></Link>
+              <Link to="/profile" className="text-primary"><FaUser /></Link> {/* Изменено с text-white на text-primary */}
               <Link 
                 to="/admin" 
                 className="btn btn-secondary btn-sm"
               >
                 Admin Panel
               </Link>
-              <button onClick={handleLogout} className="text-white">Logout</button>
+              <button onClick={handleLogout} className="text-primary">Logout</button> {/* Изменено с text-white на text-primary */}
             </>
           ) : (
-            <Link to="/login" className="text-white">Login</Link>
+            <Link to="/login" className="text-primary">Login</Link> {/* Изменено с text-white на text-primary */}
           )}
         </div>
       </div>
-      <ul className="menu">
+      <ul className="menu text-gray-800"> {/* Добавлен text-gray-800 */}
         <li><Link to="/mobile">Mobile Phones</Link></li>
         <li><Link to="/tv-audio">TVs</Link></li>
         <li><Link to="/gaming">Gaming</Link></li>

@@ -2,7 +2,7 @@ import React from 'react';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-[#003D2D] text-white py-6">
+    <footer className="bg-[#003D2D] text-white py-6"> {/* Возвращен оригинальный цвет bg-[#003D2D] text-white */}
       <div className="container mx-auto grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Company Info */}
         <div>
@@ -65,13 +65,13 @@ const Footer: React.FC = () => {
         </div>
       </div>
 
-      <div className="container mx-auto mt-6 text-center border-t border-gray-700 pt-4">
+      <div className="container mx-auto mt-6 text-center border-t border-gray-700 pt-4"> {/* Возвращен border-gray-700 */}
         <img 
           src="/logo.svg" 
           alt="NEAS Logo" 
           className="h-6 mx-auto mb-2 sm:h-8" 
         />
-        <p className="text-xs text-gray-400 sm:text-sm">We are part of the NEAS GROUP</p>
+        <p className="text-xs text-gray-400 sm:text-sm">We are part of the NEAS GROUP</p> {/* Возвращен text-gray-400 */}
       </div>
     </footer>
   );

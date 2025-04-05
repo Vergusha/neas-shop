@@ -86,7 +86,7 @@ body {
   }
 
   :root {
-    --daisy-theme: light;
+    --daisy-theme: light; /* Изменено с "light" на "light" (оставили для ясности) */
   }
   
   .dark {
