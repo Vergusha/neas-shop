@@ -25,7 +25,6 @@ export const formatAudioName = (product: {
   subtype?: string;
   color?: string;
 }): string => {
-  if (!product.brand || !product.model) return '';
 
   const parts = [
     product.brand,
@@ -80,8 +79,54 @@ export const formatTVName = (product: {
     product.model || '',                // QN90B
     product.modelNumber || ''           // Model number if available
   ]
-    .filter(Boolean)  // Remove empty strings
+    .filter(Boolean)
     .join(' ');
-  
+    
   return parts;
+};
+
+// Add a new formatter for laptop names that's more concise for cards
+export const formatLaptopName = (product: {
+  brand?: string;
+  model?: string;
+  processor?: string;
+  ram?: string;
+  storageType?: string;
+}): string => {
+  if (!product.brand || !product.model) return '';
+  
+  // For Apple products, use a more streamlined format
+  if (product.brand === 'Apple') {
+    return `${product.brand} ${product.model} ${product.processor?.replace('Apple ', '')}`;
+  }
+  
+  // For other brands, include key specs
+  const parts = [
+    product.brand,
+    product.model,
+    product.processor?.split(' ').slice(0, 2).join(' '), // Simplified processor name
+    product.ram,
+    product.storageType
+  ].filter(Boolean);
+  
+  return parts.join(' ');
+};
+
+// Add a formatter for gaming products
+export const formatGamingName = (product: {
+  brand?: string;
+  model?: string;
+  deviceType?: string;
+  connectivity?: string;
+}): string => {
+  if (!product.brand || !product.model) return '';
+  
+  const parts = [
+    product.brand,
+    product.model,
+    product.deviceType,
+    product.connectivity === 'Wired' ? '' : product.connectivity
+  ].filter(Boolean);
+  
+  return parts.join(' ');
 };

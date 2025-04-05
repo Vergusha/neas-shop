@@ -166,6 +166,54 @@ body {
   /* Сетки */
   .grid-cols-auto-fit { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
   .grid-cols-auto-fill { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  
+  /* Product card styles */
+  .product-card {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .product-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  }
+
+  .product-card button:focus,
+  .product-card button:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .product-card figure img {
+    transition: transform 0.4s ease;
+    object-fit: contain;
+    max-height: 100%;
+    width: auto;
+    margin: 0 auto;
+  }
+
+  .product-card:hover figure img {
+    transform: scale(1.05);
+  }
+
+  .product-card .card-body {
+    transition: background-color 0.3s ease;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  /* Sale badge animation */
+  @keyframes pulseSale {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  .product-card .sale-badge {
+    animation: pulseSale 2s infinite;
+    background-color: #003D2D;
+    color: white;
+  }
 }
 
 /* Анимации */
@@ -258,5 +306,9 @@ body {
   
   .transition-logo {
     transition: transform 0.3s ease-in-out;
+  }
+  
+  .product-card-glow:hover {
+    box-shadow: 0 0 20px rgba(0, 61, 45, 0.2);
   }
 }

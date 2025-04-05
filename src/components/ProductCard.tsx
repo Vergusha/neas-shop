@@ -347,12 +347,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
   return (
     <Link to={`/product/${product.id}`} className="block h-full">
       <div className="product-card-wrapper">
-        <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 product-card h-[420px] sm:h-[450px] lg:h-[480px] flex flex-col">
-          <figure className="relative h-40 px-3 pt-4 sm:px-6 sm:h-48 lg:h-56">
+        <div className="card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 product-card h-[420px] sm:h-[450px] lg:h-[480px] flex flex-col transform hover:scale-[1.02] hover:-translate-y-1">
+          <figure className="relative px-3 pt-4 overflow-hidden h-44 sm:px-6 sm:h-52 lg:h-60">
             <ProductImageCarousel 
               images={getProductImages()} 
               productName={product.name}
               onClick={handleClick}
+              className="object-contain rounded-lg"
             />
             <div className="absolute flex flex-col gap-2 top-6 right-3 sm:right-6">
               <button
@@ -371,6 +372,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
                 <FaHeart className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} />
               </button>
             </div>
+            {product.price && product.price <= 999 && (
+              <div className="absolute px-2 py-1 text-xs font-bold text-white rounded-full top-4 left-4 bg-primary">
+                Sale!
+              </div>
+            )}
           </figure>
           
           <div className="flex flex-col flex-1 p-4 card-body sm:p-6">
@@ -383,7 +389,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
               </span>
             </div>
             
-            <div className="min-h-[2.5rem] text-sm sm:text-base"> 
+            <div className="min-h-[2.5rem] text-sm sm:text-base font-medium text-gray-800"> 
               {formatProductDetails(product)}
             </div>
             
@@ -391,12 +397,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
               {formatDescription(product.description)}
             </div>
             
-            <div className="mt-2 text-lg sm:text-xl"> 
-              <span className="font-bold">
-                {typeof product.price === 'number' 
-                  ? product.price.toFixed(2) 
-                  : Number(product.price).toFixed(2)} NOK
-              </span>
+            <div className="mt-2 text-lg font-bold sm:text-xl text-primary"> 
+              {typeof product.price === 'number' 
+                ? product.price.toFixed(2) 
+                : Number(product.price).toFixed(2)} NOK
             </div>
           </div>
         </div>
