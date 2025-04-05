@@ -214,6 +214,15 @@ body {
     background-color: #003D2D;
     color: white;
   }
+
+  /* User menu styles */
+  .user-menu-item {
+    @apply flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50;
+  }
+
+  .user-menu-icon {
+    @apply flex items-center justify-center w-8 h-8 mr-3 rounded-full;
+  }
 }
 
 /* Анимации */

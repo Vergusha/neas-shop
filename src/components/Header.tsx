@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, ShoppingCart, Heart, User, Bell, MessageSquare } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Bell, MessageSquare, LogOut, LogIn } from 'lucide-react';
 import logo from '../assets/logo.svg';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore'; // Remove 'update' from here
@@ -625,18 +625,36 @@ const Header: React.FC = () => {
 
               {/* User menu dropdown */}
               {userMenuOpen && (
-                <div className="absolute right-0 z-20 w-48 mt-2 bg-white rounded-md shadow-xl">
-                  <div className="py-1">
-                    {user ? (
-                      <>
-                        <div className="px-4 py-3 border-b">
-                          <p className="text-sm font-medium text-gray-900">
-                            {user.displayName || 'User'}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {user.email}
-                          </p>
+                <div className="absolute right-0 z-20 w-64 mt-2 overflow-hidden transition-all duration-300 bg-white rounded-lg shadow-xl animate-fade-in-down">
+                  {user ? (
+                    <>
+                      <div className="px-6 pt-4 pb-3 bg-gradient-to-r from-[#003D2D] to-[#005040]">
+                        <div className="flex items-center gap-3">
+                          {user.photoURL ? (
+                            <img 
+                              src={user.photoURL} 
+                              alt={user.displayName || 'User'} 
+                              className="object-cover w-12 h-12 border-2 border-white rounded-full shadow-md"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/avatar-placeholder.png';
+                              }}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center w-12 h-12 text-xl font-semibold text-white uppercase bg-gray-500 border-2 border-white rounded-full shadow-md">
+                              {user.displayName ? user.displayName[0] : user.email?.[0] || '?'}
+                            </div>
+                          )}
+                          <div className="overflow-hidden">
+                            <p className="text-sm font-bold text-white truncate">
+                              {user.displayName || 'User'}
+                            </p>
+                            <p className="text-xs truncate text-white/80">
+                              {user.email}
+                            </p>
+                          </div>
                         </div>
+                      </div>
+                      <div className="py-1">
                         <a
                           href="/profile"
                           onClick={(e) => {
@@ -644,9 +662,12 @@ const Header: React.FC = () => {
                             setUserMenuOpen(false);
                             navigate('/profile');
                           }}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
                         >
-                          Profile
+                          <div className="flex items-center justify-center w-8 h-8 mr-3 bg-gray-100 rounded-full">
+                            <User size={16} className="text-[#003D2D]" />
+                          </div>
+                          <span className="font-medium text-gray-700">Profile</span>
                         </a>
                         <button
                           onClick={async () => {
@@ -654,13 +675,26 @@ const Header: React.FC = () => {
                             setUserMenuOpen(false);
                             navigate('/');
                           }}
-                          className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-100"
+                          className="flex items-center w-full px-6 py-3 text-sm text-left transition-colors hover:bg-gray-50"
                         >
-                          Sign Out
+                          <div className="flex items-center justify-center w-8 h-8 mr-3 rounded-full bg-red-50">
+                            <LogOut size={16} className="text-red-500" />
+                          </div>
+                          <span className="font-medium text-red-500">Sign Out</span>
                         </button>
-                      </>
-                    ) : (
-                      <>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="px-6 pt-4 pb-3 bg-gradient-to-r from-[#003D2D] to-[#005040]">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-12 h-12 text-xl font-semibold text-white bg-gray-500 border-2 border-white rounded-full shadow-md">
+                            <User size={24} />
+                          </div>
+                          <p className="text-sm font-bold text-white">Guest User</p>
+                        </div>
+                      </div>
+                      <div className="py-1">
                         <a
                           href="/login"
                           onClick={(e) => {
@@ -668,9 +702,12 @@ const Header: React.FC = () => {
                             setUserMenuOpen(false);
                             navigate('/login');
                           }}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
                         >
-                          Sign In
+                          <div className="flex items-center justify-center w-8 h-8 mr-3 bg-[#f0f7f5] rounded-full">
+                            <LogIn size={16} className="text-[#003D2D]" />
+                          </div>
+                          <span className="font-medium text-gray-700">Sign In</span>
                         </a>
                         <a
                           href="/register"
@@ -679,13 +716,16 @@ const Header: React.FC = () => {
                             setUserMenuOpen(false);
                             navigate('/register');
                           }}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
                         >
-                          Register
+                          <div className="flex items-center justify-center w-8 h-8 mr-3 bg-[#f0f7f5] rounded-full">
+                            <User size={16} className="text-[#003D2D]" />
+                          </div>
+                          <span className="font-medium text-gray-700">Register</span>
                         </a>
-                      </>
-                    )}
-                  </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
