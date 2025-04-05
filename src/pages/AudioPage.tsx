@@ -108,37 +108,44 @@ const AudioPage: React.FC = () => {
   };
 
   return (
-    <div className="container py-8 mx-auto">
+    <div className="container py-8 mx-auto px-4">
       <h1 className="mb-4 text-2xl font-bold">Audio Products</h1>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium">Filters</h2>
-            <button 
-              onClick={() => setShowFilters && setShowFilters(!showFilters)}
-              className="btn bg-primary hover:bg-primary-focus text-white flex items-center gap-2 btn-sm"
-            >
-              <FaFilter />
-              {showFilters ? 'Hide Filters' : 'Show Filters'}
-            </button>
-          </div>
-          {showFilters && (
+          <span className="text-sm text-gray-500">{filteredProducts.length} products found</span>
+        </div>
+        <button 
+          onClick={() => setShowFilters(!showFilters)}
+          className="btn btn-sm bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
+        >
+          <FaFilter />
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {showFilters && (
+          <div className="md:col-span-1">
             <ProductFilters
               filters={filters}
               activeFilters={activeFilters}
               onFilterChange={handleFilterChange}
             />
-          )}
-        </div>
-        <div className="col-span-2">
+          </div>
+        )}
+
+        <div className={`${showFilters ? 'md:col-span-3' : 'md:col-span-4'}`}>
           {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
+                <div key={product.id} className="w-full">
+                  <ProductCard key={product.id} product={product} />
+                </div>
               ))}
             </div>
           ) : (
-            <p>No products found matching your filters.</p>
+            <p className="text-center py-8">No products found matching your filters.</p>
           )}
         </div>
       </div>

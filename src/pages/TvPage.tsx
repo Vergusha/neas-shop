@@ -164,23 +164,27 @@ const TvPage: React.FC = () => {
   }
 
   return (
-    <div className="container px-4 py-8 mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">TV & Audio</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="mb-4 text-2xl font-bold">TVs & Audio</h1>
+      
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <span className="text-sm text-gray-500">{filteredProducts.length} products found</span>
+        </div>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 text-white btn bg-primary hover:bg-primary-focus"
+          className="btn btn-sm bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
         >
           <FaFilter />
           {showFilters ? 'Hide Filters' : 'Show Filters'}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {showFilters && (
           <div className="md:col-span-1">
-            <ProductFilters
-              filters={availableFilters}
+            <ProductFilters 
+              filters={availableFilters} 
               activeFilters={activeFilters}
               onFilterChange={handleFilterChange}
             />
@@ -189,14 +193,12 @@ const TvPage: React.FC = () => {
 
         <div className={`${showFilters ? 'md:col-span-3' : 'md:col-span-4'}`}>
           {filteredProducts.length > 0 ? (
-            <div className="px-12 overflow-x-hidden sm:px-16">
-              <div className="flex flex-row flex-wrap">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className="w-full mb-6 sm:w-1/2 lg:w-1/3">
-                    <ProductCard key={product.id} product={product} />
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map(product => (
+                <div key={product.id} className="w-full">
+                  <ProductCard product={product} />
+                </div>
+              ))}
             </div>
           ) : (
             <div className="py-8 text-center col-span-full">

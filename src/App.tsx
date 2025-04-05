@@ -23,6 +23,7 @@ import { AuthProvider } from './utils/AuthProvider'; // Add this import
 import LoginRedirect from './components/LoginRedirect';
 import KeywordDebugger from './utils/KeywordDebugger'; // Добавляем импорт компонента KeywordDebugger
 import LaptopsPage from './pages/LaptopsPage'; // Add this import
+import './styles/ProductCardStyles.css';
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const auth = getAuth();

@@ -199,11 +199,15 @@ const MobilePage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Mobile Phones</h1>
+      <h1 className="mb-4 text-2xl font-bold">Mobile Phones</h1>
+      
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <span className="text-sm text-gray-500">{filteredProducts.length} products found</span>
+        </div>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
+          className="btn btn-sm bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
         >
           <FaFilter />
           {showFilters ? 'Hide Filters' : 'Show Filters'}
@@ -223,14 +227,12 @@ const MobilePage: React.FC = () => {
 
         <div className={`${showFilters ? 'md:col-span-3' : 'md:col-span-4'}`}>
           {filteredProducts.length > 0 ? (
-            <div className="px-12 sm:px-16 overflow-x-hidden">
-              <div className="flex flex-row flex-wrap">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className="w-full sm:w-1/2 lg:w-1/3 mb-6">
-                    <ProductCard key={product.id} product={product} />
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map(product => (
+                <div key={product.id} className="w-full">
+                  <ProductCard product={product} />
+                </div>
+              ))}
             </div>
           ) : (
             <div className="col-span-full text-center py-8">

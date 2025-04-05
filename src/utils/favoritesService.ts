@@ -29,22 +29,23 @@ export const toggleFavorite = async (
       const snapshot = await get(favRef);
       
       if (snapshot.exists()) {
-        // Dispatch the event first for immediate UI update
+        // First dispatch event with immediate flag for instant UI update
         window.dispatchEvent(new CustomEvent('favoritesUpdated', { 
           detail: { productId, isFavorite: false, immediate: true } 
         }));
         
-        // Then perform the Firebase update
+        // Then perform the Firebase update (happens in background)
         await set(favRef, null);
         return false;
       } else {
-        // For adding, perform Firebase update first to ensure we have the data
+        // For adding to favorites, we do Firebase operation first to ensure data is saved
         await set(favRef, {
           addedAt: new Date().toISOString(),
           productId,
           ...productData
         });
         
+        // Then notify UI
         window.dispatchEvent(new CustomEvent('favoritesUpdated', { 
           detail: { productId, isFavorite: true } 
         }));

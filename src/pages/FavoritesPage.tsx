@@ -24,7 +24,6 @@ const FavoritesPage: React.FC = () => {
   const auth = getAuth();
   const user = auth.currentUser;
 
-  // Fetch favorites from database
   const fetchFavorites = async () => {
     try {
       setLoading(true);
@@ -83,18 +82,18 @@ const FavoritesPage: React.FC = () => {
   useEffect(() => {
     fetchFavorites();
     
-    // Listen for favorites updates with enhanced handling for immediate UI updates
-    const handleFavoritesUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent;
+    // Custom event handler for favorites updates
+    const handleFavoritesUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent;
       
-      // If we have the immediate flag, update UI immediately without refetching
+      // If we have immediate flag, update UI immediately without refetching
       if (customEvent.detail?.immediate && customEvent.detail?.productId && !customEvent.detail?.isFavorite) {
-        // Remove the product from favorites immediately
+        // Remove the product from favorites list immediately
         setFavorites(prevFavorites => 
           prevFavorites.filter(product => product.id !== customEvent.detail.productId)
         );
       } else {
-        // For non-immediate updates or additions, refetch all favorites
+        // For non-immediate updates, refetch all favorites
         fetchFavorites();
       }
     };
