@@ -1,0 +1,56 @@
+/* Mobile-first layout modifications for the header */
+
+/* Search results dropdown positioning */
+.search-results-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 50;
+}
+
+/* Container tweaks for larger screens */
+@media (min-width: 640px) {
+  .header-layout-wrapper {
+    flex-direction: row;
+  }
+  
+  .header-search-container {
+    order: initial;
+    margin-top: 0;
+  }
+  
+  /* For screens larger than small (sm breakpoint) */
+  .header-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .header-search-wrapper {
+    order: initial;
+  }
+  
+  .logo-wrapper {
+    margin-right: 1rem;
+  }
+
+  .header-search {
+    order: 2;
+    margin-top: 0;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .header-icons {
+    order: 3;
+  }
+}
+
+/* Ensuring buttons have proper sizing */
+.btn-circle {
+  min-width: 3rem;
+  min-height: 3rem;
+  padding: 0;
+}

@@ -11,6 +11,7 @@ import { app } from '../firebaseConfig';
 import { database } from '../firebaseConfig';
 import { useAuth } from '../utils/AuthProvider';
 import UserAvatar from './UserAvatar';
+import '../styles/HeaderStyles.css';
 
 const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -464,12 +465,12 @@ const Header: React.FC = () => {
   }, [showNotifications]);
 
   return (
-    <header className="bg-[#003D2D] shadow-md relative"> {/* Возвращен оригинальный цвет bg-[#003D2D] */}
+    <header className="bg-[#003D2D] shadow-md relative">
       <div className="container py-2 sm:py-4">
-        <div className="flex items-center justify-between gap-4">
-          {/* Main content wrapper */}
-          <div className="flex items-center flex-1 gap-4">
-            {/* Logo with responsive switching */}
+        <div className="flex flex-col gap-4">
+          {/* Top row with logo and buttons side by side */}
+          <div className="flex items-center justify-between">
+            {/* Logo */}
             <a href="/" className="block transition-all duration-500 ease-in-out origin-center transform shrink-0 hover:scale-110">
               <img
                 src={logo}
@@ -483,297 +484,297 @@ const Header: React.FC = () => {
               />
             </a>
 
-            {/* Search bar */}
-            <div className="relative w-full sm:max-w-[400px] md:max-w-[500px] lg:max-w-[600px]">
-              <form onSubmit={handleSearch} className="relative flex items-center w-full">
-                <Search className="absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2" size={20} />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search for anything..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    if (e.target.value) {
-                      setShowResults(true);
-                    }
-                  }}
-                  onFocus={() => {
-                    if (searchResults.length > 0) {
-                      setShowResults(true);
-                    }
-                  }}
-                  className="w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </form>
-              {showResults && searchResults.length > 0 && (
-                <div 
-                  ref={searchResultsRef}
-                  className="absolute left-0 right-0 z-20 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg top-full"
-                >
-                  {searchResults.map((result) => (
-                    <div key={result.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => navigate(`/product/${result.id}`)}>
-                      <img src={result.image} alt={result.name} className="inline-block w-8 h-8 mr-2" />
-                      <span>{result.name}</span>
+            {/* Icons section - always at the top, aligned to the right */}
+            <div className="flex items-center gap-1 sm:gap-1">
+              {/* Notifications bell */}
+              {user && (
+                <div className="relative">
+                  <button 
+                    ref={notificationsButtonRef}
+                    onClick={() => setShowNotifications(!showNotifications)} 
+                    className="relative transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
+                  >
+                    <Bell size={32} className="text-white" />
+                    {unreadNotifications > 0 && (
+                      <div className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full -top-2 -right-2">
+                        {unreadNotifications}
+                      </div>
+                    )}
+                  </button>
+                  
+                  {/* Notifications dropdown */}
+                  {showNotifications && (
+                    <div 
+                      ref={notificationsDropdownRef}
+                      className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80"
+                    >
+                      <div className="flex items-center justify-between p-3 border-b">
+                        <h3 className="font-semibold">Notifications</h3>
+                        {unreadNotifications > 0 && (
+                          <button 
+                            onClick={markAllNotificationsAsRead}
+                            className="text-xs text-[#003D2D] hover:underline"
+                          >
+                            Mark all as read
+                          </button>
+                        )}
+                      </div>
+                      <div className="p-2 overflow-y-auto max-h-60">
+                        {notifications.length > 0 ? (
+                          notifications.map(notification => (
+                            <div 
+                              key={notification.id} 
+                              className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-[#edf7f5]' : ''}`}
+                              onClick={() => handleNotificationClick(notification)}
+                            >
+                              <div className="flex items-start gap-2">
+                                <div className={`rounded-full p-2 ${!notification.read ? 'bg-[#d5eae6]' : 'bg-gray-100'}`}>
+                                  <MessageSquare size={16} className={!notification.read ? 'text-[#003D2D]' : 'text-gray-600'} />
+                                </div>
+                                <div className="flex-1">
+                                  <p className={`text-sm ${!notification.read ? 'font-semibold' : ''}`}>
+                                    {notification.text}
+                                  </p>
+                                  <p className="mt-1 text-xs text-gray-500">
+                                    {new Date(notification.createdAt).toLocaleDateString()} 
+                                    {' • '}
+                                    {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                </div>
+                                {!notification.read && (
+                                  <div className="w-2 h-2 bg-[#003D2D] rounded-full"></div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-gray-500">
+                            No notifications
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
-            </div>
-          </div>
 
-          {/* Icons section */}
-          <div className="flex items-center gap-1 sm:gap-1">
-            {/* Notifications bell */}
-            {user && (
+              {/* Favorites button */}
+              <button 
+                onClick={handleFavoriteClick} 
+                className={`btn btn-ghost btn-circle transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
+                title={!user ? 'Please login to use favorites' : 'Favorites'}
+              >
+                <Heart size={32} className="text-white" />
+              </button>
+              
+              {/* Cart button with dropdown */}
               <div className="relative">
                 <button 
-                  ref={notificationsButtonRef}
-                  onClick={() => setShowNotifications(!showNotifications)} 
+                  ref={cartButtonRef}
+                  onClick={toggleCartPreview} 
                   className="relative transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
+                  title="Cart"
                 >
-                  <Bell size={32} className="text-white" /> {/* Возвращен цвет text-white */}
-                  {unreadNotifications > 0 && (
+                  <ShoppingCart size={32} className="text-white" />
+                  {user && cartItemCount > 0 && (
                     <div className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full -top-2 -right-2">
-                      {unreadNotifications}
+                      {cartItemCount}
                     </div>
                   )}
                 </button>
                 
-                {/* Notifications dropdown */}
-                {showNotifications && (
-                  <div 
-                    ref={notificationsDropdownRef}
-                    className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80"
-                  >
-                    <div className="flex items-center justify-between p-3 border-b">
-                      <h3 className="font-semibold">Notifications</h3>
-                      {unreadNotifications > 0 && (
-                        <button 
-                          onClick={markAllNotificationsAsRead}
-                          className="text-xs text-[#003D2D] hover:underline"
-                        >
-                          Mark all as read
-                        </button>
-                      )}
+                {/* Cart preview dropdown */}
+                {user && cartOpen && cartItemCount > 0 && (
+                  <div ref={cartDropdownRef} className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80">
+                    <div className="p-4 border-b">
+                      <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
                     </div>
                     <div className="p-2 overflow-y-auto max-h-60">
-                      {notifications.length > 0 ? (
-                        notifications.map(notification => (
-                          <div 
-                            key={notification.id} 
-                            className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-[#edf7f5]' : ''}`}
-                            onClick={() => handleNotificationClick(notification)}
-                          >
-                            <div className="flex items-start gap-2">
-                              <div className={`rounded-full p-2 ${!notification.read ? 'bg-[#d5eae6]' : 'bg-gray-100'}`}>
-                                <MessageSquare size={16} className={!notification.read ? 'text-[#003D2D]' : 'text-gray-600'} />
-                              </div>
-                              <div className="flex-1">
-                                <p className={`text-sm ${!notification.read ? 'font-semibold' : ''}`}>
-                                  {notification.text}
-                                </p>
-                                <p className="mt-1 text-xs text-gray-500">
-                                  {new Date(notification.createdAt).toLocaleDateString()} 
-                                  {' • '}
-                                  {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                              </div>
-                              {!notification.read && (
-                                <div className="w-2 h-2 bg-[#003D2D] rounded-full"></div>
-                              )}
-                            </div>
+                      {getCartItems().map((item: any, index: number) => (
+                        <div key={index} className="flex items-center p-2 border-b hover:bg-gray-100">
+                          <img src={item.image} alt={item.name} className="object-contain w-12 h-12" />
+                          <div className="flex-1 ml-2">
+                            <p className="text-sm font-medium truncate">{item.name}</p>
+                            <p className="text-xs text-gray-500">{item.quantity} × {item.price} NOK</p>
                           </div>
-                        ))
-                      ) : (
-                        <div className="p-4 text-center text-gray-500">
-                          No notifications
                         </div>
+                      ))}
+                      
+                      {cartItemCount > 3 && (
+                        <p className="mt-2 text-xs text-center text-gray-500">
+                          and {cartItemCount - 3} more items...
+                        </p>
                       )}
+                    </div>
+                    <div className="p-3 bg-gray-50">
+                      <button 
+                        onClick={() => {
+                          setCartOpen(false);
+                          handleCartClick();
+                        }}
+                        className="w-full btn btn-neas-green btn-sm"
+                      >
+                        View Cart
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Favorites button */}
-            <button 
-              onClick={handleFavoriteClick} 
-              className={`btn btn-ghost btn-circle transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
-              title={!user ? 'Please login to use favorites' : 'Favorites'}
-            >
-              <Heart size={32} className="text-white" /> {/* Возвращен цвет text-white */}
-            </button>
-            
-            {/* Cart button with dropdown */}
-            <div className="relative">
-              <button 
-                ref={cartButtonRef}
-                onClick={toggleCartPreview} 
-                className="relative transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
-                title="Cart"
-              >
-                <ShoppingCart size={32} className="text-white" /> {/* Возвращен цвет text-white */}
-                {user && cartItemCount > 0 && (
-                  <div className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full -top-2 -right-2">
-                    {cartItemCount}
-                  </div>
-                )}
-              </button>
               
-              {/* Cart preview dropdown */}
-              {user && cartOpen && cartItemCount > 0 && (
-                <div ref={cartDropdownRef} className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl w-80">
-                  <div className="p-4 border-b">
-                    <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
-                  </div>
-                  <div className="p-2 overflow-y-auto max-h-60">
-                    {getCartItems().map((item: any, index: number) => (
-                      <div key={index} className="flex items-center p-2 border-b hover:bg-gray-100">
-                        <img src={item.image} alt={item.name} className="object-contain w-12 h-12" />
-                        <div className="flex-1 ml-2">
-                          <p className="text-sm font-medium truncate">{item.name}</p>
-                          <p className="text-xs text-gray-500">{item.quantity} × {item.price} NOK</p>
+              {/* User button with dropdown */}
+              <div className="relative">
+                <button 
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
+                >
+                  {userAvatar}
+                </button>
+
+                {/* User menu dropdown */}
+                {userMenuOpen && (
+                  <div className="absolute right-0 z-20 w-64 mt-2 overflow-hidden transition-all duration-300 bg-white rounded-lg shadow-xl animate-fade-in-down">
+                    {user ? (
+                      <>
+                        <div className="px-6 pt-4 pb-3 bg-gradient-to-r from-[#003d2d] to-[#95c672]">
+                          <div className="flex items-center gap-3">
+                            {user.photoURL ? (
+                              <img 
+                                src={user.photoURL} 
+                                alt={user.displayName || 'User'} 
+                                className="object-cover w-12 h-12 border-2 border-white rounded-full shadow-md"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/avatar-placeholder.png';
+                                }}
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center w-12 h-12 text-xl font-semibold text-white uppercase bg-gray-500 border-2 border-white rounded-full shadow-md">
+                                {user.displayName ? user.displayName[0] : user.email?.[0] || '?'}
+                              </div>
+                            )}
+                            <div className="overflow-hidden">
+                              <p className="text-sm font-bold text-white truncate">
+                                {user.displayName || 'User'}
+                              </p>
+                              <p className="text-xs truncate text-white/90">
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    
-                    {cartItemCount > 3 && (
-                      <p className="mt-2 text-xs text-center text-gray-500">
-                        and {cartItemCount - 3} more items...
-                      </p>
+                        <div className="py-1">
+                          <a
+                            href="/profile"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setUserMenuOpen(false);
+                              navigate('/profile');
+                            }}
+                            className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
+                          >
+                            <div className="flex items-center justify-center w-8 h-8 mr-3 rounded-full" style={{backgroundColor: 'rgba(149, 198, 114, 0.15)'}}>
+                              <User size={16} className="text-[#95c672]" />
+                            </div>
+                            <span className="font-medium text-gray-700">Profile</span>
+                          </a>
+                          <button
+                            onClick={async () => {
+                              await handleSignOut();
+                              setUserMenuOpen(false);
+                              navigate('/');
+                            }}
+                            className="flex items-center w-full px-6 py-3 text-sm text-left transition-colors hover:bg-gray-50"
+                          >
+                            <div className="flex items-center justify-center w-8 h-8 mr-3 rounded-full bg-red-50">
+                              <LogOut size={16} className="text-red-500" />
+                            </div>
+                            <span className="font-medium text-red-500">Sign Out</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="px-6 pt-4 pb-3 bg-gradient-to-r from-[#003d2d] to-[#95c672]">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center w-12 h-12 text-xl font-semibold text-white bg-gray-500 border-2 border-white rounded-full shadow-md">
+                              <User size={24} />
+                            </div>
+                            <p className="text-sm font-bold text-white">Guest User</p>
+                          </div>
+                        </div>
+                        <div className="py-1">
+                          <a
+                            href="/login"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setUserMenuOpen(false);
+                              navigate('/login');
+                            }}
+                            className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
+                          >
+                            <div className="flex items-center justify-center w-8 h-8 mr-3 rounded-full" style={{backgroundColor: 'rgba(149, 198, 114, 0.15)'}}>
+                              <LogIn size={16} className="text-[#95c672]" />
+                            </div>
+                            <span className="font-medium text-gray-700">Sign In</span>
+                          </a>
+                          <a
+                            href="/register"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setUserMenuOpen(false);
+                              navigate('/register');
+                            }}
+                            className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
+                          >
+                            <div className="flex items-center justify-center w-8 h-8 mr-3 rounded-full" style={{backgroundColor: 'rgba(149, 198, 114, 0.15)'}}>
+                              <User size={16} className="text-[#95c672]" />
+                            </div>
+                            <span className="font-medium text-gray-700">Register</span>
+                          </a>
+                        </div>
+                      </>
                     )}
                   </div>
-                  <div className="p-3 bg-gray-50">
-                    <button 
-                      onClick={() => {
-                        setCartOpen(false);
-                        handleCartClick();
-                      }}
-                      className="w-full btn btn-neas-green btn-sm"
-                    >
-                      View Cart
-                    </button>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-            
-            {/* User button with dropdown */}
-            <div className="relative">
-              <button 
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
-              >
-                {userAvatar}
-              </button>
+          </div>
 
-              {/* User menu dropdown */}
-              {userMenuOpen && (
-                <div className="absolute right-0 z-20 w-64 mt-2 overflow-hidden transition-all duration-300 bg-white rounded-lg shadow-xl animate-fade-in-down">
-                  {user ? (
-                    <>
-                      <div className="px-6 pt-4 pb-3 bg-gradient-to-r from-[#003d2d] to-[#95c672]">
-                        <div className="flex items-center gap-3">
-                          {user.photoURL ? (
-                            <img 
-                              src={user.photoURL} 
-                              alt={user.displayName || 'User'} 
-                              className="object-cover w-12 h-12 border-2 border-white rounded-full shadow-md"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = '/avatar-placeholder.png';
-                              }}
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center w-12 h-12 text-xl font-semibold text-white uppercase bg-gray-500 border-2 border-white rounded-full shadow-md">
-                              {user.displayName ? user.displayName[0] : user.email?.[0] || '?'}
-                            </div>
-                          )}
-                          <div className="overflow-hidden">
-                            <p className="text-sm font-bold text-white truncate">
-                              {user.displayName || 'User'}
-                            </p>
-                            <p className="text-xs truncate text-white/90">
-                              {user.email}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="py-1">
-                        <a
-                          href="/profile"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setUserMenuOpen(false);
-                            navigate('/profile');
-                          }}
-                          className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
-                        >
-                          <div className="flex items-center justify-center w-8 h-8 mr-3 rounded-full" style={{backgroundColor: 'rgba(149, 198, 114, 0.15)'}}>
-                            <User size={16} className="text-[#95c672]" />
-                          </div>
-                          <span className="font-medium text-gray-700">Profile</span>
-                        </a>
-                        <button
-                          onClick={async () => {
-                            await handleSignOut();
-                            setUserMenuOpen(false);
-                            navigate('/');
-                          }}
-                          className="flex items-center w-full px-6 py-3 text-sm text-left transition-colors hover:bg-gray-50"
-                        >
-                          <div className="flex items-center justify-center w-8 h-8 mr-3 rounded-full bg-red-50">
-                            <LogOut size={16} className="text-red-500" />
-                          </div>
-                          <span className="font-medium text-red-500">Sign Out</span>
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="px-6 pt-4 pb-3 bg-gradient-to-r from-[#003d2d] to-[#95c672]">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-12 h-12 text-xl font-semibold text-white bg-gray-500 border-2 border-white rounded-full shadow-md">
-                            <User size={24} />
-                          </div>
-                          <p className="text-sm font-bold text-white">Guest User</p>
-                        </div>
-                      </div>
-                      <div className="py-1">
-                        <a
-                          href="/login"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setUserMenuOpen(false);
-                            navigate('/login');
-                          }}
-                          className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
-                        >
-                          <div className="flex items-center justify-center w-8 h-8 mr-3 rounded-full" style={{backgroundColor: 'rgba(149, 198, 114, 0.15)'}}>
-                            <LogIn size={16} className="text-[#95c672]" />
-                          </div>
-                          <span className="font-medium text-gray-700">Sign In</span>
-                        </a>
-                        <a
-                          href="/register"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setUserMenuOpen(false);
-                            navigate('/register');
-                          }}
-                          className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
-                        >
-                          <div className="flex items-center justify-center w-8 h-8 mr-3 rounded-full" style={{backgroundColor: 'rgba(149, 198, 114, 0.15)'}}>
-                            <User size={16} className="text-[#95c672]" />
-                          </div>
-                          <span className="font-medium text-gray-700">Register</span>
-                        </a>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+          {/* Search bar row - always below on mobile */}
+          <div className="w-full sm:max-w-[500px] sm:mx-auto lg:max-w-[600px]">
+            <form onSubmit={handleSearch} className="relative flex items-center w-full">
+              <Search className="absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2" size={20} />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search for anything..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value) {
+                    setShowResults(true);
+                  }
+                }}
+                onFocus={() => {
+                  if (searchResults.length > 0) {
+                    setShowResults(true);
+                  }
+                }}
+                className="w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </form>
+            {showResults && searchResults.length > 0 && (
+              <div 
+                ref={searchResultsRef}
+                className="absolute left-0 right-0 z-20 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg search-results-dropdown"
+              >
+                {searchResults.map((result) => (
+                  <div key={result.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => navigate(`/product/${result.id}`)}>
+                    <img src={result.image} alt={result.name} className="inline-block w-8 h-8 mr-2" />
+                    <span>{result.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
