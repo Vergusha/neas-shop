@@ -5,6 +5,8 @@ import ProductCard from '../components/ProductCard';
 import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
 import { trackProductInteraction } from '../utils/productTracking';
+import { extractFilters, FilterOption, applyFilters } from '../utils/filterUtils';
+import { getTheme } from '../utils/themeUtils'; // Import getTheme
 
 interface Product {
   id: string;
@@ -28,12 +30,6 @@ interface FilterValue {
   count: number;
 }
 
-interface FilterOption {
-  name: string;
-  key: string;
-  values: FilterValue[];
-}
-
 const LaptopsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +39,17 @@ const LaptopsPage: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> | [number, number] }>({});
   const [availableFilters, setAvailableFilters] = useState<FilterOption[]>([]);
   const [filterOsType] = useState<'all' | 'mac' | 'windows'>('all');
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme()); // Add currentTheme state
+
+  // Add effect to listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -221,13 +228,22 @@ const LaptopsPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Laptops</h1>
+      
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Laptops</h1>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          {filteredProducts.length} products found
+        </div>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
+          className="btn btn-sm flex items-center gap-2"
+          style={{ 
+            backgroundColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
+            borderColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
+            color: currentTheme === 'dark' ? '#1f2937' : 'white'
+          }}
         >
-          <FaFilter />
+          <FaFilter className="filter-icon" />
           {showFilters ? 'Hide Filters' : 'Show Filters'}
         </button>
       </div>

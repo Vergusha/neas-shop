@@ -6,6 +6,7 @@ import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import ProductFilters from '../components/ProductFilters';
 import { applyFilters } from '../utils/filterUtils';
+import { getTheme } from '../utils/themeUtils'; // Import getTheme
 
 interface Product {
   id: string;
@@ -85,6 +86,17 @@ const TvPage: React.FC = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> | [number, number] }>({});
   const [availableFilters, setAvailableFilters] = useState<FilterOption[]>([]);
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme()); // Add currentTheme state
+
+  // Add effect to listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -175,9 +187,14 @@ const TvPage: React.FC = () => {
         </div>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn btn-sm btn-primary dark:bg-[#eebbca] dark:text-gray-900 dark:border-[#eebbca] dark:hover:bg-[#e0a1b7] dark:hover:border-[#e0a1b7] flex items-center gap-2"
+          className="btn btn-sm flex items-center gap-2"
+          style={{ 
+            backgroundColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
+            borderColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
+            color: currentTheme === 'dark' ? '#1f2937' : 'white'
+          }}
         >
-          <FaFilter />
+          <FaFilter className="filter-icon" />
           {showFilters ? 'Hide Filters' : 'Show Filters'}
         </button>
       </div>

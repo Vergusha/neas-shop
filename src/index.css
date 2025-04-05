@@ -516,6 +516,50 @@ body {
   border: none !important;
 }
 
+/* Make more specific selectors for filter buttons in dark mode */
+[data-theme="dark"] button.btn-primary,
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] button.btn.btn-primary {
+  background-color: #eebbca !important;
+  border-color: #eebbca !important;
+  color: #1f2937 !important;
+}
+
+[data-theme="dark"] button.btn-primary:hover,
+[data-theme="dark"] .btn-primary:hover,
+[data-theme="dark"] button.btn.btn-primary:hover {
+  background-color: #e0a1b7 !important;
+  border-color: #e0a1b7 !important;
+}
+
+/* Specifically target "Show Filter" buttons which might have additional classes */
+[data-theme="dark"] button:has(svg[class*="FaFilter"]),
+[data-theme="dark"] button:has(.filter-icon) {
+  background-color: #eebbca !important;
+  border-color: #eebbca !important;
+  color: #1f2937 !important;
+}
+
+[data-theme="dark"] button:has(svg[class*="FaFilter"]):hover,
+[data-theme="dark"] button:has(.filter-icon):hover {
+  background-color: #e0a1b7 !important;
+  border-color: #e0a1b7 !important;
+}
+
+/* Ensure all primary buttons in dark mode use pink */
+[data-theme="dark"] .daisy-btn-primary, 
+[data-theme="dark"] .btn.btn-primary {
+  background-color: #eebbca !important;
+  border-color: #eebbca !important;
+  color: #1f2937 !important;
+}
+
+[data-theme="dark"] .daisy-btn-primary:hover,
+[data-theme="dark"] .btn.btn-primary:hover {
+  background-color: #e0a1b7 !important;
+  border-color: #e0a1b7 !important;
+}
+
 @layer utilities {
   .animate-shake {
     animation: shake 0.3s;

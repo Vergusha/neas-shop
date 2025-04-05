@@ -4,6 +4,8 @@ import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
+import { extractFilters, FilterOption, applyFilters } from '../utils/filterUtils';
+import { getTheme } from '../utils/themeUtils';
 
 interface Product {
   id: string;
@@ -25,6 +27,16 @@ const MobilePage: React.FC = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
   const [filters, setFilters] = useState<Array<{ id: string; name: string; values: any[] }>>([]);
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -207,9 +219,14 @@ const MobilePage: React.FC = () => {
         </div>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn btn-sm bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
+          className="btn btn-sm flex items-center gap-2"
+          style={{ 
+            backgroundColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
+            borderColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
+            color: currentTheme === 'dark' ? '#1f2937' : 'white'
+          }}
         >
-          <FaFilter />
+          <FaFilter className="filter-icon" />
           {showFilters ? 'Hide Filters' : 'Show Filters'}
         </button>
       </div>
