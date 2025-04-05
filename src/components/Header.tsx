@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, ShoppingCart, Heart, User, Bell, MessageSquare, LogOut, LogIn } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Bell, MessageSquare, LogOut, LogIn, Sun, Moon } from 'lucide-react';
 import logo from '../assets/logo.svg';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore'; // Remove 'update' from here
@@ -26,6 +26,7 @@ const Header: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark' | 'synthwave'>('light');
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchResultsRef = useRef<HTMLDivElement>(null);
@@ -483,6 +484,28 @@ const Header: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showNotifications]);
 
+  // Initialize theme from localStorage on component mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'synthwave' || 'light';
+    setCurrentTheme(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
+
+  // Theme toggle handler
+  const handleThemeToggle = () => {
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    setCurrentTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    
+    // Also add/remove dark class for additional styling if needed
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
   return (
     <header className="bg-[#003D2D] shadow-md relative">
       <div className="container py-2 sm:py-4">
@@ -544,6 +567,20 @@ const Header: React.FC = () => {
 
           {/* Navbar buttons */}
           <div className="flex items-center gap-1 header-icons sm:gap-1">
+            {/* Theme toggle button - add before notifications bell */}
+            <label className="swap swap-rotate transition-all duration-500 ease-in-out hover:scale-110 btn btn-ghost btn-circle">
+              <input 
+                type="checkbox" 
+                className="theme-controller" 
+                checked={currentTheme !== 'light'}
+                onChange={handleThemeToggle}
+              />
+              {/* sun icon */}
+              <Sun className="swap-off h-8 w-8 text-white" />
+              {/* moon icon */}
+              <Moon className="swap-on h-8 w-8 text-white" />
+            </label>
+            
             {/* Notifications bell */}
             {user && (
               <div className="relative">

@@ -29,6 +29,7 @@ import LaptopsPage from './pages/LaptopsPage'; // Add this import
 import './styles/ProductCardStyles.css';
 import './styles/HeaderStyles.css';
 import './styles/CartStyles.css'; // Add the import for cart styles
+import { initializeTheme } from './utils/themeUtils';
 
 // Оптимизированные настройки для маршрутизации
 const router_future = {
@@ -49,6 +50,9 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => {
   useEffect(() => {
+    // Initialize theme on app start
+    initializeTheme();
+    
     // Run the migrations once to ensure database structure is correct
     // You can comment these out after the first run
     // migrateProductRatings();
