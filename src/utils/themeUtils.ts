@@ -13,6 +13,9 @@ export const setTheme = (theme: Theme): void => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    
+    // Dispatch event to notify components about theme change
+    window.dispatchEvent(new Event('themeChanged'));
   }
 };
 

@@ -33,6 +33,18 @@ body {
   --color-text-secondary: 209 213 219; /* text-gray-300 in RGB */
 }
 
+/* Fix buttons in dark mode */
+[data-theme="dark"] .btn-neas-green {
+  background-color: #eebbca !important;
+  border-color: #eebbca !important;
+  color: #1f2937 !important; /* darker text for contrast */
+}
+
+[data-theme="dark"] .btn-neas-green:hover {
+  background-color: #e0a1b7 !important;
+  border-color: #e0a1b7 !important;
+}
+
 [data-theme="dark"] .menu {
   --tw-bg-opacity: 1;
   background-color: rgba(31, 41, 55, var(--tw-bg-opacity)) !important; /* bg-gray-800 */
@@ -52,7 +64,7 @@ body {
 
 [data-theme="dark"] .text-primary {
   --tw-text-opacity: 1;
-  color: rgba(149, 198, 114, var(--tw-text-opacity)) !important; /* Light green color */
+  color: rgba(238, 187, 202, var(--tw-text-opacity)) !important; /* #eebbca in RGB */
 }
 
 /* Fix card colors in dark mode */
@@ -95,6 +107,32 @@ body {
 [data-theme="dark"] .user-menu-item:hover {
   --tw-bg-opacity: 1;
   background-color: rgba(31, 41, 55, var(--tw-bg-opacity)) !important; /* bg-gray-800 */
+}
+
+/* Add specific styling for header and footer in dark mode */
+[data-theme="dark"] .bg-\[\#003D2D\] {
+  background-color: #eebbca !important;
+  color: #1f2937 !important; /* Dark text for contrast on pink background */
+}
+
+[data-theme="dark"] footer a {
+  color: #1f2937 !important;
+  text-decoration: underline;
+}
+
+[data-theme="dark"] footer a:hover {
+  color: #111827 !important;
+  text-decoration: none;
+}
+
+/* Fix icon colors in dark header */
+[data-theme="dark"] header button svg {
+  color: #1f2937 !important;
+}
+
+/* Add a hover effect for buttons in dark header */
+[data-theme="dark"] header button:hover {
+  background-color: rgba(31, 41, 55, 0.1) !important; /* Light dark hover effect */
 }
 
 @keyframes fade-in-down {
@@ -298,6 +336,11 @@ body {
     color: white;
   }
 
+  [data-theme="dark"] .product-card .sale-badge {
+    background-color: #eebbca;
+    color: #1f2937; /* dark text for better contrast */
+  }
+
   /* User menu styles */
   .user-menu-item {
     @apply flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50;
@@ -322,7 +365,7 @@ body {
   }
 
   [data-theme="dark"] .product-card-glow:hover {
-    box-shadow: 0 0 20px rgba(149, 198, 114, 0.2);
+    box-shadow: 0 0 20px rgba(238, 187, 202, 0.3); /* Change to pink glow */
   }
 }
 
@@ -353,8 +396,14 @@ body {
   100% { box-shadow: 0 0 0 rgba(0, 61, 45, 0); }
 }
 
-.highlight-review {
-  animation: highlight-pulse 1.5s ease-out;
+[data-theme="dark"] .highlight-review {
+  animation: highlight-pulse-dark 1.5s ease-out;
+}
+
+@keyframes highlight-pulse-dark {
+  0% { box-shadow: 0 0 0 rgba(238, 187, 202, 0); }
+  50% { box-shadow: 0 0 20px rgba(238, 187, 202, 0.5); }
+  100% { box-shadow: 0 0 0 rgba(238, 187, 202, 0); }
 }
 
 /* Убираем фиолетовую обводку с кнопок корзины и избранного */
@@ -420,6 +469,10 @@ body {
   
   .product-card-glow:hover {
     box-shadow: 0 0 20px rgba(0, 61, 45, 0.2);
+  }
+
+  [data-theme="dark"] .product-card-glow:hover {
+    box-shadow: 0 0 20px rgba(238, 187, 202, 0.3); /* Pink glow in dark mode */
   }
 }
 

@@ -45,8 +45,56 @@
 }
 
 [data-theme="dark"] .btn-neas-green {
-  background-color: #004D3D !important;
-  border-color: #004D3D !important;
+  background-color: #eebbca !important;
+  border-color: #eebbca !important;
+  color: #1f2937 !important; /* darker text on pink background for better contrast */
+}
+
+[data-theme="dark"] .btn-neas-green:hover {
+  background-color: #e0a1b7 !important;
+  border-color: #e0a1b7 !important;
+}
+
+/* Header background remains dark but buttons and accents use the pink color */
+[data-theme="dark"] header.bg-[#003D2D] {
+  background-color: #1f2937 !important; /* Keep header dark */
+}
+
+/* Update button styles in dark header */
+[data-theme="dark"] header.bg-[#eebbca] button svg {
+  color: #1f2937 !important; /* Dark text for contrast on pink background */
+}
+
+[data-theme="dark"] header.bg-[#eebbca] .theme-controller + svg {
+  color: #1f2937 !important;
+}
+
+/* Fix cart and notification colors */
+[data-theme="dark"] header.bg-[#eebbca] .cart-dropdown,
+[data-theme="dark"] header.bg-[#eebbca] .notifications-dropdown {
+  background-color: #1f2937; /* Keep dropdown background dark */
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+/* Fix user menu dropdown in pink header */
+[data-theme="dark"] header.bg-[#eebbca] .user-menu-dropdown {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+/* Change text color in header */
+[data-theme="dark"] header.bg-[#eebbca] {
+  color: #1f2937; /* Dark text for contrast */
+}
+
+/* Navigation buttons in dark mode */
+[data-theme="dark"] .user-menu-icon {
+  background-color: rgba(238, 187, 202, 0.15) !important;
+}
+
+[data-theme="dark"] .user-menu-icon svg {
+  color: #eebbca !important;
 }
 
 /* Container tweaks for larger screens */
