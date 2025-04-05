@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Star } from 'lucide-react';
+import { getTheme } from '../utils/themeUtils';
 
 interface RatingProps {
   value: number;
@@ -17,6 +18,23 @@ const Rating: React.FC<RatingProps> = ({
   readonly = true,
   onChange
 }) => {
+  // Add theme tracking
+  const [theme, setTheme] = useState(getTheme());
+  
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
+
+  // Define star colors based on theme
+  const starFillColor = theme === 'dark' ? '#eebbca' : '#FFCA28';
+  const starStrokeColor = theme === 'dark' ? '#e0a1b7' : '#E6A700';
+  
   // Convert size prop to pixel values
   const sizePx = {
     xs: 12,
@@ -53,12 +71,12 @@ const Rating: React.FC<RatingProps> = ({
             }}
           >
             {isFilled ? (
-              <Star size={sizePx} fill="#FFCA28" color="#FFCA28" stroke="#E6A700" strokeWidth="1" />
+              <Star size={sizePx} fill={starFillColor} color={starFillColor} stroke={starStrokeColor} strokeWidth="1" />
             ) : isHalf ? (
               <div className="relative">
                 <Star size={sizePx} color="#e2e8f0" stroke="#888888" strokeWidth="1.5" />
                 <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
-                  <Star size={sizePx} fill="#FFCA28" color="#FFCA28" stroke="#E6A700" strokeWidth="1" />
+                  <Star size={sizePx} fill={starFillColor} color={starFillColor} stroke={starStrokeColor} strokeWidth="1" />
                 </div>
               </div>
             ) : (
@@ -68,7 +86,7 @@ const Rating: React.FC<RatingProps> = ({
         );
       })}
       {!readonly && (
-        <span className="ml-2 text-xs text-gray-500">
+        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
           {value.toFixed(1)}/{maxValue}
         </span>
       )}

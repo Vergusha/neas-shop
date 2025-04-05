@@ -29,6 +29,17 @@
   box-shadow: 0 0 0 3px rgba(0, 61, 45, 0.5); /* Add a glow effect */
 }
 
+/* Dark mode styles for color variants */
+[data-theme="dark"] .product-color-variant {
+  background-color: #1f2937; /* Dark background */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .product-color-variant.active {
+  border-color: #eebbca; /* Pink border in dark mode */
+  box-shadow: 0 0 0 3px rgba(238, 187, 202, 0.5); /* Pink glow in dark mode */
+}
+
 .product-color-image {
   flex: 1;
   width: 100%;
@@ -62,6 +73,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Change the indicator color in dark mode */
+[data-theme="dark"] .active-indicator {
+  background-color: #eebbca; /* Pink indicator in dark mode */
 }
 
 .active-indicator::after {

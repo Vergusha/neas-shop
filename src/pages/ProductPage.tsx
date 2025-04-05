@@ -729,13 +729,13 @@ const ProductPage: React.FC = () => {
             
             {/* Обновленный блок с ценой - меняем цвет на точный цвет логотипа #003D2D */}
             <div className="relative mb-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#003D2D] to-[#005040] rounded-lg transform -rotate-1 scale-105"></div>
-              <div className="relative bg-white py-3 px-4 rounded-lg border-2 border-[#003D2D] shadow-md">
-                <p className="text-2xl font-bold text-gray-900">
-                  {Number(product?.price).toFixed(2)} <span className="text-[#003D2D]">NOK</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#003D2D] to-[#005040] dark:from-[#eebbca] dark:to-[#e0a1b7] rounded-lg transform -rotate-1 scale-105"></div>
+              <div className="relative bg-white dark:bg-gray-800 py-3 px-4 rounded-lg border-2 border-[#003D2D] dark:border-[#eebbca] shadow-md">
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {Number(product?.price).toFixed(2)} <span className="text-[#003D2D] dark:text-[#eebbca]">NOK</span>
                 </p>
                 {product?.price > 1000 && (
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     or {(product.price / 12).toFixed(2)} NOK/month with 12-month payment plan
                   </p>
                 )}
@@ -748,7 +748,7 @@ const ProductPage: React.FC = () => {
                 <span className="text-sm font-medium text-gray-700">Quantity:</span>
                 <div className="flex items-center">
                   <button 
-                    className="w-10 h-10 flex items-center justify-center text-[#003D2D] hover:bg-[#003D2D] hover:text-white border-2 border-r-0 border-[#003D2D] rounded-l-lg transition-all duration-200 active:scale-95"
+                    className="w-10 h-10 flex items-center justify-center text-[#003D2D] dark:text-[#eebbca] hover:bg-[#003D2D] dark:hover:bg-[#eebbca] hover:text-white dark:hover:text-gray-900 border-2 border-r-0 border-[#003D2D] dark:border-[#eebbca] rounded-l-lg transition-all duration-200 active:scale-95"
                     onClick={decrementQuantity}
                     disabled={quantity <= 1}
                   >
@@ -768,12 +768,12 @@ const ProductPage: React.FC = () => {
                           setQuantity(1);
                         }
                       }}
-                      className="w-12 h-10 text-center border-y-2 border-[#003D2D] focus:outline-none text-[#003D2D] font-medium [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-12 h-10 text-center border-y-2 border-[#003D2D] dark:border-[#eebbca] focus:outline-none text-[#003D2D] dark:text-[#eebbca] font-medium [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       min="1"
                     />
                   </div>
                   <button 
-                    className="w-10 h-10 flex items-center justify-center text-[#003D2D] hover:bg-[#003D2D] hover:text-white border-2 border-l-0 border-[#003D2D] rounded-r-lg transition-all duration-200 active:scale-95"
+                    className="w-10 h-10 flex items-center justify-center text-[#003D2D] dark:text-[#eebbca] hover:bg-[#003D2D] dark:hover:bg-[#eebbca] hover:text-white dark:hover:text-gray-900 border-2 border-l-0 border-[#003D2D] dark:border-[#eebbca] rounded-r-lg transition-all duration-200 active:scale-95"
                     onClick={incrementQuantity}
                   >
                     <Plus size={16} className="stroke-[2.5]" />
@@ -781,9 +781,7 @@ const ProductPage: React.FC = () => {
                 </div>
 
                 <button
-                  className={`flex items-center justify-center gap-2 px-6 py-3 text-white bg-[#003D2D] rounded-lg hover:bg-[#005040] transition-all duration-200 active:scale-95 ${
-                    window.innerWidth <= 768 ? 'btn-circle p-4' : ''
-                  }`}
+                  className="flex items-center justify-center gap-2 px-6 py-3 text-white dark:text-gray-900 bg-[#003D2D] dark:bg-[#eebbca] rounded-lg hover:bg-[#005040] dark:hover:bg-[#e0a1b7] transition-all duration-200 active:scale-95"
                   onClick={addToCart}
                 >
                   {window.innerWidth <= 768 ? <ShoppingCart size={22} /> : 'Add to Cart'}

@@ -31,9 +31,11 @@ body {
   /* Improve text readability in dark mode */
   --color-text-primary: 229 231 235; /* text-gray-200 in RGB */
   --color-text-secondary: 209 213 219; /* text-gray-300 in RGB */
+  --primary-color: #eebbca; /* Replace #003D2D with #eebbca in dark mode */
+  --primary-focus-color: #e0a1b7; /* Slightly darker pink for hover/focus states */
+  --primary-glow-color: rgba(238, 187, 202, 0.5); /* Pink glow effect */
 }
 
-/* Fix buttons in dark mode */
 [data-theme="dark"] .btn-neas-green {
   background-color: #eebbca !important;
   border-color: #eebbca !important;
@@ -65,6 +67,48 @@ body {
 [data-theme="dark"] .text-primary {
   --tw-text-opacity: 1;
   color: rgba(238, 187, 202, var(--tw-text-opacity)) !important; /* #eebbca in RGB */
+}
+
+[data-theme="dark"] .text-[#003D2D] {
+  color: #eebbca !important;
+}
+
+[data-theme="dark"] .border-[#003D2D] {
+  border-color: #eebbca !important;
+}
+
+[data-theme="dark"] .bg-[#003D2D] {
+  background-color: #eebbca !important;
+}
+
+[data-theme="dark"] .bg-gradient-to-r.from-[#003D2D] {
+  --tw-gradient-from: #eebbca !important;
+  --tw-gradient-to: #e0a1b7 !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+[data-theme="dark"] .hover\:bg-[#003D2D]:hover {
+  background-color: #eebbca !important;
+}
+
+[data-theme="dark"] .hover\:border-[#003D2D]:hover {
+  border-color: #eebbca !important;
+}
+
+[data-theme="dark"] .hover\:text-[#003D2D]:hover {
+  color: #eebbca !important;
+}
+
+/* Fix buttons in dark mode */
+[data-theme="dark"] .btn-primary {
+  background-color: #eebbca !important;
+  border-color: #eebbca !important;
+  color: #1f2937 !important; /* Dark text for better contrast */
+}
+
+[data-theme="dark"] .btn-primary:hover {
+  background-color: #e0a1b7 !important;
+  border-color: #e0a1b7 !important;
 }
 
 /* Fix card colors in dark mode */

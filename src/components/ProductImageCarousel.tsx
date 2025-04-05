@@ -111,15 +111,15 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
       {/* Navigation arrows */}
       <button 
         onClick={prevImage}
-        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-1 rounded-full shadow-md"
+        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/70 dark:bg-gray-700/70 hover:bg-white dark:hover:bg-gray-600 p-1 rounded-full shadow-md"
       >
-        <ChevronLeft size={16} />
+        <ChevronLeft size={16} className="dark:text-gray-200" />
       </button>
       <button 
         onClick={nextImage}
-        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-1 rounded-full shadow-md"
+        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/70 dark:bg-gray-700/70 hover:bg-white dark:hover:bg-gray-600 p-1 rounded-full shadow-md"
       >
-        <ChevronRight size={16} />
+        <ChevronRight size={16} className="dark:text-gray-200" />
       </button>
 
       {/* Dots indicator */}
@@ -128,7 +128,9 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
           <button
             key={idx}
             className={`w-2 h-2 rounded-full ${
-              idx === currentIndex ? 'bg-primary' : 'bg-gray-300'
+              idx === currentIndex 
+                ? 'bg-[#003D2D] dark:bg-[#eebbca]' // Use explicit colors for light/dark modes
+                : 'bg-gray-300 dark:bg-gray-600'
             }`}
             onClick={(e) => {
               e.stopPropagation();
