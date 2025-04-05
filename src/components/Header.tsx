@@ -605,7 +605,7 @@ const Header: React.FC = () => {
                         setCartOpen(false);
                         handleCartClick();
                       }}
-                      className="w-full btn btn-primary btn-sm"
+                      className="w-full btn btn-neas-green btn-sm"
                     >
                       View Cart
                     </button>

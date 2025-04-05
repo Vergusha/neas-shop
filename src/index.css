@@ -139,6 +139,17 @@ body {
   .max-w-tablet { max-width: 960px; }
   .max-w-card-w { max-width: calc(100% - 2.5rem); }
   
+  /* Custom button styles */
+  .btn-neas-green {
+    background-color: #003D2D !important;
+    border-color: #003D2D !important;
+    color: white !important;
+  }
+  
+  .btn-neas-green:hover {
+    background-color: #005040 !important;
+  }
+  
   /* Отступы карточек */
   .p-card-p { padding: 1.25rem; }
   

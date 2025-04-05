@@ -307,7 +307,7 @@ const CartPage: React.FC = () => {
               <h2 className="mb-4 text-xl font-semibold">Your cart is empty</h2>
               <p className="mb-4">Add some products to your cart to continue shopping.</p>
               <button 
-                className="btn btn-primary" 
+                className="w-full btn btn-neas-green btn-sm"
                 onClick={() => navigate('/')}
               >
                 Continue Shopping
@@ -444,7 +444,7 @@ const CartPage: React.FC = () => {
           </div>
           
           <button 
-            className="w-full mt-4 btn btn-primary"
+            className="w-full mt-4 btn btn-neas-green"
             onClick={handleCheckout}
             disabled={cartItems.length === 0}
           >
