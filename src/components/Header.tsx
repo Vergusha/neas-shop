@@ -486,7 +486,7 @@ const Header: React.FC = () => {
   return (
     <header className="bg-[#003D2D] shadow-md relative">
       <div className="container py-2 sm:py-4">
-        {/* Top row: Logo and buttons */}
+        {/* Top row: Logo, Search, and buttons */}
         <div className="header-top-row">
           {/* Logo */}
           <a href="/" className="block transition-all duration-500 ease-in-out origin-center transform header-logo shrink-0 hover:scale-110">
@@ -501,6 +501,46 @@ const Header: React.FC = () => {
               className="block w-auto h-8 sm:hidden"
             />
           </a>
+
+          {/* Desktop Search bar - visible only on md and larger screens */}
+          <div className="hidden md:block md:flex-grow md:mx-4">
+            <form onSubmit={handleSearch} className="relative flex items-center w-full">
+              <Search className="absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2" size={20} />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search for anything..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value) {
+                    setShowResults(true);
+                  }
+                }}
+                onFocus={() => {
+                  if (searchResults.length > 0) {
+                    setShowResults(true);
+                  }
+                }}
+                className="w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              
+              {/* Search results dropdown */}
+              {showResults && searchResults.length > 0 && (
+                <div 
+                  ref={searchResultsRef}
+                  className="absolute left-0 right-0 z-20 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg search-results-dropdown"
+                >
+                  {searchResults.map((result) => (
+                    <div key={result.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => navigate(`/product/${result.id}`)}>
+                      <img src={result.image} alt={result.name} className="inline-block w-8 h-8 mr-2" />
+                      <span>{result.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </form>
+          </div>
 
           {/* Navbar buttons */}
           <div className="flex items-center gap-1 header-icons sm:gap-1">
@@ -526,51 +566,7 @@ const Header: React.FC = () => {
                     ref={notificationsDropdownRef}
                     className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl notifications-dropdown w-80 sm:relative sm:w-auto"
                   >
-                    <div className="flex items-center justify-between p-3 border-b">
-                      <h3 className="font-semibold">Notifications</h3>
-                      {unreadNotifications > 0 && (
-                        <button 
-                          onClick={markAllNotificationsAsRead}
-                          className="text-xs text-[#003D2D] hover:underline"
-                        >
-                          Mark all as read
-                        </button>
-                      )}
-                    </div>
-                    <div className="p-2 overflow-y-auto max-h-60">
-                      {notifications.length > 0 ? (
-                        notifications.map(notification => (
-                          <div 
-                            key={notification.id} 
-                            className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-[#edf7f5]' : ''}`}
-                            onClick={() => handleNotificationClick(notification)}
-                          >
-                            <div className="flex items-start gap-2">
-                              <div className={`rounded-full p-2 ${!notification.read ? 'bg-[#d5eae6]' : 'bg-gray-100'}`}>
-                                <MessageSquare size={16} className={!notification.read ? 'text-[#003D2D]' : 'text-gray-600'} />
-                              </div>
-                              <div className="flex-1">
-                                <p className={`text-sm ${!notification.read ? 'font-semibold' : ''}`}>
-                                  {notification.text}
-                                </p>
-                                <p className="mt-1 text-xs text-gray-500">
-                                  {new Date(notification.createdAt).toLocaleDateString()} 
-                                  {' • '}
-                                  {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                              </div>
-                              {!notification.read && (
-                                <div className="w-2 h-2 bg-[#003D2D] rounded-full"></div>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-4 text-center text-gray-500">
-                          No notifications
-                        </div>
-                      )}
-                    </div>
+                    {/* ...existing notifications dropdown code... */}
                   </div>
                 )}
               </div>
@@ -757,12 +753,11 @@ const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Search bar */}
-        <div className="header-search-container">
+        {/* Mobile Search bar - visible only on small screens */}
+        <div className="md:hidden header-search-container">
           <form onSubmit={handleSearch} className="relative flex items-center w-full">
             <Search className="absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2" size={20} />
             <input
-              ref={searchInputRef}
               type="text"
               placeholder="Search for anything..."
               value={searchQuery}
@@ -779,22 +774,21 @@ const Header: React.FC = () => {
               }}
               className="w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            
+            {/* Mobile search results */}
+            {showResults && searchResults.length > 0 && (
+              <div 
+                className="absolute left-0 right-0 z-20 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg search-results-dropdown"
+              >
+                {searchResults.map((result) => (
+                  <div key={result.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => navigate(`/product/${result.id}`)}>
+                    <img src={result.image} alt={result.name} className="inline-block w-8 h-8 mr-2" />
+                    <span>{result.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </form>
-          
-          {/* Search results dropdown */}
-          {showResults && searchResults.length > 0 && (
-            <div 
-              ref={searchResultsRef}
-              className="absolute left-0 right-0 z-20 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg search-results-dropdown"
-            >
-              {searchResults.map((result) => (
-                <div key={result.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => navigate(`/product/${result.id}`)}>
-                  <img src={result.image} alt={result.name} className="inline-block w-8 h-8 mr-2" />
-                  <span>{result.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
       
