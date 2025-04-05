@@ -6,7 +6,8 @@ import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import ProductFilters from '../components/ProductFilters';
 import { applyFilters } from '../utils/filterUtils';
-import { getTheme } from '../utils/themeUtils'; // Import getTheme
+import { getTheme } from '../utils/themeUtils';
+import CategoryLayout from '../components/CategoryLayout'; // Import CategoryLayout
 
 interface Product {
   id: string;
@@ -81,7 +82,7 @@ const TvPage: React.FC = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> | [number, number] }>({});
@@ -167,20 +168,24 @@ const TvPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
+      <CategoryLayout>
+        <div className="flex justify-center items-center py-20">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      </CategoryLayout>
     );
   }
 
   if (error) {
-    return <div className="py-8 text-center text-red-500">{error}</div>;
+    return (
+      <CategoryLayout>
+        <div className="text-red-500 text-center py-8">{error}</div>
+      </CategoryLayout>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-4 text-2xl font-bold">TVs & Audio</h1>
-      
+    <CategoryLayout title="TVs & Audio">
       <div className="flex justify-between items-center mb-4">
         <div>
           <span className="text-sm text-gray-500 dark:text-gray-400">{filteredProducts.length} products found</span>
@@ -189,8 +194,8 @@ const TvPage: React.FC = () => {
           onClick={() => setShowFilters(!showFilters)}
           className="btn btn-sm flex items-center gap-2"
           style={{ 
-            backgroundColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
-            borderColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
+            backgroundColor: currentTheme === 'dark' ? '#d45288' : '#003D2D',
+            borderColor: currentTheme === 'dark' ? '#d45288' : '#003D2D',
             color: currentTheme === 'dark' ? '#1f2937' : 'white'
           }}
         >
@@ -232,7 +237,7 @@ const TvPage: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </CategoryLayout>
   );
 };
 

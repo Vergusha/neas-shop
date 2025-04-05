@@ -6,7 +6,8 @@ import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
 import { Product } from '../types/product';
 import { FilterOption } from '../utils/filterUtils';
-import { getTheme } from '../utils/themeUtils'; // Import getTheme
+import { getTheme } from '../utils/themeUtils';
+import CategoryLayout from '../components/CategoryLayout';
 
 const getUniqueValues = (products: Product[], key: keyof Product): { value: string | number; count: number }[] => {
   const counts: Record<string, number> = {};
@@ -66,9 +67,9 @@ const GamingPage: React.FC = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> | [number, number] }>({});
   const [availableFilters, setAvailableFilters] = useState<FilterOption[]>([]);
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme()); // Add currentTheme state
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
+  const [error, setError] = useState<string | null>(null);
 
-  // Add effect to listen for theme changes
   useEffect(() => {
     const handleThemeChange = () => {
       setCurrentTheme(getTheme());
@@ -95,6 +96,7 @@ const GamingPage: React.FC = () => {
         setFilteredProducts(productsData);
       } catch (error) {
         console.error('Error fetching gaming products:', error);
+        setError('Error fetching gaming products');
       } finally {
         setLoading(false);
       }
@@ -130,16 +132,24 @@ const GamingPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
+      <CategoryLayout>
+        <div className="flex justify-center items-center py-20">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      </CategoryLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <CategoryLayout>
+        <div className="text-red-500 text-center py-8">{error}</div>
+      </CategoryLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Gaming Products</h1>
-      
+    <CategoryLayout title="Gaming">
       <div className="flex justify-between items-center mb-6">
         <div className="text-sm text-gray-500 dark:text-gray-400">
           {filteredProducts.length} products found
@@ -148,8 +158,8 @@ const GamingPage: React.FC = () => {
           onClick={() => setShowFilters(!showFilters)}
           className="btn btn-sm flex items-center gap-2"
           style={{ 
-            backgroundColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
-            borderColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
+            backgroundColor: currentTheme === 'dark' ? '#d45288' : '#003D2D',
+            borderColor: currentTheme === 'dark' ? '#d45288' : '#003D2D',
             color: currentTheme === 'dark' ? '#1f2937' : 'white'
           }}
         >
@@ -183,7 +193,7 @@ const GamingPage: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </CategoryLayout>
   );
 };
 

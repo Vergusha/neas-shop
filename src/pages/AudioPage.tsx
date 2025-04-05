@@ -4,6 +4,9 @@ import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import ProductFilters from '../components/ProductFilters';
 import { Product } from '../types/product';
+import { FaFilter } from 'react-icons/fa'; // Import FaFilter
+import CategoryLayout from '../components/CategoryLayout'; // Import CategoryLayout
+import { getTheme } from '../utils/themeUtils'; // Import getTheme
 
 // Remove local FilterOption interface and import it from ProductFilters
 type FilterValue = {
@@ -25,19 +28,39 @@ const AudioPage: React.FC = () => {
   const [filters, setFilters] = useState<FilterOption[]>([]);
   const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> | [number, number] }>({});
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [showFilters, setShowFilters] = useState<boolean>(true);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+  const [currentTheme, setCurrentTheme] = useState(getTheme());
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const collectionRef = collection(db, 'audio');
-      const querySnapshot = await getDocs(collectionRef);
-      const productsData: Product[] = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Product[];
+      setLoading(true);
+      try {
+        const collectionRef = collection(db, 'audio');
+        const querySnapshot = await getDocs(collectionRef);
+        const productsData: Product[] = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Product[];
 
-      setProducts(productsData);
-      setFilters(createFilters(productsData));
+        setProducts(productsData);
+        setFilteredProducts(productsData);
+        setFilters(createFilters(productsData));
+      } catch (error) {
+        console.error("Error fetching audio products:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchProducts();
@@ -107,19 +130,32 @@ const AudioPage: React.FC = () => {
     return [priceFilter, brandFilter];
   };
 
+  if (loading) {
+    return (
+      <CategoryLayout>
+        <div className="flex justify-center items-center py-20">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      </CategoryLayout>
+    );
+  }
+
   return (
-    <div className="container py-8 mx-auto px-4">
-      <h1 className="mb-4 text-2xl font-bold">Audio Products</h1>
-      
+    <CategoryLayout title="Audio Products">
       <div className="flex justify-between items-center mb-4">
         <div>
           <span className="text-sm text-gray-500">{filteredProducts.length} products found</span>
         </div>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn btn-sm bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
+          className="btn btn-sm flex items-center gap-2"
+          style={{ 
+            backgroundColor: currentTheme === 'dark' ? '#d45288' : '#003D2D',
+            borderColor: currentTheme === 'dark' ? '#d45288' : '#003D2D',
+            color: currentTheme === 'dark' ? '#1f2937' : 'white'
+          }}
         >
-          <FaFilter />
+          <FaFilter className="filter-icon" />
           {showFilters ? 'Hide Filters' : 'Show Filters'}
         </button>
       </div>
@@ -149,7 +185,7 @@ const AudioPage: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </CategoryLayout>
   );
 };
 

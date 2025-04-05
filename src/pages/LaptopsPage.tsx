@@ -4,44 +4,27 @@ import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
-import { trackProductInteraction } from '../utils/productTracking';
-import { extractFilters, FilterOption, applyFilters } from '../utils/filterUtils';
-import { getTheme } from '../utils/themeUtils'; // Import getTheme
+import CategoryLayout from '../components/CategoryLayout';
+import { getTheme } from '../utils/themeUtils';
+import { Product } from '../types/product';
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  brand?: string;
-  processor?: string;
-  ram?: string;
-  graphicsCard?: string;
-  storageType?: string;
-  screenSize?: string;
-  operatingSystem?: string;
-  color?: string;
-  category?: string;
-}
-
-interface FilterValue {
-  value: string | number;
+interface FilterOption {
+  value: string;
   count: number;
 }
 
 const LaptopsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [activeFilters, setActiveFilters] = useState<{ [key: string]: Set<string | number> | [number, number] }>({});
-  const [availableFilters, setAvailableFilters] = useState<FilterOption[]>([]);
-  const [filterOsType] = useState<'all' | 'mac' | 'windows'>('all');
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme()); // Add currentTheme state
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
+  const [activeFilters, setActiveFilters] = useState<string[]>([]); // Added missing state
+  const [filters, setFilters] = useState<Array<{ id: string; name: string; values: FilterOption[] }>>([]);
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
 
-  // Add effect to listen for theme changes
+  // Listen for theme changes
   useEffect(() => {
     const handleThemeChange = () => {
       setCurrentTheme(getTheme());
@@ -51,9 +34,13 @@ const LaptopsPage: React.FC = () => {
     return () => window.removeEventListener('themeChanged', handleThemeChange);
   }, []);
 
+  // Fetch laptops data
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchLaptops = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         const laptopsCollection = collection(db, 'laptops');
         const laptopsSnapshot = await getDocs(laptopsCollection);
         const laptopsList = laptopsSnapshot.docs.map(doc => ({
@@ -63,183 +50,219 @@ const LaptopsPage: React.FC = () => {
           description: doc.data().description || 'No description available',
           price: Number(doc.data().price) || 0,
           image: doc.data().image || '',
-          brand: doc.data().brand || '',
-          processor: doc.data().processor || '',
-          ram: doc.data().ram || '',
-          graphicsCard: doc.data().graphicsCard || '',
-          storageType: doc.data().storageType || '',
-          screenSize: doc.data().screenSize || '',
-          operatingSystem: doc.data().operatingSystem || '',
-          color: doc.data().color || '',
           category: 'laptops'
         })) as Product[];
         
         setProducts(laptopsList);
-        
-        // Generate filters from laptop properties
-        const filters = [
-          {
-            name: 'Brand',
-            key: 'brand',
-            values: getUniqueValues(laptopsList, 'brand')
-          },
-          {
-            name: 'Processor',
-            key: 'processor',
-            values: getUniqueValues(laptopsList, 'processor')
-          },
-          {
-            name: 'RAM',
-            key: 'ram',
-            values: getUniqueValues(laptopsList, 'ram')
-          },
-          {
-            name: 'Storage',
-            key: 'storageType',
-            values: getUniqueValues(laptopsList, 'storageType')
-          },
-          {
-            name: 'Screen Size',
-            key: 'screenSize',
-            values: getUniqueValues(laptopsList, 'screenSize')
-          },
-          {
-            name: 'Operating System',
-            key: 'operatingSystem',
-            values: getUniqueValues(laptopsList, 'operatingSystem')
-          },
-          {
-            name: 'Price',
-            key: 'price',
-            values: [],
-            type: 'range' as const,
-            min: Math.min(...laptopsList.map(p => p.price)),
-            max: Math.max(...laptopsList.map(p => p.price))
-          }
-        ];
-        
-        setAvailableFilters(filters.filter(f => f.values.length > 0 || f.key === 'price'));
         setFilteredProducts(laptopsList);
+        
+        // Extract filters from products
+        extractFilters(laptopsList);
       } catch (err) {
-        console.error('Error fetching laptop products:', err);
+        console.error('Error fetching laptops:', err);
         setError('Failed to load products');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchProducts();
+    
+    fetchLaptops();
   }, []);
-
-  // Function to get unique values for a property across products
-  const getUniqueValues = (products: Product[], key: string): FilterValue[] => {
-    const counts: Record<string, number> = {};
+  
+  // Extract filter options from products
+  const extractFilters = (products: Product[]) => {
+    const brandOptions: Record<string, number> = {};
+    const processorOptions: Record<string, number> = {};
+    const ramOptions: Record<string, number> = {};
+    const storageOptions: Record<string, number> = {};
+    
+    // Calculate price range
+    let minPrice = Number.MAX_VALUE;
+    let maxPrice = 0;
     
     products.forEach(product => {
-      const value = product[key as keyof Product];
-      if (typeof value === 'string' && value.trim()) {
-        counts[value] = (counts[value] || 0) + 1;
+      // Count brand occurrences
+      if (product.brand) {
+        brandOptions[product.brand] = (brandOptions[product.brand] || 0) + 1;
+      }
+      
+      // Count processor occurrences
+      if (product.processor) {
+        processorOptions[product.processor] = (processorOptions[product.processor] || 0) + 1;
+      }
+      
+      // Count RAM occurrences
+      if (product.ram) {
+        ramOptions[product.ram] = (ramOptions[product.ram] || 0) + 1;
+      }
+      
+      // Count storage occurrences
+      if (product.storage) {
+        storageOptions[product.storage] = (storageOptions[product.storage] || 0) + 1;
+      }
+      
+      // Update price range
+      const price = Number(product.price);
+      if (!isNaN(price)) {
+        minPrice = Math.min(minPrice, price);
+        maxPrice = Math.max(maxPrice, price);
       }
     });
     
-    return Object.entries(counts)
-      .map(([value, count]) => ({ value, count }))
-      .sort((a, b) => String(a.value).localeCompare(String(b.value)));
-  };
-
-  // Update filtered products when filters change
-  useEffect(() => {
-    let filtered = products;
+    // Round price range
+    minPrice = Math.floor(minPrice / 100) * 100;
+    maxPrice = Math.ceil(maxPrice / 100) * 100;
     
-    // Apply OS type filter first
-    if (filterOsType === 'mac') {
-      filtered = filtered.filter(product => 
-        product.brand === 'Apple' || 
-        (product.operatingSystem && product.operatingSystem.toLowerCase().includes('macos'))
-      );
-    } else if (filterOsType === 'windows') {
-      filtered = filtered.filter(product => 
-        product.brand !== 'Apple' && 
-        (!product.operatingSystem || !product.operatingSystem.toLowerCase().includes('macos'))
-      );
+    // Create filter arrays
+    const extractedFilters = [
+      {
+        id: 'price',
+        name: 'Price Range',
+        values: [],
+        type: 'range',
+        min: minPrice,
+        max: maxPrice
+      },
+      {
+        id: 'brand',
+        name: 'Brand',
+        values: Object.entries(brandOptions).map(([value, count]) => ({ value, count }))
+          .sort((a, b) => a.value.localeCompare(b.value))
+      },
+      {
+        id: 'processor',
+        name: 'Processor',
+        values: Object.entries(processorOptions).map(([value, count]) => ({ value, count }))
+          .sort((a, b) => a.value.localeCompare(b.value))
+      },
+      {
+        id: 'ram',
+        name: 'RAM',
+        values: Object.entries(ramOptions).map(([value, count]) => ({ value, count }))
+          .sort((a, b) => {
+            // Sort by RAM size (assuming format like "8GB")
+            const numA = parseInt(a.value.replace(/[^0-9]/g, '')) || 0;
+            const numB = parseInt(b.value.replace(/[^0-9]/g, '')) || 0;
+            return numA - numB;
+          })
+      },
+      {
+        id: 'storage',
+        name: 'Storage',
+        values: Object.entries(storageOptions).map(([value, count]) => ({ value, count }))
+          .sort((a, b) => {
+            // Sort by storage size (assuming format like "512GB")
+            const numA = parseInt(a.value.replace(/[^0-9]/g, '')) || 0;
+            const numB = parseInt(b.value.replace(/[^0-9]/g, '')) || 0;
+            return numA - numB;
+          })
+      }
+    ];
+    
+    setFilters(extractedFilters);
+  };
+  
+  // Handle filter changes
+  const handleFilterChange = (filterId: string, values: string[] | [number, number]) => {
+    const newSelectedFilters = { ...selectedFilters };
+    
+    if (filterId === 'price' && Array.isArray(values) && values.length === 2) {
+      newSelectedFilters[filterId] = values.map(String);
+    } else {
+      newSelectedFilters[filterId] = Array.isArray(values) 
+        ? values.map(String)
+        : [String(values)];
     }
     
-    // Then apply other filters
-    filtered = filtered.filter(product => {
-      return Object.entries(activeFilters).every(([filterKey, filterValues]) => {
+    // Remove empty filter selections
+    Object.keys(newSelectedFilters).forEach(key => {
+      if (newSelectedFilters[key].length === 0) {
+        delete newSelectedFilters[key];
+      }
+    });
+    
+    setSelectedFilters(newSelectedFilters);
+    
+    // Update active filters list for display
+    const newActiveFilters: string[] = [];
+    Object.entries(newSelectedFilters).forEach(([filterId, values]) => {
+      if (filterId === 'price' && values.length === 2) {
+        newActiveFilters.push(`Price: ${values[0]} - ${values[1]}`);
+      } else {
+        values.forEach(value => {
+          const filterName = filters.find(f => f.id === filterId)?.name || filterId;
+          newActiveFilters.push(`${filterName}: ${value}`);
+        });
+      }
+    });
+    
+    setActiveFilters(newActiveFilters);
+    
+    // Apply filters to products
+    applyFilters(newSelectedFilters);
+  };
+  
+  // Apply filters to products
+  const applyFilters = (selectedFilters: Record<string, string[]>) => {
+    const filtered = products.filter(product => {
+      return Object.entries(selectedFilters).every(([filterId, values]) => {
+        if (!values.length) return true;
+        
         // Handle price range filter
-        if (filterKey === 'price' && Array.isArray(filterValues) && filterValues.length === 2) {
-          const [min, max] = filterValues;
-          return product.price >= min && product.price <= max;
+        if (filterId === 'price' && values.length === 2) {
+          const [min, max] = values.map(Number);
+          const productPrice = Number(product.price);
+          return !isNaN(productPrice) && productPrice >= min && productPrice <= max;
         }
         
-        // Handle all other filters
-        if (filterValues instanceof Set) {
-          if (filterValues.size === 0) return true; // No filter values selected
-          
-          const productValue = product[filterKey as keyof Product];
-          if (typeof productValue === 'string') {
-            return filterValues.has(productValue);
-          }
-        }
-        
-        return true;
+        // Handle other filters
+        const productValue = String(product[filterId as keyof Product] || '');
+        return values.includes(productValue);
       });
     });
     
     setFilteredProducts(filtered);
-  }, [products, activeFilters, filterOsType]);
-
-  const handleFilterChange = (filterKey: string, values: string[] | [number, number]) => {
-    const newActiveFilters = { ...activeFilters };
-    
-    if (filterKey === 'price' && Array.isArray(values) && values.length === 2) {
-      newActiveFilters[filterKey] = values as [number, number];
-    } else if (Array.isArray(values)) {
-      if (values.length === 0) {
-        delete newActiveFilters[filterKey];
-      } else {
-        newActiveFilters[filterKey] = new Set(values.map(String));
-      }
-    }
-    
-    setActiveFilters(newActiveFilters);
-  };
-
-  // Трекинг взаимодействия с продуктом
-  const handleProductClick = (productId: string) => {
-    trackProductInteraction(productId, {
-      incrementClick: true, 
-      userId: 'anonymous' // Можно заменить на реальный userId если пользователь авторизован
-    });
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
+      <CategoryLayout>
+        <div className="flex justify-center items-center py-20">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      </CategoryLayout>
     );
   }
 
   if (error) {
-    return <div className="text-red-500 text-center py-8">{error}</div>;
+    return (
+      <CategoryLayout>
+        <div className="text-red-500 text-center py-8">{error}</div>
+      </CategoryLayout>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Laptops</h1>
-      
-      <div className="flex justify-between items-center mb-6">
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          {filteredProducts.length} products found
+    <CategoryLayout title="Laptops">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <span className="text-sm text-gray-500">{filteredProducts.length} products found</span>
+          {activeFilters.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {activeFilters.map((filter, index) => (
+                <span key={index} className="badge badge-sm bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                  {filter}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <button 
           onClick={() => setShowFilters(!showFilters)}
           className="btn btn-sm flex items-center gap-2"
           style={{ 
-            backgroundColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
-            borderColor: currentTheme === 'dark' ? '#eebbca' : '#003D2D',
+            backgroundColor: currentTheme === 'dark' ? '#d45288' : '#003D2D',
+            borderColor: currentTheme === 'dark' ? '#d45288' : '#003D2D',
             color: currentTheme === 'dark' ? '#1f2937' : 'white'
           }}
         >
@@ -252,8 +275,8 @@ const LaptopsPage: React.FC = () => {
         {showFilters && (
           <div className="md:col-span-1">
             <ProductFilters
-              filters={availableFilters}
-              activeFilters={activeFilters}
+              filters={filters}
+              selectedFilters={selectedFilters}
               onFilterChange={handleFilterChange}
             />
           </div>
@@ -261,21 +284,21 @@ const LaptopsPage: React.FC = () => {
 
         <div className={`${showFilters ? 'md:col-span-3' : 'md:col-span-4'}`}>
           {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredProducts.map((product) => (
-                <div key={product.id} onClick={() => handleProductClick(product.id)}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map(product => (
+                <div key={product.id} className="w-full">
                   <ProductCard product={product} />
                 </div>
               ))}
             </div>
           ) : (
             <div className="col-span-full text-center py-8">
-              No laptops found matching the selected filters.
+              No products found matching the selected filters.
             </div>
           )}
         </div>
       </div>
-    </div>
+    </CategoryLayout>
   );
 };
 
