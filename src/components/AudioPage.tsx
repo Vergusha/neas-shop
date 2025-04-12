@@ -22,18 +22,18 @@ const AudioPage: React.FC = () => {
     <div>
       <button 
         onClick={() => setShowFilters(!showFilters)}
-        className="btn btn-sm flex items-center gap-2"
+        className="flex items-center gap-2 btn btn-sm"
         style={{ 
           backgroundColor: currentTheme === 'dark' ? '#95c672' : '#003D2D',
           borderColor: currentTheme === 'dark' ? '#95c672' : '#003D2D',
           color: currentTheme === 'dark' ? '#1f2937' : 'white'
         }}
       >
-        <FaFilter className="filter-icon" />
+        <FaFilter classNafilter-iconicon" />
         {showFilters ? 'Hide Filters' : 'Show Filters'}
       </button>
       {showFilters && (
-        <div className="filters">
+        <div classNafiltersters">
           {/* Filter options go here */}
         </div>
       )}
