@@ -50,6 +50,10 @@ const Rating: React.FC<RatingProps> = ({
     }
   };
 
+  const getFilledColor = () => {
+    return theme === 'dark' ? '#95c672' : '#003D2D';
+  };
+
   return (
     <div className="flex items-center">
       {[...Array(maxValue)].map((_, i) => {
@@ -67,12 +71,12 @@ const Rating: React.FC<RatingProps> = ({
             }}
           >
             {isFilled ? (
-              <Star size={sizePx} fill="#FFCA28" color="#FFCA28" stroke="#E6A700" strokeWidth="1" />
+              <Star size={sizePx} fill={getFilledColor()} color={getFilledColor()} stroke="#E6A700" strokeWidth="1" />
             ) : isHalf ? (
               <div className="relative">
                 <Star size={sizePx} color="#e2e8f0" stroke="#888888" strokeWidth="1.5" />
                 <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
-                  <Star size={sizePx} fill="#FFCA28" color="#FFCA28" stroke="#E6A700" strokeWidth="1" />
+                  <Star size={sizePx} fill={getFilledColor()} color={getFilledColor()} stroke="#E6A700" strokeWidth="1" />
                 </div>
               </div>
             ) : (

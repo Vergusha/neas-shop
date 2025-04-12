@@ -18,6 +18,8 @@ interface ImageProperties {
 
 const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCancel }) => {
   const editorRef = createRef<AvatarEditorLib>();
+  const [uploading, setUploading] = useState(false);
+  const [isFileSelected, setIsFileSelected] = useState(false);
   const [imageProperties, setImageProperties] = useState<ImageProperties>({
     image: initialImage,
     position: { x: 0.5, y: 0.5 },
@@ -31,6 +33,7 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
         ...prev,
         image: e.target.files![0]
       }));
+      setIsFileSelected(true);
     }
   };
 
@@ -52,8 +55,9 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
 
   const handleSave = async () => {
     if (editorRef.current) {
-      const canvas = editorRef.current.getImageScaledToCanvas();
+      setUploading(true);
       try {
+        const canvas = editorRef.current.getImageScaledToCanvas();
         // Сжимаем изображение до очень маленького размера
         const compressedImage = await compressImageToBase64(canvas, 20);
         
@@ -63,21 +67,23 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
         }
 
         // Передаем в родительский компонент
-        onSave(compressedImage);
+        await onSave(compressedImage);
       } catch (error) {
         console.error('Error processing image:', error);
         alert('Failed to process image. Please try a smaller image or lower quality.');
+      } finally {
+        setUploading(false);
       }
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg max-w-md w-full">
-        <h3 className="text-xl font-bold mb-4">Edit Avatar</h3>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
+        <h3 className="text-xl font-bold mb-4 dark:text-gray-100">Edit Avatar</h3>
         
         <div className="relative mb-6">
-          <div className="dropzone border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-primary transition-colors">
+          <div className="dropzone border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 hover:border-[#003D2D] dark:hover:border-[#95c672] transition-colors">
             <AvatarEditorLib
               ref={editorRef}
               image={imageProperties.image}
@@ -105,7 +111,7 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
           
           <label 
             htmlFor="avatar-upload"
-            className="absolute bottom-2 right-2 btn btn-circle btn-sm btn-primary"
+            className="absolute bottom-2 right-2 btn btn-circle btn-sm bg-[#003D2D] hover:bg-[#005040] dark:bg-[#95c672] dark:hover:bg-[#7fb356] text-white dark:text-gray-900"
           >
             <FaUpload />
           </label>
@@ -114,7 +120,7 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
         <div className="space-y-4">
           {/* Zoom control */}
           <div>
-            <label className="block text-sm font-medium mb-2">Zoom</label>
+            <label className="block text-sm font-medium mb-2 dark:text-gray-200">Zoom</label>
             <input
               type="range"
               min={1}
@@ -122,23 +128,23 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
               step={0.01}
               value={imageProperties.scale}
               onChange={handleZoom}
-              className="range range-primary w-full"
+              className="range w-full"
             />
           </div>
 
           {/* Rotation controls */}
           <div>
-            <label className="block text-sm font-medium mb-2">Rotate</label>
+            <label className="block text-sm font-medium mb-2 dark:text-gray-200">Rotate</label>
             <div className="flex gap-2">
               <button 
                 onClick={() => handleRotate('left')}
-                className="btn btn-outline btn-square"
+                className="btn btn-outline border-[#003D2D] hover:bg-[#003D2D] hover:border-[#003D2D] dark:border-[#95c672] dark:hover:bg-[#95c672] dark:hover:border-[#95c672] dark:text-[#95c672] dark:hover:text-gray-900"
               >
                 <FaUndo />
               </button>
               <button 
                 onClick={() => handleRotate('right')}
-                className="btn btn-outline btn-square"
+                className="btn btn-outline border-[#003D2D] hover:bg-[#003D2D] hover:border-[#003D2D] dark:border-[#95c672] dark:hover:bg-[#95c672] dark:hover:border-[#95c672] dark:text-[#95c672] dark:hover:text-gray-900"
               >
                 <FaRedo />
               </button>
@@ -147,11 +153,22 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
 
           {/* Action buttons */}
           <div className="flex justify-end gap-2 mt-6">
-            <button onClick={onCancel} className="btn btn-ghost">
+            <button 
+              onClick={onCancel} 
+              className="btn btn-ghost dark:text-gray-200"
+            >
               Cancel
             </button>
-            <button onClick={handleSave} className="btn btn-primary">
-              Save
+            <button 
+              onClick={handleSave}
+              disabled={!isFileSelected || uploading}
+              className={`w-full py-2 px-4 rounded-lg text-white ${
+                isFileSelected 
+                  ? 'bg-gradient-to-r from-[#003D2D] to-[#005040] hover:from-[#005040] hover:to-[#006050] dark:from-[#95c672] dark:to-[#7fb356] dark:hover:from-[#7fb356] dark:hover:to-[#6fa346] dark:text-gray-900' 
+                  : 'bg-gray-400 dark:bg-gray-600'
+              } transition-colors`}
+            >
+              {uploading ? 'Uploading...' : 'Save Avatar'}
             </button>
           </div>
         </div>

@@ -18,10 +18,20 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 }) => {
   const [editedProduct, setEditedProduct] = useState<ProductForm>(product);
   const [isLoading, setIsLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setEditedProduct(product);
   }, [product]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await handleSubmit();
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -351,20 +361,19 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
           </div>
           
-          <div className="flex justify-end gap-2 mt-6">
+          <div className="mt-4 flex justify-end gap-2">
             <button
-              type="button"
               onClick={onClose}
-              className="btn btn-ghost"
+              className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
             >
               Cancel
             </button>
             <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isLoading}
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 bg-[#003D2D] dark:bg-[#95c672] text-white dark:text-gray-900 rounded hover:bg-[#005040] dark:hover:bg-[#7fb356] disabled:opacity-50"
             >
-              {isLoading ? <span className="loading loading-spinner"></span> : 'Save Changes'}
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>

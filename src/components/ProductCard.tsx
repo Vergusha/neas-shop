@@ -385,7 +385,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
               </button>
             </div>
             {isOnSale && (
-              <div className="sale-badge absolute top-2 right-2 z-10 bg-[#003D2D] dark:bg-[#eebbca] text-white dark:text-gray-900 text-xs font-semibold px-2 py-1 rounded-full">
+              <div className="sale-badge absolute top-2 right-2 z-10 bg-[#003D2D] dark:bg-[#95c672] text-white dark:text-gray-900 text-xs font-semibold px-2 py-1 rounded-full">
                 Sale!
               </div>
             )}

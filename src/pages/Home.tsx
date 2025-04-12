@@ -5,7 +5,6 @@ import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db, database } from '../firebaseConfig';
 import { ref, get, query, orderByChild, limitToLast } from 'firebase/database';
 import { Product } from '../types/product';
-import './Home.css'; // Import the CSS file for custom styles
 import { getTheme } from '../utils/themeUtils'; // Import the getTheme function
 
 const Home = () => {

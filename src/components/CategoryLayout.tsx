@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CategoryList from './CategoryList';
+import { Filter } from 'lucide-react';
 
 interface CategoryLayoutProps {
   children: React.ReactNode;
@@ -7,6 +8,12 @@ interface CategoryLayoutProps {
 }
 
 const CategoryLayout: React.FC<CategoryLayoutProps> = ({ children, title }) => {
+  const [showFilters, setShowFilters] = useState(false);
+  
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+
   return (
     <div className="container mx-auto px-4 py-4">
       {/* Category navigation section that will stay at the top */}
@@ -19,7 +26,16 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ children, title }) => {
       
       {/* Page title if provided */}
       {title && (
-        <h1 className="text-2xl font-bold mb-4">{title}</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold text-[#003D2D] dark:text-[#95c672]">{title}</h1>
+          <button
+            onClick={toggleFilters}
+            className="flex items-center gap-2 px-4 py-2 text-white bg-[#003D2D] dark:bg-[#95c672] dark:text-gray-900 rounded-lg hover:bg-[#005040] dark:hover:bg-[#7fb356] transition-colors"
+          >
+            <Filter size={20} />
+            <span className="hidden sm:inline">Filters</span>
+          </button>
+        </div>
       )}
       
       {/* Main content area */}

@@ -11,24 +11,21 @@ import GamingPage from './pages/GamingPage';
 import TvPage from './pages/TvPage';
 import SupportPage from './pages/SupportPage';
 import SearchResultsPage from './pages/SearchResultsPage';
-import Register from './pages/Register'; // Обновляем путь импорта с components на pages
+import Register from './pages/Register';
 import Login from './pages/Login';
 import ProfilePage from './pages/ProfilePage';
 import FavoritesPage from './pages/FavoritesPage';
 import CartPage from './pages/CartPage';
 import Home from './pages/Home';
 import Breadcrumbs from './components/Breadcrumbs';
-import AdminPanel from './components/AdminPanel'; // Fix import path
+import AdminPanel from './components/AdminPanel';
 import { isAdmin } from './utils/constants';
 import { getAuth } from 'firebase/auth';
-import { useEffect } from 'react'; // Add this import
-import { AuthProvider } from './utils/AuthProvider'; // Add this import
+import { useEffect } from 'react';
+import { AuthProvider } from './utils/AuthProvider';
 import LoginRedirect from './components/LoginRedirect';
-import KeywordDebugger from './utils/KeywordDebugger'; // Добавляем импорт компонента KeywordDebugger
-import LaptopsPage from './pages/LaptopsPage'; // Add this import
-import './styles/ProductCardStyles.css';
-import './styles/HeaderStyles.css';
-import './styles/CartStyles.css'; // Add the import for cart styles
+import KeywordDebugger from './utils/KeywordDebugger';
+import LaptopsPage from './pages/LaptopsPage';
 import { initializeTheme } from './utils/themeUtils';
 
 // Оптимизированные настройки для маршрутизации

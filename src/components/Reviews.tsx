@@ -3,7 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { ref, get, set, onValue, update, remove } from 'firebase/database';
 import { database } from '../firebaseConfig';
 import Rating from './Rating';
-import { User, Clock, ThumbsUp, Edit, Trash2, MessageSquare, X } from 'lucide-react';
+import { User, Clock, ThumbsUp, Edit, Trash2, MessageSquare, X, Star } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { defaultAvatarSVG, handleAvatarError } from '../utils/AvatarHelper';
@@ -922,7 +922,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
               <button 
                 className={`btn text-white ${
                   currentTheme === 'dark' 
-                    ? 'bg-[#eebbca] hover:bg-[#e0a1b7] border-[#eebbca]' 
+                    ? 'bg-[#95c672] hover:bg-[#7fb356] border-[#95c672]' 
                     : 'bg-[#003d2d] hover:bg-[#00513b] border-[#003d2d]'
                 }`}
                 onClick={handleSubmitReview}
@@ -982,8 +982,8 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                   <button 
                     className={`flex items-center gap-1 text-sm 
                       ${replyingToId === review.id 
-                        ? currentTheme === 'dark' ? 'text-[#eebbca] font-medium' : 'text-green-600 font-medium'
-                        : currentTheme === 'dark' ? 'text-[#eebbca] hover:text-[#e0a1b7]' : 'text-green-600 hover:text-green-700'
+                        ? currentTheme === 'dark' ? 'text-[#95c672] font-medium' : 'text-[#003D2D] font-medium'
+                        : currentTheme === 'dark' ? 'text-[#95c672] hover:text-[#7fb356]' : 'text-[#003D2D] hover:text-[#005040]'
                       }`}
                     onClick={() => setReplyingToId(replyingToId === review.id ? null : review.id)}
                   >
@@ -1031,8 +1031,8 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                     <button 
                       className={`text-white btn btn-sm border-none ${
                         currentTheme === 'dark' 
-                          ? 'bg-[#eebbca] hover:bg-[#e0a1b7]' 
-                          : 'bg-green-600 hover:bg-green-700'
+                          ? 'bg-[#95c672] hover:bg-[#7fb356]' 
+                          : 'bg-[#003D2D] hover:bg-[#005040]'
                       }`}
                       onClick={() => handleSubmitReply(review.id)}
                       disabled={isSubmittingReply || replyText.trim().length < 3}
@@ -1051,13 +1051,13 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
               {review.replies && Object.keys(review.replies).length > 0 && (
                 <div className="pt-3 mt-3 border-t border-gray-100">
                   <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
-                    <MessageSquare size={14} className={currentTheme === 'dark' ? 'text-[#eebbca]' : 'text-green-600'} />
+                    <MessageSquare size={14} className={currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003D2D]'} />
                     <span>Replies ({Object.keys(review.replies).length})</span>
                   </h4>
                   <div className="pl-4 space-y-3 border-l-2 border-gray-100">
                     {Object.values(review.replies).map((reply) => (
                       <div key={reply.id} className={`p-3 rounded-md ${reply.isAdmin 
-                        ? currentTheme === 'dark' ? 'bg-[#eebbca]/10 border border-[#eebbca]/20' : 'bg-green-50 border border-green-200' 
+                        ? currentTheme === 'dark' ? 'bg-[#95c672]/10 border border-[#95c672]/20' : 'bg-[#003D2D]/10 border border-[#003D2D]/20' 
                         : 'bg-gray-50'}`}>
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2">

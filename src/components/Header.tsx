@@ -2,16 +2,15 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, ShoppingCart, Heart, User, Bell, MessageSquare, LogOut, LogIn, Sun, Moon } from 'lucide-react';
 import logo from '../assets/logo.svg';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, where } from 'firebase/firestore'; // Remove 'update' from here
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import Toast from './Toast';
-import { getDatabase, ref, get, onValue, update } from 'firebase/database'; // Import update from here
+import { getDatabase, ref, get, onValue, update } from 'firebase/database';
 import { app } from '../firebaseConfig';
 import { database } from '../firebaseConfig';
 import { useAuth } from '../utils/AuthProvider';
 import UserAvatar from './UserAvatar';
-import '../styles/HeaderStyles.css';
 import { Link } from 'react-router-dom';
 import { FaShoppingCart, FaUser, FaBell } from 'react-icons/fa';
 import { IoMdSunny, IoMdMoon } from 'react-icons/io';
@@ -697,7 +696,7 @@ const Header: React.FC = () => {
                 <div className="absolute right-0 z-20 w-64 mt-2 overflow-hidden transition-all duration-300 bg-white rounded-lg shadow-xl animate-fade-in-down">
                   {user ? (
                     <>
-                      <div className={`px-6 pt-4 pb-3 bg-gradient-to-r ${currentTheme === 'dark' ? 'from-gray-700 to-[#d45288]' : 'from-[#003d2d] to-[#95c672]'}`}>
+                      <div className={`px-6 pt-4 pb-3 bg-gradient-to-r ${currentTheme === 'dark' ? 'from-gray-700 to-[#95c672]' : 'from-[#003d2d] to-[#95c672]'}`}>
                         <div className="flex items-center gap-3">
                           {user.photoURL ? (
                             <img 
@@ -733,8 +732,8 @@ const Header: React.FC = () => {
                           }}
                           className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
                         >
-                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(212,82,136,0.15)]' : 'bg-[rgba(149,198,114,0.15)]'}`}>
-                            <User size={16} className={`${currentTheme === 'dark' ? 'text-[#d45288]' : 'text-[#95c672]'}`} />
+                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(149,198,114,0.15)]' : 'bg-[rgba(0,61,45,0.15)]'}`}>
+                            <User size={16} className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003d2d]'}`} />
                           </div>
                           <span className="font-medium text-gray-700">Profile</span>
                         </a>
@@ -755,7 +754,7 @@ const Header: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <div className={`px-6 pt-4 pb-3 bg-gradient-to-r ${currentTheme === 'dark' ? 'from-gray-700 to-[#d45288]' : 'from-[#003d2d] to-[#95c672]'}`}>
+                      <div className={`px-6 pt-4 pb-3 bg-gradient-to-r ${currentTheme === 'dark' ? 'from-gray-700 to-[#95c672]' : 'from-[#003d2d] to-[#95c672]'}`}>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center justify-center w-12 h-12 text-xl font-semibold text-white bg-gray-500 border-2 border-white rounded-full shadow-md">
                             <User size={24} />
@@ -773,8 +772,8 @@ const Header: React.FC = () => {
                           }}
                           className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
                         >
-                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(212,82,136,0.15)]' : 'bg-[rgba(149,198,114,0.15)]'}`}>
-                            <LogIn size={16} className={`${currentTheme === 'dark' ? 'text-[#d45288]' : 'text-[#95c672]'}`} />
+                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(149,198,114,0.15)]' : 'bg-[rgba(0,61,45,0.15)]'}`}>
+                            <LogIn size={16} className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003d2d]'}`} />
                           </div>
                           <span className="font-medium text-gray-700">Sign In</span>
                         </a>
@@ -787,8 +786,8 @@ const Header: React.FC = () => {
                           }}
                           className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
                         >
-                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(212,82,136,0.15)]' : 'bg-[rgba(149,198,114,0.15)]'}`}>
-                            <User size={16} className={`${currentTheme === 'dark' ? 'text-[#d45288]' : 'text-[#95c672]'}`} />
+                          <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(149,198,114,0.15)]' : 'bg-[rgba(0,61,45,0.15)]'}`}>
+                            <User size={16} className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003d2d]'}`} />
                           </div>
                           <span className="font-medium text-gray-700">Register</span>
                         </a>

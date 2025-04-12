@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import '../styles/ColorVariants.css';
 import { getTheme } from '../utils/themeUtils';
 
 interface ColorVariant {
@@ -66,12 +65,15 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
           const isCurrentVariant = variant.id === currentVariantId;
           
           return (
-            <div
+            <button
               key={variant.id}
-              className={`product-color-variant ${isCurrentVariant ? 'active' : ''} ${isPending ? 'opacity-70 pointer-events-none' : ''}`}
               onClick={() => handleVariantClick(variant.id)}
-              title={`${variant.color} - Click to view this variant`}
-              data-testid={`color-variant-${variant.color}`}
+              className={`relative p-2 rounded-lg transition-all duration-200 ${
+                variant.id === currentVariantId
+                  ? 'ring-2 ring-offset-2 ring-[#003D2D] dark:ring-[#95c672]'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+              disabled={isPending}
             >
               <div className="product-color-image">
                 <img 
@@ -86,7 +88,7 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
               {isCurrentVariant && (
                 <div className="active-indicator"></div>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
