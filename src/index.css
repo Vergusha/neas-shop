@@ -624,6 +624,191 @@ footer.bg-\[\#003d2d\] div {
   [data-theme="dark"] .category-card:not(.active):hover {
     background-color: #374151;
   }
+
+  /* Styles for product page price block */
+  .product-page-price-block {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+
+  .product-page-price-block .price-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, #003d2d, #005040);
+    border-radius: 0.5rem;
+    transform: rotate(-1deg) scale(1.05);
+    z-index: 0;
+  }
+
+  [data-theme="dark"] .product-page-price-block .price-gradient {
+    background: linear-gradient(to right, #95c672, #7fb356);
+  }
+
+  .product-page-price-container {
+    position: relative;
+    background-color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 2px solid #003d2d;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+  }
+
+  [data-theme="dark"] .product-page-price-container {
+    background-color: #1f2937;
+    border-color: #95c672;
+  }
+
+  .product-page-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  [data-theme="dark"] .product-page-price {
+    color: #f3f4f6;
+  }
+
+  .product-page-price-currency {
+    color: #003d2d;
+  }
+
+  [data-theme="dark"] .product-page-price-currency {
+    color: #95c672;
+  }
+
+  /* Styles for quantity controls */
+  .quantity-control-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .quantity-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4b5563;
+  }
+
+  [data-theme="dark"] .quantity-label {
+    color: #d1d5db;
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+  }
+
+  .quantity-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #003d2d;
+    border: 2px solid #003d2d;
+    transition: all 0.2s;
+  }
+
+  [data-theme="dark"] .quantity-button {
+    color: #95c672;
+    border-color: #95c672;
+  }
+
+  .quantity-button:hover {
+    background-color: #003d2d;
+    color: white;
+  }
+
+  [data-theme="dark"] .quantity-button:hover {
+    background-color: #95c672;
+    color: #1f2937;
+  }
+
+  .quantity-button-minus {
+    border-radius: 0.5rem 0 0 0.5rem;
+    border-right: none;
+  }
+
+  .quantity-button-plus {
+    border-radius: 0 0.5rem 0.5rem 0;
+    border-left: none;
+  }
+
+  .quantity-input {
+    width: 3rem;
+    height: 2.5rem;
+    border-top: 2px solid #003d2d;
+    border-bottom: 2px solid #003d2d;
+    border-left: none;
+    border-right: none;
+    text-align: center;
+    font-weight: 500;
+    color: #003d2d;
+  }
+
+  [data-theme="dark"] .quantity-input {
+    border-color: #95c672;
+    color: #95c672;
+    background-color: #1f2937;
+  }
+
+  /* Add to cart button */
+  .add-to-cart-button {
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: #003d2d;
+    color: white;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  [data-theme="dark"] .add-to-cart-button {
+    background-color: #95c672;
+    color: #1f2937;
+  }
+
+  .add-to-cart-button:hover {
+    background-color: #005040;
+  }
+
+  [data-theme="dark"] .add-to-cart-button:hover {
+    background-color: #7fb356;
+  }
+
+  /* Success message animation */
+  .add-success-message {
+    padding: 0.75rem;
+    margin-bottom: 1.5rem;
+    background-color: #dcfce7;
+    border: 1px solid #86efac;
+    border-radius: 0.5rem;
+    color: #166534;
+    text-align: center;
+    animation: fade-in-down 0.3s ease-out;
+  }
+
+  [data-theme="dark"] .add-success-message {
+    background-color: rgba(149, 198, 114, 0.2);
+    border-color: rgba(149, 198, 114, 0.4);
+    color: #95c672;
+  }
+
+  /* Стилизация блока цены на странице продукта */
+  .product-price-block {
+    background-color: white !important;
+    border-color: #003d2d !important;
+  }
+
+  [data-theme="dark"] .product-price-block {
+    background-color: #1f2937 !important;
+    border-color: #95c672 !important;
+  }
 }
 
 /* Анимации */

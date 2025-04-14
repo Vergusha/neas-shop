@@ -727,12 +727,12 @@ const ProductPage: React.FC = () => {
 
             {/* Удалили секцию Product Specifications */}
             
-            {/* Обновленный блок с ценой - меняем цвет на точный цвет логотипа #003D2D */}
-            <div className="relative mb-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#003D2D] to-[#005040] dark:from-[#95c672] dark:to-[#7fb356] rounded-lg transform -rotate-1 scale-105"></div>
-              <div className="relative bg-white dark:bg-gray-800 py-3 px-4 rounded-lg border-2 border-[#003D2D] dark:border-[#95c672] shadow-md">
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {Number(product?.price).toFixed(2)} <span className="text-[#003D2D] dark:text-[#95c672]">NOK</span>
+            {/* Обновленный блок с ценой - используем новые CSS классы */}
+            <div className="product-page-price-block">
+              <div className="price-gradient"></div>
+              <div className="product-page-price-container">
+                <p className="product-page-price">
+                  {Number(product?.price).toFixed(2)} <span className="product-page-price-currency">NOK</span>
                 </p>
                 {product?.price > 1000 && (
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -742,56 +742,52 @@ const ProductPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Quantity selector and Add to cart button in one row */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-gray-700">Quantity:</span>
-                <div className="flex items-center">
-                  <button 
-                    className="w-10 h-10 flex items-center justify-center text-[#003D2D] dark:text-[#95c672] hover:bg-[#003D2D] dark:hover:bg-[#95c672] hover:text-white dark:hover:text-gray-900 border-2 border-r-0 border-[#003D2D] dark:border-[#95c672] rounded-l-lg transition-all duration-200 active:scale-95"
-                    onClick={decrementQuantity}
-                    disabled={quantity <= 1}
-                  >
-                    <Minus size={16} className="stroke-[2.5]" />
-                  </button>
-                  <div className="relative flex items-center">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={quantity}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value.replace(/[^0-9]/g, ''));
-                        if (!isNaN(val) && val > 0) {
-                          setQuantity(val);
-                        } else if (e.target.value === '') {
-                          setQuantity(1);
-                        }
-                      }}
-                      className="w-12 h-10 text-center border-y-2 border-[#003D2D] dark:border-[#95c672] focus:outline-none text-[#003D2D] dark:text-[#95c672] font-medium [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      min="1"
-                    />
-                  </div>
-                  <button 
-                    className="w-10 h-10 flex items-center justify-center text-[#003D2D] dark:text-[#95c672] hover:bg-[#003D2D] dark:hover:bg-[#95c672] hover:text-white dark:hover:text-gray-900 border-2 border-l-0 border-[#003D2D] dark:border-[#95c672] rounded-r-lg transition-all duration-200 active:scale-95"
-                    onClick={incrementQuantity}
-                  >
-                    <Plus size={16} className="stroke-[2.5]" />
-                  </button>
-                </div>
-
-                <button
-                  className="flex items-center justify-center gap-2 px-6 py-3 text-white dark:text-gray-900 bg-[#003D2D] dark:bg-[#95c672] rounded-lg hover:bg-[#005040] dark:hover:bg-[#7fb356] transition-all duration-200 active:scale-95"
-                  onClick={addToCart}
+            {/* Quantity selector and Add to cart button в одном ряду */}
+            <div className="quantity-control-wrapper">
+              <span className="quantity-label">Quantity:</span>
+              <div className="quantity-controls">
+                <button 
+                  className="quantity-button quantity-button-minus"
+                  onClick={decrementQuantity}
+                  disabled={quantity <= 1}
                 >
-                  {window.innerWidth <= 768 ? <ShoppingCart size={22} /> : 'Add to Cart'}
+                  <Minus size={16} className="stroke-[2.5]" />
+                </button>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value.replace(/[^0-9]/g, ''));
+                    if (!isNaN(val) && val > 0) {
+                      setQuantity(val);
+                    } else if (e.target.value === '') {
+                      setQuantity(1);
+                    }
+                  }}
+                  className="quantity-input"
+                  min="1"
+                />
+                <button 
+                  className="quantity-button quantity-button-plus"
+                  onClick={incrementQuantity}
+                >
+                  <Plus size={16} className="stroke-[2.5]" />
                 </button>
               </div>
+
+              <button
+                className="add-to-cart-button"
+                onClick={addToCart}
+              >
+                {window.innerWidth <= 768 ? <ShoppingCart size={22} /> : 'Add to Cart'}
+              </button>
             </div>
             
             {/* Success message with animation */}
             {addedToCart && (
-              <div className="p-3 mb-6 text-center text-green-700 bg-green-100 border border-green-200 rounded-lg animate-fade-in-down">
+              <div className="add-success-message">
                 <div className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
