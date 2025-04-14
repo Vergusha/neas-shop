@@ -1,9 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { Link } from 'react-router-dom';
 import { getDatabase, ref, get, update } from 'firebase/database';
+import { getTheme } from '../utils/themeUtils';
 
 const Login: React.FC = () => {
+  // Добавляем отслеживание текущей темы
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
+  
+  // Добавляем эффект для отслеживания изменений темы
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -52,11 +66,19 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 py-12 bg-gray-50 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white shadow-lg rounded-xl">
+    <div className={`flex items-center justify-center min-h-screen px-4 py-12 sm:px-6 lg:px-8 ${
+      currentTheme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+    }`}>
+      <div className={`w-full max-w-md p-8 space-y-8 shadow-lg rounded-xl ${
+        currentTheme === 'dark' ? 'bg-gray-800 text-gray-100' : 'bg-white'
+      }`}>
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Welcome back!</h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <h2 className={`mt-6 text-3xl font-extrabold ${
+            currentTheme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+          }`}>Welcome back!</h2>
+          <p className={`mt-2 text-sm ${
+            currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+          }`}>
             Please sign in to your account
           </p>
         </div>
@@ -64,7 +86,9 @@ const Login: React.FC = () => {
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className={`block text-sm font-medium ${
+                currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Email address
               </label>
               <input
@@ -72,14 +96,20 @@ const Login: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#003D2D] focus:border-[#003D2D] sm:text-sm"
+                className={`appearance-none relative block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 sm:text-sm ${
+                  currentTheme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 focus:ring-[#95c672] focus:border-[#95c672]' 
+                    : 'border-gray-300 focus:ring-[#003D2D] focus:border-[#003D2D]'
+                }`}
                 placeholder="Enter your email"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className={`block text-sm font-medium ${
+                currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Password
               </label>
               <input
@@ -87,7 +117,11 @@ const Login: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#003D2D] focus:border-[#003D2D] sm:text-sm"
+                className={`appearance-none relative block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 sm:text-sm ${
+                  currentTheme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 focus:ring-[#95c672] focus:border-[#95c672]' 
+                    : 'border-gray-300 focus:ring-[#003D2D] focus:border-[#003D2D]'
+                }`}
                 placeholder="Enter your password"
                 required
               />
@@ -95,10 +129,14 @@ const Login: React.FC = () => {
           </div>
 
           {error && (
-            <div className="p-4 border-l-4 border-red-400 bg-red-50">
+            <div className={`p-4 border-l-4 border-red-400 ${
+              currentTheme === 'dark' ? 'bg-red-900/30' : 'bg-red-50'
+            }`}>
               <div className="flex">
                 <div className="ml-3">
-                  <p className="text-sm text-red-700">{error}</p>
+                  <p className={`text-sm ${
+                    currentTheme === 'dark' ? 'text-red-300' : 'text-red-700'
+                  }`}>{error}</p>
                 </div>
               </div>
             </div>
@@ -107,7 +145,11 @@ const Login: React.FC = () => {
           <div className="mt-6 space-y-4">
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#003D2D] hover:bg-[#004D3D] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#003D2D] transition-all duration-200 text-base shadow-md"
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white transition-all duration-200 text-base shadow-md ${
+                currentTheme === 'dark'
+                  ? 'bg-[#95c672] hover:bg-[#7fb356] focus:ring-[#95c672]'
+                  : 'bg-[#003D2D] hover:bg-[#004D3D] focus:ring-[#003D2D]'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2`}
               disabled={isLoading}
             >
               {isLoading && (
@@ -120,7 +162,11 @@ const Login: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                <a href="#" className="font-medium text-[#003D2D] hover:text-[#004D3D] transition-colors duration-200">
+                <a href="#" className={`font-medium transition-colors duration-200 ${
+                  currentTheme === 'dark'
+                    ? 'text-[#95c672] hover:text-[#a6d285]'
+                    : 'text-[#003D2D] hover:text-[#004D3D]'
+                }`}>
                   Forgot your password?
                 </a>
               </div>
@@ -129,17 +175,25 @@ const Login: React.FC = () => {
 
           <div className="relative mt-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className={`w-full border-t ${
+                currentTheme === 'dark' ? 'border-gray-700' : 'border-gray-300'
+              }`}></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 text-gray-500 bg-white">New to our store?</span>
+              <span className={`px-2 ${
+                currentTheme === 'dark' ? 'text-gray-400 bg-gray-800' : 'text-gray-500 bg-white'
+              }`}>New to our store?</span>
             </div>
           </div>
 
           <div className="mt-6">
             <Link
               to="/register"
-              className="inline-flex justify-center w-full px-4 py-3 text-sm font-medium border rounded-md border-[#003D2D] text-[#003D2D] hover:bg-[#003D2D] hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#003D2D] transition-all duration-200 text-base shadow-md"
+              className={`inline-flex justify-center w-full px-4 py-3 text-sm font-medium border rounded-md transition-all duration-200 text-base shadow-md ${
+                currentTheme === 'dark'
+                  ? 'border-[#95c672] text-[#95c672] hover:bg-[#95c672] hover:text-gray-900 focus:ring-[#95c672]'
+                  : 'border-[#003D2D] text-[#003D2D] hover:bg-[#003D2D] hover:text-white focus:ring-[#003D2D]'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2`}
             >
               Create an account
             </Link>

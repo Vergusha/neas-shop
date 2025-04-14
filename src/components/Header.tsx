@@ -536,7 +536,7 @@ const Header: React.FC = () => {
           </a>
 
           {/* Desktop Search bar - visible only on md and larger screens */}
-          <div className="w-full order-3 md:order-2 md:w-auto md:flex-1 md:mx-4 lg:mx-8 mt-2 md:mt-0">
+          <div className="hidden w-full md:block md:order-2 md:w-auto md:flex-1 md:mx-4 lg:mx-8 md:mt-0">
             <form onSubmit={handleSearch} className="relative flex items-center w-full">
               <Search className="absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2" size={20} />
               <input

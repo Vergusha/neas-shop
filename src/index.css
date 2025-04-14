@@ -59,6 +59,12 @@ body {
   background-color: rgba(31, 41, 55, var(--tw-bg-opacity)) !important; /* bg-gray-800 */
 }
 
+/* Fix Login and Register page background in dark mode */
+[data-theme="dark"] .bg-gray-50 {
+  --tw-bg-opacity: 1;
+  background-color: rgba(17, 24, 39, var(--tw-bg-opacity)) !important; /* bg-gray-900 */
+}
+
 [data-theme="dark"] .text-gray-800 {
   --tw-text-opacity: 1;
   color: rgba(229, 231, 235, var(--tw-text-opacity)) !important; /* text-gray-200 */
@@ -126,6 +132,13 @@ body {
   color: rgba(229, 231, 235, var(--tw-text-opacity)) !important; /* text-gray-200 */
 }
 
+/* Fix text color for auth pages */
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgba(209, 213, 219, var(--tw-text-opacity)) !important; /* text-gray-300 */
+}
+
 [data-theme="dark"] input,
 [data-theme="dark"] select,
 [data-theme="dark"] textarea {
@@ -145,6 +158,33 @@ body {
 [data-theme="dark"] .hover\:bg-gray-100:hover {
   --tw-bg-opacity: 1;
   background-color: rgba(55, 65, 81, var(--tw-bg-opacity)) !important; /* bg-gray-700 */
+}
+
+/* Login and Register form specific styles */
+[data-theme="dark"] .min-h-screen.bg-gray-50 {
+  background-color: #111827 !important; /* bg-gray-900 */
+}
+
+[data-theme="dark"] .min-h-screen.bg-gray-50 .bg-white {
+  background-color: #1f2937 !important; /* bg-gray-800 */
+}
+
+[data-theme="dark"] .min-h-screen.bg-gray-50 .text-gray-900 {
+  color: #f9fafb !important; /* text-gray-50 */
+}
+
+[data-theme="dark"] .min-h-screen.bg-gray-50 .text-gray-600 {
+  color: #d1d5db !important; /* text-gray-300 */
+}
+
+/* Fix divider in login/register forms */
+[data-theme="dark"] .min-h-screen.bg-gray-50 .border-gray-300 {
+  border-color: #4b5563 !important; /* border-gray-600 */
+}
+
+[data-theme="dark"] .min-h-screen.bg-gray-50 .text-gray-500.bg-white {
+  color: #9ca3af !important; /* text-gray-400 */
+  background-color: #1f2937 !important; /* bg-gray-800 */
 }
 
 /* Fix profile dropdown colors */
@@ -1289,4 +1329,48 @@ footer.bg-\[\#003d2d\] div {
   border-color: rgba(75, 85, 99, var(--tw-border-opacity)) !important;
   --tw-text-opacity: 1;
   color: rgba(229, 231, 235, var(--tw-text-opacity)) !important;
+}
+
+/* Специальные стили для формы входа/регистрации в темной теме */
+[data-theme="dark"] .flex.items-center.justify-center.min-h-screen.px-4.py-12.bg-gray-50 {
+  background-color: #111827 !important; /* bg-gray-900 */
+}
+
+[data-theme="dark"] .w-full.max-w-md.p-8.space-y-8.bg-white.shadow-lg.rounded-xl {
+  background-color: #1f2937 !important; /* bg-gray-800 */
+  color: #f3f4f6 !important; /* text-gray-100 */
+}
+
+/* Кнопка логина и регистрации в темной теме */
+[data-theme="dark"] .group.relative.w-full.flex.justify-center.py-3.px-4.border.border-transparent.text-sm.font-medium.rounded-md.text-white.bg-\[\#003D2D\],
+[data-theme="dark"] button.bg-\[\#003D2D\] {
+  background-color: #95c672 !important;
+  border-color: #95c672 !important;
+  color: #1f2937 !important;
+}
+
+[data-theme="dark"] .group.relative.w-full.flex.justify-center.py-3.px-4.border.border-transparent.text-sm.font-medium.rounded-md.text-white.bg-\[\#003D2D\]:hover,
+[data-theme="dark"] button.bg-\[\#003D2D\]:hover {
+  background-color: #7fb356 !important;
+  border-color: #7fb356 !important;
+}
+
+/* Ссылки в формах авторизации в темной теме */
+[data-theme="dark"] a.font-medium.text-\[\#003D2D\],
+[data-theme="dark"] .font-medium.text-\[\#003D2D\] {
+  color: #95c672 !important;
+}
+
+[data-theme="dark"] a.font-medium.text-\[\#003D2D\]:hover,
+[data-theme="dark"] .font-medium.text-\[\#003D2D\]:hover {
+  color: #a6d285 !important;
+}
+
+/* Исправление цвета для забытого пароля и других ссылок */
+[data-theme="dark"] .text-\[\#003D2D\] {
+  color: #95c672 !important;
+}
+
+[data-theme="dark"] .hover\:text-\[\#004D3D\]:hover {
+  color: #a6d285 !important;
 }
