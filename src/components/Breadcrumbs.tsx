@@ -192,7 +192,7 @@ const Breadcrumbs: React.FC = () => {
               {index < breadcrumbs.length - 1 ? (
                 <Link 
                   to={breadcrumb.path} 
-                  className="hover:text-primary dark:hover:text-[#eebbca]"
+                  className="hover:text-[#003d2d] dark:hover:text-[#95c672]"
                 >
                   {breadcrumb.name}
                 </Link>
