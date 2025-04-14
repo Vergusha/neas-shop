@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, ShoppingCart, Heart, User, Bell, MessageSquare, LogOut, LogIn, Sun, Moon } from 'lucide-react';
 import logo from '../assets/logo.svg';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import Toast from './Toast';
@@ -52,21 +52,98 @@ const Header: React.FC = () => {
       }
 
       try {
-        const collections = ['mobile', 'products', 'laptops', 'audio', 'tv', 'gaming']; // Обновляем список коллекций
+        const collections = ['mobile', 'products', 'laptops', 'audio', 'tv', 'gaming']; 
         let results: any[] = [];
+        
+        // Нечувствительный к регистру поиск
+        const lowerQuery = searchQuery.toLowerCase().trim();
+        // Разбиваем поисковый запрос на отдельные слова для более точного поиска
+        const searchWords = lowerQuery.split(/\s+/).filter(word => word.length > 0);
+        
+        // Проверяем, содержит ли запрос специальные фразы для iPhone
+        const isIphoneSearch = lowerQuery.includes('iphone');
+        const isIphone15Search = isIphoneSearch && lowerQuery.includes('15');
+        const isIphoneProSearch = isIphoneSearch && lowerQuery.includes('pro');
 
         for (const collectionName of collections) {
+          // Получаем документы из коллекции
           const q = query(
             collection(db, collectionName),
-            where('name', '>=', searchQuery),
-            where('name', '<=', searchQuery + '\uf8ff')
+            limit(40)
           );
           const querySnapshot = await getDocs(q);
-          const collectionResults = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          
+          // Фильтруем документы локально
+          const collectionResults = querySnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(item => {
+              const name = (item.name || '').toLowerCase();
+              const brand = (item.brand || '').toLowerCase();
+              const model = (item.model || '').toLowerCase();
+              const description = (item.description || '').toLowerCase();
+              const memory = (item.memory || '').toLowerCase();
+              const color = (item.color || '').toLowerCase();
+              
+              // Специальная обработка для iPhone
+              if (isIphoneSearch && brand === 'apple' && name.includes('iphone')) {
+                if (isIphone15Search && isIphoneProSearch) {
+                  return name.includes('15') && name.includes('pro');
+                } else if (isIphone15Search) {
+                  return name.includes('15');
+                } else if (isIphoneProSearch) {
+                  return name.includes('pro');
+                } else {
+                  return true; // любой iPhone
+                }
+              }
+              
+              // Объединяем все поля в один текст для поиска
+              const combinedText = `${brand} ${name} ${model} ${description} ${memory} ${color}`;
+              
+              // Если хотя бы половина слов из запроса найдено, считаем товар соответствующим
+              // или если найдено хотя бы одно слово при поиске из 1-2 слов
+              let matchCount = 0;
+              searchWords.forEach(word => {
+                if (combinedText.includes(word)) {
+                  matchCount++;
+                }
+              });
+              
+              const matchThreshold = searchWords.length <= 2 ? 1 : Math.ceil(searchWords.length / 2);
+              
+              return matchCount >= matchThreshold;
+            });
+            
           results = [...results, ...collectionResults];
         }
 
-        setSearchResults(results);
+        // Сортируем результаты - сначала точные соответствия бренду и модели
+        results.sort((a, b) => {
+          // Для iPhone Pro сначала показываем Pro модели
+          if (isIphoneProSearch) {
+            const aHasPro = (a.model || '').toLowerCase().includes('pro') || 
+                           (a.name || '').toLowerCase().includes('pro');
+            const bHasPro = (b.model || '').toLowerCase().includes('pro') || 
+                           (b.name || '').toLowerCase().includes('pro');
+                           
+            if (aHasPro && !bHasPro) return -1;
+            if (!aHasPro && bHasPro) return 1;
+          }
+          
+          const aName = (a.name || '').toLowerCase();
+          const aBrand = (a.brand || '').toLowerCase();
+          const bName = (b.name || '').toLowerCase();
+          const bBrand = (b.brand || '').toLowerCase();
+          
+          // Если точное совпадение с названием
+          if (aName.includes(lowerQuery) && !bName.includes(lowerQuery)) return -1;
+          if (!aName.includes(lowerQuery) && bName.includes(lowerQuery)) return 1;
+          
+          return 0;
+        });
+
+        // Ограничиваем количество результатов
+        setSearchResults(results.slice(0, 10));
       } catch (error) {
         console.error("Error fetching search results: ", error);
       }
@@ -562,12 +639,35 @@ const Header: React.FC = () => {
               {showResults && searchResults.length > 0 && (
                 <div 
                   ref={searchResultsRef}
-                  className="absolute left-0 right-0 z-20 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg search-results-dropdown"
+                  className={`absolute left-0 right-0 z-20 mt-2 rounded-lg shadow-lg search-results-dropdown ${
+                    currentTheme === 'dark' ? 'bg-[#1f2937] border border-gray-600' : 'bg-white border border-gray-300'
+                  }`}
                 >
                   {searchResults.map((result) => (
-                    <div key={result.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => navigate(`/product/${result.id}`)}>
-                      <img src={result.image} alt={result.name} className="inline-block w-8 h-8 mr-2" />
-                      <span>{result.name}</span>
+                    <div key={result.id} className={`p-3 cursor-pointer border-b ${
+                      currentTheme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-200'
+                    }`} onClick={() => navigate(`/product/${result.id}`)}>
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 w-14 h-14 bg-white rounded-sm p-1">
+                          <img src={result.image} alt={result.name} className="object-contain w-full h-full" />
+                        </div>
+                        <div className="flex-1 pl-4">
+                          <div className="flex justify-between items-start">
+                            <div className={`font-medium pr-2 ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                              {`${result.brand} ${result.model || ''}`}
+                              {result.memory ? ` ${result.memory}` : ''}
+                              {result.modelNumber ? ` ${result.modelNumber}` : ''}
+                              {result.processor ? ` ${result.processor}` : ''}
+                              {result.ram ? ` ${result.ram}` : ''}
+                              {result.storageType ? ` ${result.storageType}` : ''}
+                              {result.color ? ` ${result.color}` : ''}
+                            </div>
+                            <div className={`font-semibold whitespace-nowrap ${
+                              currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003d2d]'
+                            }`}>{result.price} NOK</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -872,14 +972,35 @@ const Header: React.FC = () => {
             {/* Mobile search results */}
             {showResults && searchResults.length > 0 && (
               <div 
-                className={`absolute left-0 right-0 z-20 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg search-results-dropdown ${
-                  currentTheme === 'dark' ? 'bg-gray-800 border-gray-600' : ''
+                className={`absolute left-0 right-0 z-20 mt-2 rounded-lg shadow-lg search-results-dropdown ${
+                  currentTheme === 'dark' ? 'bg-[#1f2937] border border-gray-600' : 'bg-white border border-gray-300'
                 }`}
               >
                 {searchResults.map((result) => (
-                  <div key={result.id} className={`p-2 cursor-pointer ${currentTheme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`} onClick={() => navigate(`/product/${result.id}`)}>
-                    <img src={result.image} alt={result.name} className="inline-block w-8 h-8 mr-2" />
-                    <span className={currentTheme === 'dark' ? 'text-gray-200' : ''}>{result.name}</span>
+                  <div key={result.id} className={`p-3 cursor-pointer border-b ${
+                    currentTheme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-200'
+                  }`} onClick={() => navigate(`/product/${result.id}`)}>
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 w-14 h-14 bg-white rounded-sm p-1">
+                        <img src={result.image} alt={result.name} className="object-contain w-full h-full" />
+                      </div>
+                      <div className="flex-1 pl-4">
+                        <div className="flex justify-between items-start">
+                          <div className={`font-medium pr-2 ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                            {`${result.brand} ${result.model || ''}`}
+                            {result.memory ? ` ${result.memory}` : ''}
+                            {result.modelNumber ? ` ${result.modelNumber}` : ''}
+                            {result.processor ? ` ${result.processor}` : ''}
+                            {result.ram ? ` ${result.ram}` : ''}
+                            {result.storageType ? ` ${result.storageType}` : ''}
+                            {result.color ? ` ${result.color}` : ''}
+                          </div>
+                          <div className={`font-semibold whitespace-nowrap ${
+                            currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003d2d]'
+                          }`}>{result.price} NOK</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

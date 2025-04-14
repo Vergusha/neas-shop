@@ -48,99 +48,78 @@ const SearchResultsPage: React.FC = () => {
         // Добавляем логирование для отладки
         console.log(`🔍 Searching for "${q}" with parameter types (q and query)`);
         
-        // Создаем несколько вариантов поискового запроса для повышения шансов на совпадение
+        // Разбиваем поисковый запрос на отдельные слова для более точного поиска
+        const searchWords = q.split(/\s+/).filter(word => word.length > 0);
+        console.log(`🔍 Search words: ${searchWords.join(', ')}`);
+        
+        // Создаем несколько вариантов поискового запроса для совместимости со старой логикой
         const queryVariants = [
-          q,                          // оригинальный запрос
-          q.replace(/\s+/g, ''),     // запрос без пробелов
-          ...q.split(/\s+/)           // запрос разбитый на отдельные слова
+          q,                       // оригинальный запрос
+          q.replace(/\s+/g, ''),   // запрос без пробелов
+          ...searchWords            // запрос разбитый на отдельные слова
         ];
         const uniqueQueryVariants = Array.from(new Set(queryVariants));
         console.log(`🔍 Query variants: ${uniqueQueryVariants.join(', ')}`);
+
+        // Проверяем, содержит ли запрос ключевые слова iPhone
+        const isIphoneSearch = q.includes('iphone');
+        const isIphone15Search = isIphoneSearch && q.includes('15');
+        const isIphoneProSearch = isIphoneSearch && q.includes('pro');
         
-        // Специальная обработка для поиска Razer V3
-        if (q.includes('v3') || q.includes('pro')) {
-          console.log('Detected V3/Pro search term, checking for Razer products');
+        // Особая обработка для запросов iPhone
+        if (isIphoneSearch) {
+          console.log('Detected iPhone search, focusing on mobile collection first');
           
-          const gamingCollectionRef = collection(db, 'gaming');
-          const gamingSnapshot = await getDocs(gamingCollectionRef);
+          const mobileCollectionRef = collection(db, 'mobile');
+          const mobileSnapshot = await getDocs(mobileCollectionRef);
           
-          const razerV3Products: Product[] = [];
+          const iPhoneProducts: Product[] = [];
           
-          gamingSnapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.brand && 
-                data.brand.toLowerCase() === 'razer' && 
-                ((data.model && 
-                  (data.model.toLowerCase().includes('v3') || 
-                   data.model.toLowerCase().includes('pro'))) || 
-                 (data.name && 
-                  (data.name.toLowerCase().includes('v3') || 
-                   data.name.toLowerCase().includes('pro'))) ||
-                 (data.memory && data.memory.toLowerCase().includes('v3')))) {
-              
-              console.log(`Found Razer V3/Pro match: ${doc.id} - ${data.name}`);
-              razerV3Products.push(ensureRequiredFields(data, doc.id, 'gaming'));
-            }
-          });
-          
-          if (razerV3Products.length > 0) {
-            console.log(`Found ${razerV3Products.length} Razer V3/Pro products`);
-            setProducts(razerV3Products);
-            setLoading(false);
-            return;
-          }
-        }
-        
-        // Проверяем наличие конкретного ID в запросе
-        if (q.includes('deathadder') || q.includes('razer-deathadder')) {
-          console.log('Detected specific product search for DeathAdder');
-          
-          // Прямой поиск по ID
-          const specificId = 'razer-deathadder-wiredwireless-2022-black';
-          try {
-            const specificDoc = await getDoc(doc(db, 'gaming', specificId));
-            if (specificDoc.exists()) {
-              const data = specificDoc.data();
-              console.log(`Found specific product by ID: ${specificId}`, data);
-              setProducts([ensureRequiredFields(data, specificId, 'gaming')]);
-              setLoading(false);
-              return;
-            } else {
-              console.log(`Product with ID ${specificId} not found directly`);
-            }
-          } catch (err) {
-            console.error(`Error fetching specific product ${specificId}:`, err);
-          }
-        }
-        
-        // Особая обработка для запросов, содержащих 'razer'
-        if (q.includes('razer')) {
-          console.log('Razer search detected, focusing on gaming collection first');
-          
-          // Сначала получаем игровые продукты от Razer
-          const gamingCollectionRef = collection(db, 'gaming');
-          const gamingSnapshot = await getDocs(gamingCollectionRef);
-          
-          const razerProducts: Product[] = [];
-          
-          gamingSnapshot.forEach(doc => {
+          mobileSnapshot.forEach(doc => {
             const data = doc.data();
             const brand = (data.brand || '').toLowerCase();
+            const name = (data.name || '').toLowerCase();
+            const model = (data.model || '').toLowerCase();
             
-            // Находим все продукты Razer в gaming коллекции
-            if (brand.includes('razer')) {
-              razerProducts.push(ensureRequiredFields(data, doc.id, 'gaming'));
+            if (brand === 'apple' && name.includes('iphone')) {
+              // Если ищем iPhone 15 Pro, находим соответствующие модели
+              if (isIphone15Search && isIphoneProSearch) {
+                if (name.includes('15') && name.includes('pro')) {
+                  console.log(`Found iPhone 15 Pro match: ${doc.id} - ${data.name}`);
+                  iPhoneProducts.push(ensureRequiredFields(data, doc.id, 'mobile'));
+                }
+              }
+              // Если ищем iPhone 15 (любая модель)
+              else if (isIphone15Search) {
+                if (name.includes('15') || model.includes('15')) {
+                  console.log(`Found iPhone 15 match: ${doc.id} - ${data.name}`);
+                  iPhoneProducts.push(ensureRequiredFields(data, doc.id, 'mobile'));
+                }
+              }
+              // Если просто ищем iPhone Pro
+              else if (isIphoneProSearch) {
+                if (name.includes('pro') || model.includes('pro')) {
+                  console.log(`Found iPhone Pro match: ${doc.id} - ${data.name}`);
+                  iPhoneProducts.push(ensureRequiredFields(data, doc.id, 'mobile'));
+                }
+              }
+              // Если просто ищем iPhone любой модели
+              else {
+                console.log(`Found iPhone match: ${doc.id} - ${data.name}`);
+                iPhoneProducts.push(ensureRequiredFields(data, doc.id, 'mobile'));
+              }
             }
           });
           
-          if (razerProducts.length > 0) {
-            console.log(`Found ${razerProducts.length} Razer products`);
-            setProducts(razerProducts);
+          if (iPhoneProducts.length > 0) {
+            console.log(`Found ${iPhoneProducts.length} iPhone products`);
+            setProducts(iPhoneProducts);
             setLoading(false);
             return;
           }
         }
         
+        // Если специальная обработка не сработала или нет результатов, выполняем обычный поиск
         let allResults: Product[] = [];
         const collections = ['products', 'mobile', 'tv', 'gaming', 'laptops', 'audio'];
         
@@ -154,50 +133,70 @@ const SearchResultsPage: React.FC = () => {
           
           querySnapshot.forEach(doc => {
             const data = doc.data();
-            console.log(`Checking product: ${data.name} in ${collectionName}`); // Add this line
-            
-            // Сначала проверяем searchKeywords
-            if (data.searchKeywords && Array.isArray(data.searchKeywords)) {
-              const keywordsMatch = uniqueQueryVariants.some(variant => 
-                data.searchKeywords.some((keyword: string) => {
-                  if (!keyword || typeof keyword !== 'string') return false;
-                  const match = keyword.toLowerCase().includes(variant);
-                  if (match) {
-                    console.log(`✅ Keyword match found in ${collectionName}/${doc.id}: "${keyword}" matches "${variant}"`);
-                  }
-                  return match;
-                })
-              );
-              
-              if (keywordsMatch) {
-                console.log(`✅ Adding product by keyword match: ${collectionName}/${doc.id} - ${data.name}`);
-                allResults.push(ensureRequiredFields(data, doc.id, collectionName));
-                return; // продолжаем проверку других документов
-              }
-            }
-            
-            // Если нет совпадения по ключевым словам, проверяем другие поля
             const name = (data.name || '').toLowerCase();
             const brand = (data.brand || '').toLowerCase();
             const model = (data.model || '').toLowerCase();
             const deviceType = (data.deviceType || '').toLowerCase();
+            const memory = (data.memory || '').toLowerCase();
+            const color = (data.color || '').toLowerCase();
+            const description = (data.description || '').toLowerCase();
             
-            // Проверяем каждый вариант запроса
-            const matchFound = uniqueQueryVariants.some(variant => 
-              name.includes(variant) || 
-              brand.includes(variant) || 
-              model.includes(variant) || 
-              deviceType.includes(variant) || 
-              `${brand} ${model}`.includes(variant) || 
-              `${brand} ${deviceType}`.includes(variant)
-            );
+            // Объединяем все поля в один текст для поиска
+            const combinedText = `${brand} ${name} ${model} ${memory} ${color} ${deviceType} ${description}`;
             
-            if (matchFound) {
-              console.log(`✅ Found matching product: ${data.name} in ${collectionName}`);
+            // Если хотя бы 50% слов из запроса найдены, считаем товар соответствующим
+            // Более гибкая проверка, чем .every()
+            let matchCount = 0;
+            searchWords.forEach(word => {
+              if (combinedText.includes(word)) {
+                matchCount++;
+              }
+            });
+            
+            // Товар подходит, если более половины слов из запроса найдено
+            // или если найдено хотя бы одно слово при поиске из 1-2 слов
+            const matchThreshold = searchWords.length <= 2 ? 1 : Math.ceil(searchWords.length / 2);
+            
+            if (matchCount >= matchThreshold) {
+              console.log(`✅ Found matching product: ${data.name} in ${collectionName} (matched ${matchCount}/${searchWords.length} words)`);
               allResults.push(ensureRequiredFields(data, doc.id, collectionName));
+            }
+            // Дополнительно проверяем соответствие ключевых слов из базы
+            else if (data.searchKeywords && Array.isArray(data.searchKeywords)) {
+              const keywordsLower = data.searchKeywords.map((k: string) => k.toLowerCase());
+              let keywordMatches = 0;
+              
+              searchWords.forEach(word => {
+                if (keywordsLower.some(k => k.includes(word))) {
+                  keywordMatches++;
+                }
+              });
+              
+              if (keywordMatches >= matchThreshold) {
+                console.log(`✅ Keyword match found in ${collectionName}/${doc.id}: Matched ${keywordMatches}/${searchWords.length} keywords`);
+                allResults.push(ensureRequiredFields(data, doc.id, collectionName));
+              }
             }
           });
         }
+        
+        // Сортируем результаты по релевантности
+        allResults.sort((a, b) => {
+          const aName = (a.name || '').toLowerCase();
+          const aBrand = (a.brand || '').toLowerCase();
+          const bName = (b.name || '').toLowerCase();
+          const bBrand = (b.brand || '').toLowerCase();
+          
+          // Проверяем точное соответствие названия
+          if (aName.includes(q) && !bName.includes(q)) return -1;
+          if (!aName.includes(q) && bName.includes(q)) return 1;
+          
+          // Проверяем точное соответствие бренда
+          if (aBrand.includes(q) && !bBrand.includes(q)) return -1;
+          if (!aBrand.includes(q) && bBrand.includes(q)) return 1;
+          
+          return 0;
+        });
         
         console.log(`📊 Search found ${allResults.length} results`);
         setProducts(allResults);
