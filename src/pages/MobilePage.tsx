@@ -216,7 +216,7 @@ const MobilePage: React.FC = () => {
   }
 
   return (
-    <CategoryLayout title="Mobile Phones">
+    <CategoryLayout>
       <div className="flex justify-between items-center mb-4">
         <div>
           <span className="text-sm text-gray-500">{filteredProducts.length} products found</span>

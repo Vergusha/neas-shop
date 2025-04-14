@@ -50,8 +50,9 @@ const Rating: React.FC<RatingProps> = ({
     }
   };
 
+  // Updated to use yellow color
   const getFilledColor = () => {
-    return theme === 'dark' ? '#95c672' : '#003D2D';
+    return '#FFDD00';
   };
 
   return (

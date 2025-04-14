@@ -149,7 +149,7 @@ const GamingPage: React.FC = () => {
   }
 
   return (
-    <CategoryLayout title="Gaming">
+    <CategoryLayout>
       <div className="flex justify-between items-center mb-6">
         <div className="text-sm text-gray-500 dark:text-gray-400">
           {filteredProducts.length} products found

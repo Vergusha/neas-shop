@@ -185,7 +185,7 @@ const TvPage: React.FC = () => {
   }
 
   return (
-    <CategoryLayout title="TVs & Audio">
+    <CategoryLayout>
       <div className="flex justify-between items-center mb-4">
         <div>
           <span className="text-sm text-gray-500 dark:text-gray-400">{filteredProducts.length} products found</span>

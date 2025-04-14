@@ -154,9 +154,33 @@ body {
 }
 
 /* Add specific styling for header and footer in dark mode */
-[data-theme="dark"] .bg-\[\#003D2D\] {
+[data-theme="dark"] .bg-\[\#003D2D\],
+[data-theme="dark"] .bg-\[\#003d2d\] {
   background-color: #95c672 !important;
   color: #1f2937 !important; /* Dark text for contrast on green background */
+}
+
+/* Make sure light theme footer has the correct background color */
+footer.bg-\[\#003d2d\] {
+  background-color: #003d2d !important;
+}
+
+/* Force footer text to be white in light theme */
+footer.bg-\[\#003d2d\] h3,
+footer.bg-\[\#003d2d\] p,
+footer.bg-\[\#003d2d\] a,
+footer.bg-\[\#003d2d\] span,
+footer.bg-\[\#003d2d\] div {
+  color: white !important;
+}
+
+/* Keep dark theme text dark */
+[data-theme="dark"] footer.bg-\[\#003d2d\] h3,
+[data-theme="dark"] footer.bg-\[\#003d2d\] p, 
+[data-theme="dark"] footer.bg-\[\#003d2d\] a,
+[data-theme="dark"] footer.bg-\[\#003d2d\] span,
+[data-theme="dark"] footer.bg-\[\#003d2d\] div {
+  color: #1f2937 !important;
 }
 
 [data-theme="dark"] footer a {
