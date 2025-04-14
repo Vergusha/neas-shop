@@ -687,7 +687,6 @@ const ProductPage: React.FC = () => {
             {/* Color variant selector - show for any product with variants */}
             {colorVariants.length > 1 && (
               <div className="mt-4">
-                <h3 className="mb-2 text-sm font-medium text-gray-700">Available Colors:</h3>
                 <ColorVariantSelector 
                   variants={colorVariants}
                   currentVariantId={id || ''}

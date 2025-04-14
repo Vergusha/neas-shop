@@ -776,12 +776,12 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
     <div className="mt-8" id="reviews">
       <h2 className="mb-4 text-2xl font-bold">Customer Reviews</h2>
       
-      <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+      <div className={`p-6 mb-6 rounded-lg shadow-md ${currentTheme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-white'}`}>
         <div className="flex flex-col items-center gap-6 md:flex-row">
           <div className="text-center">
             <div className="text-4xl font-bold">{averageRating.toFixed(1)}</div>
             <Rating value={averageRating} size="lg" />
-            <div className="mt-1 text-sm text-gray-500">{reviews.length} reviews</div>
+            <div className={`mt-1 text-sm ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{reviews.length} reviews</div>
           </div>
           
           <div className="flex-1">
@@ -797,7 +797,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                       <path d="M20.924 7.625a1.523 1.523 0 0 0-1.238-1.044l-5.051-.734-2.259-4.577a1.534 1.534 0 0 0-2.752 0L7.365 5.847l-5.051.734A1.535 1.535 0 0 0 1.463 9.2l3.656 3.563-.863 5.031a1.532 1.532 0 0 0 2.226 1.616L11 17.033l4.518 2.375a1.534 1.534 0 0 0 2.226-1.617l-.863-5.03L20.537 9.2a1.523 1.523 0 0 0 .387-1.575Z"/>
                     </svg>
                   </div>
-                  <div className="w-full h-3 bg-gray-200 rounded-full">
+                  <div className={`w-full h-3 rounded-full ${currentTheme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
                     <div 
                       className="h-3 transition-all duration-300 bg-yellow-300 rounded-full"
                       style={{ width: `${percentage}%` }}
@@ -805,7 +805,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                   </div>
                   <div className="flex justify-between w-16">
                     <span className="text-sm">{count}</span>
-                    <span className="text-sm text-gray-500">({percentage.toFixed(0)}%)</span>
+                    <span className={`text-sm ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>({percentage.toFixed(0)}%)</span>
                   </div>
                 </div>
               );
@@ -816,7 +816,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
       
       {user ? (
         userReview && !isEditing ? (
-          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+          <div className={`p-6 mb-6 rounded-lg shadow-md ${currentTheme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold">Your Review</h3>
               <div className="flex gap-2">
@@ -839,14 +839,14 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
               <Rating value={userReview.rating} readonly />
             </div>
             
-            <p className="text-gray-700">{userReview.text}</p>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className={currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>{userReview.text}</p>
+            <p className={`mt-2 text-xs ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
               Posted on {new Date(userReview.date).toLocaleDateString()}
             </p>
             
             {showDeleteConfirm && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
+                <div className={`w-full max-w-md p-6 rounded-lg shadow-lg ${currentTheme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                   <h3 className="mb-4 text-lg font-bold">Delete Review</h3>
                   <p className="mb-6">Are you sure you want to delete your review? This action cannot be undone.</p>
                   <div className="flex justify-end gap-3">
@@ -875,13 +875,13 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
             )}
           </div>
         ) : (
-          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+          <div className={`p-6 mb-6 rounded-lg shadow-md ${currentTheme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-white'}`}>
             <h3 className="mb-4 font-bold">
               {isEditing ? 'Edit Your Review' : 'Write a Review'}
             </h3>
             
             <div className="mb-4">
-              <label className="block mb-1 text-sm font-medium text-gray-700">Rating</label>
+              <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Rating</label>
               <Rating 
                 value={newRating} 
                 readonly={false} 
@@ -891,11 +891,11 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
             </div>
             
             <div className="mb-4">
-              <label className="block mb-1 text-sm font-medium text-gray-700">Review</label>
+              <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Review</label>
               <textarea
                 value={newReviewText}
                 onChange={(e) => setNewReviewText(e.target.value)}
-                className="w-full h-24 textarea textarea-bordered"
+                className={`w-full h-24 textarea textarea-bordered ${currentTheme === 'dark' ? 'bg-gray-700 text-gray-200 border-gray-600' : ''}`}
                 placeholder="Share your experience with this product..."
               ></textarea>
             </div>
@@ -934,20 +934,20 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
           </div>
         )
       ) : (
-        <div className="p-4 mb-6 text-blue-700 rounded-md bg-blue-50">
+        <div className={`p-4 mb-6 rounded-md ${currentTheme === 'dark' ? 'bg-blue-900 text-blue-300' : 'bg-blue-50 text-blue-700'}`}>
           <p>Please <a href="/login" className="font-medium underline">sign in</a> to write a review.</p>
         </div>
       )}
       
       <div className="space-y-4">
         {reviews.length === 0 ? (
-          <p className="py-8 text-center text-gray-500">No reviews yet. Be the first to review this product!</p>
+          <p className={`py-8 text-center ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No reviews yet. Be the first to review this product!</p>
         ) : (
           reviews.map(review => (
             <div 
               id={`review-${review.id}`} 
               key={review.id} 
-              className="p-6 transition-all duration-700 bg-white rounded-lg shadow-md"
+              className={`p-6 transition-all duration-700 rounded-lg shadow-md ${currentTheme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-white'}`}
             >
               <div className="flex justify-between">
                 <div className="flex items-center gap-2 mb-2">
@@ -955,7 +955,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                     <img 
                       src={review.userAvatar} 
                       alt={review.userName}
-                      className="object-cover w-10 h-10 border border-gray-200 rounded-full"
+                      className="object-cover w-10 h-10 border rounded-full border-gray-200"
                       onError={handleAvatarError}
                     />
                   ) : (
@@ -967,7 +967,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                 </div>
                 <div className="flex items-center gap-1 text-sm text-gray-500">
                   <Clock size={14} />
-                  <span>{formatDateTime(review.date)}</span>
+                  <span className={currentTheme === 'dark' ? 'text-gray-400' : ''}>{formatDateTime(review.date)}</span>
                 </div>
               </div>
               
@@ -975,7 +975,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                 <Rating value={review.rating} readonly size="sm" />
               </div>
               
-              <p className="text-gray-700">{review.text}</p>
+              <p className={currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>{review.text}</p>
               
               <div className="flex justify-between mt-4">
                 {user && (
@@ -995,7 +995,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                   className={`flex items-center gap-1 text-sm 
                     ${helpfulReviews.has(review.id) 
                       ? 'text-primary font-medium' 
-                      : 'text-gray-500 hover:text-primary'
+                      : currentTheme === 'dark' ? 'text-gray-400 hover:text-primary' : 'text-gray-500 hover:text-primary'
                     }`}
                   onClick={() => handleHelpfulClick(review.id)}
                 >
@@ -1010,12 +1010,12 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
               </div>
 
               {replyingToId === review.id && user && (
-                <div className="pt-3 mt-4 border-t border-gray-100">
-                  <h4 className="mb-2 text-sm font-medium text-gray-700">Write a reply</h4>
+                <div className={`pt-3 mt-4 border-t ${currentTheme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <h4 className={`mb-2 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Write a reply</h4>
                   <textarea
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    className="w-full h-20 text-sm textarea textarea-bordered"
+                    className={`w-full h-20 text-sm textarea textarea-bordered ${currentTheme === 'dark' ? 'bg-gray-700 text-gray-200 border-gray-600' : ''}`}
                     placeholder="Write your reply here..."
                   ></textarea>
                   <div className="flex justify-end gap-2 mt-2">
@@ -1049,16 +1049,16 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
               )}
 
               {review.replies && Object.keys(review.replies).length > 0 && (
-                <div className="pt-3 mt-3 border-t border-gray-100">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                <div className={`pt-3 mt-3 border-t ${currentTheme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <h4 className={`text-sm font-medium mb-2 flex items-center gap-1.5 ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                     <MessageSquare size={14} className={currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003D2D]'} />
                     <span>Replies ({Object.keys(review.replies).length})</span>
                   </h4>
-                  <div className="pl-4 space-y-3 border-l-2 border-gray-100">
+                  <div className={`pl-4 space-y-3 border-l-2 ${currentTheme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                     {Object.values(review.replies).map((reply) => (
                       <div key={reply.id} className={`p-3 rounded-md ${reply.isAdmin 
-                        ? currentTheme === 'dark' ? 'bg-[#95c672]/10 border border-[#95c672]/20' : 'bg-[#003D2D]/10 border border-[#003D2D]/20' 
-                        : 'bg-gray-50'}`}>
+                        ? currentTheme === 'dark' ? 'bg-[#95c672]/20 border border-[#95c672]/30' : 'bg-[#003D2D]/10 border border-[#003D2D]/20' 
+                        : currentTheme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2">
                             {reply.userAvatar && reply.userAvatar !== 'undefined' && reply.userAvatar !== 'null' ? (
@@ -1083,7 +1083,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">
+                            <span className={`text-xs ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                               {formatDateTime(reply.date)}
                             </span>
                             {(user && (isAdmin || reply.userId === user.uid)) && (
@@ -1097,7 +1097,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                             )}
                           </div>
                         </div>
-                        <p className="mt-1 text-sm text-gray-700">{reply.text}</p>
+                        <p className={`mt-1 text-sm ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{reply.text}</p>
                       </div>
                     ))}
                   </div>

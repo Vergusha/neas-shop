@@ -58,7 +58,7 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
   return (
     <div className="mt-6">
       <h3 className="mb-2 text-sm font-medium">
-        {currentTheme === 'dark' ? 'Choose Color:' : 'Available Colors:'}
+        Available Colors:
       </h3>
       <div className="flex flex-wrap gap-3">
         {variants.map((variant) => {
@@ -70,7 +70,7 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
               onClick={() => handleVariantClick(variant.id)}
               className={`relative p-2 rounded-lg transition-all duration-200 ${
                 variant.id === currentVariantId
-                  ? 'ring-2 ring-offset-2 ring-[#003D2D] dark:ring-[#95c672]'
+                  ? 'ring-2 ring-[#003D2D] dark:ring-[#95c672]'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
               disabled={isPending}

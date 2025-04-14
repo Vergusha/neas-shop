@@ -518,11 +518,11 @@ const Header: React.FC = () => {
     <header className={`shadow-md relative ${
       currentTheme === 'dark' ? 'bg-[#95c672] dark-header' : 'bg-[#003D2D]'
     }`}>
-      <div className="container py-2 sm:py-4">
+      <div className="container mx-auto px-4 py-2 sm:py-4">
         {/* Top row: Logo, Search, and buttons */}
-        <div className="header-top-row">
+        <div className="flex flex-wrap items-center justify-between md:flex-nowrap">
           {/* Logo */}
-          <a href="/" className="block transition-all duration-500 ease-in-out origin-center transform header-logo shrink-0 hover:scale-110">
+          <a href="/" className="block transition-all duration-500 ease-in-out origin-center transform header-logo shrink-0 hover:scale-110 mb-2 md:mb-0">
             <img
               src={logo}
               alt="Logo"
@@ -536,7 +536,7 @@ const Header: React.FC = () => {
           </a>
 
           {/* Desktop Search bar - visible only on md and larger screens */}
-          <div className="hidden md:block md:flex-grow md:mx-4">
+          <div className="w-full order-3 md:order-2 md:w-auto md:flex-1 md:mx-4 lg:mx-8 mt-2 md:mt-0">
             <form onSubmit={handleSearch} className="relative flex items-center w-full">
               <Search className="absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2" size={20} />
               <input
@@ -576,7 +576,7 @@ const Header: React.FC = () => {
           </div>
 
           {/* Navbar buttons */}
-          <div className="flex items-center gap-1 header-icons sm:gap-1">
+          <div className="flex items-center gap-1 order-2 md:order-3 header-icons sm:gap-2 md:ml-2">
             {/* Theme toggle button - add before notifications bell */}
             <label className="swap swap-rotate transition-all duration-500 ease-in-out hover:scale-110 btn btn-ghost btn-circle">
               <input 
@@ -586,9 +586,9 @@ const Header: React.FC = () => {
                 onChange={handleThemeToggle}
               />
               {/* sun icon */}
-              <Sun className="swap-off h-8 w-8 text-white" />
+              <Sun className="swap-off h-6 w-6 sm:h-7 sm:w-7 text-white" />
               {/* moon icon */}
-              <Moon className="swap-on h-8 w-8 text-white" />
+              <Moon className="swap-on h-6 w-6 sm:h-7 sm:w-7 text-white" />
             </label>
             
             {/* Notifications bell */}
@@ -599,9 +599,9 @@ const Header: React.FC = () => {
                   onClick={() => setShowNotifications(!showNotifications)} 
                   className="relative transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
                 >
-                  <Bell size={32} className="text-white" />
+                  <Bell size={24} className="text-white sm:h-7 sm:w-7" />
                   {unreadNotifications > 0 && (
-                    <div className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full -top-2 -right-2">
+                    <div className="absolute flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full -top-1 -right-1">
                       {unreadNotifications}
                     </div>
                   )}
@@ -611,9 +611,54 @@ const Header: React.FC = () => {
                 {showNotifications && (
                   <div 
                     ref={notificationsDropdownRef}
-                    className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl notifications-dropdown w-80 sm:relative sm:w-auto"
+                    className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl notifications-dropdown w-80"
                   >
-                    {/* ...existing notifications dropdown code... */}
+                    <div className="p-3 border-b">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">Notifications</h3>
+                        {unreadNotifications > 0 && (
+                          <button 
+                            onClick={markAllNotificationsAsRead}
+                            className="text-xs font-medium text-blue-600 hover:text-blue-800"
+                          >
+                            Mark all as read
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-sm text-center text-gray-500">
+                        No notifications
+                      </div>
+                    ) : (
+                      <div className="overflow-y-auto max-h-96">
+                        {notifications.map(notification => (
+                          <div 
+                            key={notification.id} 
+                            onClick={() => handleNotificationClick(notification)}
+                            className={`relative p-4 cursor-pointer ${
+                              notification.read ? 'bg-white' : 'bg-blue-50'
+                            } hover:bg-gray-50 border-b`}
+                          >
+                            {!notification.read && (
+                              <div className="absolute w-2 h-2 bg-blue-500 rounded-full top-4 left-2"></div>
+                            )}
+                            <p className="text-sm">
+                              <span className="font-medium">
+                                {notification.type === 'review_reply' ? 'Reply to your review' : 'New notification'}
+                              </span>
+                            </p>
+                            <p className="mt-1 text-xs text-gray-500 line-clamp-2">
+                              {notification.message}
+                            </p>
+                            <p className="mt-1 text-xs text-gray-400">
+                              {new Date(notification.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -625,7 +670,7 @@ const Header: React.FC = () => {
               className={`btn btn-ghost btn-circle transition-all duration-500 ease-in-out hover:scale-110 ${!user ? 'opacity-50' : ''}`}
               title={!user ? 'Please login to use favorites' : 'Favorites'}
             >
-              <Heart size={32} className="text-white" />
+              <Heart size={24} className="text-white sm:h-7 sm:w-7" />
             </button>
             
             {/* Cart button with dropdown */}
@@ -636,9 +681,9 @@ const Header: React.FC = () => {
                 className="relative transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
                 title="Cart"
               >
-                <ShoppingCart size={32} className="text-white" />
+                <ShoppingCart size={24} className="text-white sm:h-7 sm:w-7" />
                 {user && cartItemCount > 0 && (
-                  <div className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-600 rounded-full -top-2 -right-2">
+                  <div className="absolute flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full -top-1 -right-1">
                     {cartItemCount}
                   </div>
                 )}
@@ -801,7 +846,7 @@ const Header: React.FC = () => {
         </div>
 
         {/* Mobile Search bar - visible only on small screens */}
-        <div className="md:hidden header-search-container">
+        <div className="mt-2 md:hidden header-search-container">
           <form onSubmit={handleSearch} className="relative flex items-center w-full">
             <Search className={`absolute text-gray-500 transform -translate-y-1/2 left-3 top-1/2 ${currentTheme === 'dark' ? 'text-gray-300' : ''}`} size={20} />
             <input

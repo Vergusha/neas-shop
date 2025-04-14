@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { getTheme } from '../utils/themeUtils';
 
 interface OrderItem {
   id: string;
@@ -26,6 +27,19 @@ interface OrderDetailsComponentProps {
 }
 
 const OrderDetailsComponent: React.FC<OrderDetailsComponentProps> = ({ order }) => {
+  // Add current theme state
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
+  
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
+  
   // Add debug logging to check the order data on component mount
   useEffect(() => {
     console.log('Order details received:', order);
@@ -63,24 +77,26 @@ const OrderDetailsComponent: React.FC<OrderDetailsComponentProps> = ({ order }) 
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg">
-      <div className="mb-4 pb-4 border-b">
+    <div className={`p-6 rounded-lg ${currentTheme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-white'}`}>
+      <div className={`mb-4 pb-4 ${currentTheme === 'dark' ? 'border-gray-700' : 'border-b'}`}>
         <div className="flex justify-between mb-2">
           <h3 className="text-lg font-bold">Order #{orderNumber}</h3>
           <span className={`px-2 py-1 rounded-full text-xs ${
-            status === 'completed' ? 'bg-green-100 text-green-800' : 
-            status === 'processing' ? 'bg-blue-100 text-blue-800' : 
-            'bg-gray-100 text-gray-800'
+            status === 'completed' 
+              ? currentTheme === 'dark' ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
+              : status === 'processing' 
+              ? currentTheme === 'dark' ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800'
+              : currentTheme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'
           }`}>
             {status}
           </span>
         </div>
-        <p className="text-sm text-gray-500">Placed on {date}</p>
-        <p className="text-sm text-gray-500">Shipping to: {shippingAddress}</p>
+        <p className={`text-sm ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Placed on {date}</p>
+        <p className={`text-sm ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Shipping to: {shippingAddress}</p>
       </div>
       
       {/* Customer Information Section */}
-      <div className="mb-4 pb-4 border-b">
+      <div className={`mb-4 pb-4 ${currentTheme === 'dark' ? 'border-gray-700' : 'border-b'}`}>
         <h4 className="font-semibold mb-2">Customer Information</h4>
         <p className="text-sm"><span className="font-medium">Name:</span> {customerName}</p>
         <p className="text-sm"><span className="font-medium">Phone:</span> {customerPhone}</p>
@@ -90,7 +106,7 @@ const OrderDetailsComponent: React.FC<OrderDetailsComponentProps> = ({ order }) 
       <div className="mb-4">
         <h4 className="font-semibold mb-2">Items</h4>
         {items.length === 0 ? (
-          <p className="text-gray-500">No items in this order</p>
+          <p className={currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>No items in this order</p>
         ) : (
           <div className="space-y-3">
             {Array.isArray(order.items) && order.items.map((item: any, index: number) => (
@@ -105,7 +121,7 @@ const OrderDetailsComponent: React.FC<OrderDetailsComponentProps> = ({ order }) 
         )}
       </div>
       
-      <div className="border-t pt-4">
+      <div className={`pt-4 ${currentTheme === 'dark' ? 'border-t border-gray-700' : 'border-t'}`}>
         <div className="flex justify-between mb-2">
           <span>Subtotal:</span>
           <span>{calculateTotal(order.items).toFixed(2)} NOK</span>

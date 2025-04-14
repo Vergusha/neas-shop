@@ -8,8 +8,22 @@ import { isAdmin } from '../utils/constants';
 import AdminPanel from '../components/AdminPanel';
 import { defaultAvatarSVG, handleAvatarError } from '../utils/AvatarHelper';
 import { useAuth } from '../utils/AuthProvider';
+import { getTheme } from '../utils/themeUtils';
 
 const ProfilePage: React.FC = () => {
+  // Add current theme state
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
+  
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
+
   const auth = getAuth();
   const user = auth.currentUser;
   const [nickname, setNickname] = useState(user?.displayName || '');
@@ -372,17 +386,17 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="container py-8 mx-auto">
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">My Profile</h1>
+      <h1 className={`mb-8 text-3xl font-bold ${currentTheme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>My Profile</h1>
       
       {/* Profile Card */}
-      <div className="p-6 mb-8 bg-white shadow-md rounded-xl">
+      <div className={`p-6 mb-8 rounded-xl shadow-md ${currentTheme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-white'}`}>
         <div className="flex flex-col items-center md:flex-row md:items-start">
           {/* Avatar Section */}
           <div className="relative mb-6 md:mb-0 md:mr-8">
             <div className="avatar">
               <div className="w-32 h-32 overflow-hidden rounded-full ring ring-[#003D2D] ring-offset-2">
                 {isUploading ? (
-                  <div className="flex items-center justify-center w-full h-full bg-gray-100">
+                  <div className={`flex items-center justify-center w-full h-full ${currentTheme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
                     <span className="loading loading-spinner loading-md"></span>
                   </div>
                 ) : (
@@ -407,17 +421,17 @@ const ProfilePage: React.FC = () => {
           {/* User Info Section */}
           <div className="flex-grow">
             <div className="flex flex-col items-center mb-6 md:items-start">
-              <h2 className="mb-2 text-2xl font-bold text-gray-900">
+              <h2 className={`mb-2 text-2xl font-bold ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                 {nickname || `${firstName} ${lastName}`.trim() || 'User'}
               </h2>
-              <p className="text-sm text-gray-500">ID: {customUserId}</p>
+              <p className={`text-sm ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>ID: {customUserId}</p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
               {/* Form Fields */}
               <div className="space-y-4">
                 <div className="relative">
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                  <label className={`block mb-2 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                     Nickname
                   </label>
                   <div className="relative">
@@ -426,7 +440,10 @@ const ProfilePage: React.FC = () => {
                       value={nickname}
                       onChange={(e) => setNickname(e.target.value)}
                       disabled={!isEditing}
-                      className="w-full px-4 py-2 transition-colors border rounded-lg outline-none disabled:bg-gray-50 focus:border-[#003D2D]"
+                      className={`w-full px-4 py-2 transition-colors border rounded-lg outline-none 
+                        ${currentTheme === 'dark' 
+                          ? 'bg-gray-700 text-gray-200 border-gray-600 disabled:bg-gray-800' 
+                          : 'disabled:bg-gray-50 focus:border-[#003D2D]'}`}
                     />
                     {!isEditing && (
                       <button
@@ -440,7 +457,7 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                  <label className={`block mb-2 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                     First Name
                   </label>
                   <input
@@ -448,12 +465,15 @@ const ProfilePage: React.FC = () => {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     disabled={!isEditing}
-                    className="w-full px-4 py-2 transition-colors border rounded-lg outline-none disabled:bg-gray-50 focus:border-[#003D2D]"
+                    className={`w-full px-4 py-2 transition-colors border rounded-lg outline-none 
+                      ${currentTheme === 'dark' 
+                        ? 'bg-gray-700 text-gray-200 border-gray-600 disabled:bg-gray-800' 
+                        : 'disabled:bg-gray-50 focus:border-[#003D2D]'}`}
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                  <label className={`block mb-2 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                     Last Name
                   </label>
                   <input
@@ -461,12 +481,15 @@ const ProfilePage: React.FC = () => {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     disabled={!isEditing}
-                    className="w-full px-4 py-2 transition-colors border rounded-lg outline-none disabled:bg-gray-50 focus:border-[#003D2D]"
+                    className={`w-full px-4 py-2 transition-colors border rounded-lg outline-none 
+                      ${currentTheme === 'dark' 
+                        ? 'bg-gray-700 text-gray-200 border-gray-600 disabled:bg-gray-800' 
+                        : 'disabled:bg-gray-50 focus:border-[#003D2D]'}`}
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                  <label className={`block mb-2 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                     Phone Number
                   </label>
                   <input
@@ -474,7 +497,10 @@ const ProfilePage: React.FC = () => {
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     disabled={!isEditing}
-                    className="w-full px-4 py-2 transition-colors border rounded-lg outline-none disabled:bg-gray-50 focus:border-[#003D2D]"
+                    className={`w-full px-4 py-2 transition-colors border rounded-lg outline-none 
+                      ${currentTheme === 'dark' 
+                        ? 'bg-gray-700 text-gray-200 border-gray-600 disabled:bg-gray-800' 
+                        : 'disabled:bg-gray-50 focus:border-[#003D2D]'}`}
                   />
                 </div>
               </div>
@@ -484,14 +510,20 @@ const ProfilePage: React.FC = () => {
               <div className="flex gap-4 mt-6">
                 <button
                   onClick={() => setIsEditing(false)}
-                  className="px-6 py-2 text-[#003D2D] border border-[#003D2D] rounded-lg hover:bg-gray-50"
+                  className={`px-6 py-2 rounded-lg 
+                    ${currentTheme === 'dark'
+                      ? 'text-gray-300 border border-gray-500 hover:bg-gray-700'
+                      : 'text-[#003D2D] border border-[#003D2D] hover:bg-gray-50'}`}
                   disabled={isLoading}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleUpdateProfile}
-                  className="px-6 py-2 text-white rounded-lg bg-[#003D2D] hover:bg-[#004D3D]"
+                  className={`px-6 py-2 text-white rounded-lg 
+                    ${currentTheme === 'dark'
+                      ? 'bg-[#95c672] hover:bg-[#7fb356]'
+                      : 'bg-[#003D2D] hover:bg-[#004D3D]'}`}
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -508,26 +540,29 @@ const ProfilePage: React.FC = () => {
 
       {/* Admin Panel Section */}
       {user && isAdmin(user.email) && (
-        <div className="p-6 mb-8 bg-white shadow-md rounded-xl">
-          <h2 className="mb-4 text-2xl font-bold text-gray-900">Admin Panel</h2>
+        <div className={`p-6 mb-8 rounded-xl shadow-md ${currentTheme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-white'}`}>
+          <h2 className={`mb-4 text-2xl font-bold ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Admin Panel</h2>
           <AdminPanel />
         </div>
       )}
 
       {/* Order History Section */}
-      <div className="p-6 bg-white shadow-md rounded-xl">
-        <h2 className="mb-6 text-2xl font-bold text-gray-900">Order History</h2>
+      <div className={`p-6 rounded-xl shadow-md ${currentTheme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-white'}`}>
+        <h2 className={`mb-6 text-2xl font-bold ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Order History</h2>
         {orderHistory.length > 0 ? (
           <div className="space-y-4">
             {orderHistory.map((order, index) => (
-              <div key={order.id || index} className="overflow-hidden border rounded-lg">
+              <div key={order.id || index} className={`overflow-hidden border rounded-lg ${currentTheme === 'dark' ? 'border-gray-700' : ''}`}>
                 <div 
-                  className="flex items-center justify-between p-4 cursor-pointer bg-gray-50 hover:bg-gray-100"
+                  className={`flex items-center justify-between p-4 cursor-pointer 
+                    ${currentTheme === 'dark'
+                      ? 'bg-gray-700 hover:bg-gray-600'
+                      : 'bg-gray-50 hover:bg-gray-100'}`}
                   onClick={() => toggleOrderDetails(order.id)}
                 >
                   <div>
                     <p className="font-semibold">Order #{order.orderNumber || `${index + 1}`}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className={`text-sm ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       {new Date(order.date).toLocaleDateString()} • 
                       {order.items?.length || 0} items • 
                       Total: {order.total?.toFixed(2) || 0} NOK
@@ -535,9 +570,11 @@ const ProfilePage: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                      order.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                      order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
-                      'bg-gray-100 text-gray-800'
+                      order.status === 'completed' 
+                        ? currentTheme === 'dark' ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
+                        : order.status === 'processing' 
+                        ? currentTheme === 'dark' ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800'
+                        : currentTheme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-100 text-gray-800'
                     }`}>
                       {order.status || 'N/A'}
                     </span>
@@ -546,7 +583,7 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 {expandedOrderId === order.id && (
-                  <div className="p-4 border-t">
+                  <div className={`p-4 ${currentTheme === 'dark' ? 'border-t border-gray-700' : 'border-t'}`}>
                     <OrderDetailsComponent order={order} />
                   </div>
                 )}
@@ -554,7 +591,7 @@ const ProfilePage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-500">No order history available.</p>
+          <p className={`text-center ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No order history available.</p>
         )}
       </div>
 
