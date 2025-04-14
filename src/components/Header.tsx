@@ -555,7 +555,7 @@ const Header: React.FC = () => {
                     setShowResults(true);
                   }
                 }}
-                className="w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 ${currentTheme === 'dark' ? 'focus:ring-[#95c672]' : 'focus:ring-[#003D2D]'}`}
               />
               
               {/* Search results dropdown */}
@@ -691,7 +691,7 @@ const Header: React.FC = () => {
               
               {/* Cart preview dropdown */}
               {user && cartOpen && cartItemCount > 0 && (
-                <div ref={cartDropdownRef} className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl cart-dropdown w-80 sm:relative sm:w-auto">
+                <div ref={cartDropdownRef} className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl cart-dropdown w-80">
                   <div className="p-4 border-b">
                     <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
                   </div>
@@ -864,8 +864,8 @@ const Header: React.FC = () => {
                   setShowResults(true);
                 }
               }}
-              className={`w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                currentTheme === 'dark' ? 'bg-gray-700 text-white border-gray-600' : ''
+              className={`w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 ${
+                currentTheme === 'dark' ? 'bg-gray-700 text-white border-gray-600 focus:ring-[#95c672]' : 'focus:ring-[#003D2D]'
               }`}
             />
             

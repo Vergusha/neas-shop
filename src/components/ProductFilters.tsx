@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { getTheme } from '../utils/themeUtils';
 
 interface FilterValue {
   value: string | number;
@@ -37,8 +38,19 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   const [minPriceInput, setMinPriceInput] = useState<string>('0');
   const [maxPriceInput, setMaxPriceInput] = useState<string>('10000');
   const initializedRef = useRef(false);
+  const [currentTheme, setCurrentTheme] = useState(getTheme());
 
-  const debouncedUpdate = useRef<ReturnType<typeof setTimeout>>(null);
+  const debouncedUpdate = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
 
   const debouncedFilterChange = useCallback((values: [number, number]) => {
     if (debouncedUpdate.current) {
@@ -57,8 +69,17 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       const min = priceFilter.min;
       const max = priceFilter.max;
       let current: [number, number] = [min, max];
+      
+      // Check for active price filters in both formats (selectedFilters and activeFilters)
       if (activeFilters.price && Array.isArray(activeFilters.price)) {
         current = activeFilters.price as [number, number];
+      } else if (selectedFilters.price && selectedFilters.price.length === 2) {
+        const [minStr, maxStr] = selectedFilters.price;
+        const parsedMin = parseInt(minStr, 10);
+        const parsedMax = parseInt(maxStr, 10);
+        if (!isNaN(parsedMin) && !isNaN(parsedMax)) {
+          current = [parsedMin, parsedMax];
+        }
       }
 
       setPriceRange({ min, max, current });
@@ -66,7 +87,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       setMaxPriceInput(String(current[1]));
       initializedRef.current = true;
     }
-  }, [filters, activeFilters]);
+  }, [filters, activeFilters, selectedFilters]);
 
   useEffect(() => {
     return () => {
@@ -98,17 +119,19 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
   const isValueSelected = (filterId: string, value: string | number | FilterValue): boolean => {
     const stringValue = typeof value === 'object' ? String(value.value) : String(value);
+    const numValue = typeof value === 'object' ? value.value : value;
     
+    // Check selectedFilters format
     if (selectedFilters && filterId in selectedFilters) {
       return Array.isArray(selectedFilters[filterId]) && 
              selectedFilters[filterId].includes(stringValue);
     }
     
+    // Check activeFilters format
     if (activeFilters && filterId in activeFilters) {
       const filterValue = activeFilters[filterId];
       if (filterValue instanceof Set) {
-        return filterValue.has(typeof value === 'object' ? value.value : value) || 
-               filterValue.has(stringValue);
+        return filterValue.has(numValue) || filterValue.has(stringValue);
       }
     }
     
@@ -118,8 +141,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   const handleFilterChange = (filterId: string, value: string | number | FilterValue, checked: boolean) => {
     const stringValue = typeof value === 'object' ? String(value.value) : String(value);
     
-    console.log('Filter change:', { filterId, value, stringValue, checked });
-    
+    // Handle the change with the proper format
     if (checked) {
       onFilterChange(filterId, [...(selectedFilters[filterId] || []), stringValue]);
     } else {
@@ -136,6 +158,11 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   };
 
   const renderPriceRangeSlider = () => {
+    // Use theme-appropriate colors
+    const themeColors = currentTheme === 'dark' 
+      ? { track: 'bg-gray-700', thumb: 'bg-[#95c672]', focus: 'focus:ring-[#95c672]', border: 'border-gray-800' }
+      : { track: 'bg-gray-200', thumb: 'bg-[#003D2D]', focus: 'focus:ring-[#003D2D]', border: 'border-white' };
+
     const handleDrag = (
       startEvent: React.MouseEvent,
       isMin: boolean
@@ -189,9 +216,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
     return (
       <div className="relative px-1 mt-4 mb-6">
-        <div className="relative w-full h-3 bg-gray-200 rounded-lg">
+        <div className={`relative w-full h-3 ${themeColors.track} rounded-lg`}>
           <div 
-            className="absolute top-0 h-full bg-yellow-400 rounded-lg transition-all duration-150"
+            className={`absolute top-0 h-full ${currentTheme === 'dark' ? 'bg-[#95c672]' : 'bg-[#003D2D]'} rounded-lg transition-all duration-150`}
             style={{
               left: `${((priceRange.current[0] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
               width: `${((priceRange.current[1] - priceRange.current[0]) / (priceRange.max - priceRange.min)) * 100}%`
@@ -200,7 +227,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           
           <button
             type="button"
-            className="absolute z-20 w-6 h-6 -ml-3 -mt-1.5 bg-yellow-400 border-2 border-white rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-yellow-300"
+            className={`absolute z-20 w-6 h-6 -ml-3 -mt-1.5 ${themeColors.thumb} ${themeColors.border} border-2 rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all focus:outline-none ${themeColors.focus} focus:ring-2`}
             style={{
               left: `${((priceRange.current[0] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
               top: '50%'
@@ -211,7 +238,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           
           <button
             type="button"
-            className="absolute z-20 w-6 h-6 -ml-3 -mt-1.5 bg-yellow-400 border-2 border-white rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-yellow-300"
+            className={`absolute z-20 w-6 h-6 -ml-3 -mt-1.5 ${themeColors.thumb} ${themeColors.border} border-2 rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all focus:outline-none ${themeColors.focus} focus:ring-2`}
             style={{
               left: `${((priceRange.current[1] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
               top: '50%'
@@ -283,7 +310,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               />
               <label htmlFor={optionKey} className="ml-2 text-sm cursor-pointer">
                 {filterLabel} 
-                ({getOptionCount(option)})
+                {typeof getOptionCount(option) === 'number' && getOptionCount(option) > 0 && 
+                  ` (${getOptionCount(option)})`
+                }
               </label>
             </div>
           );
@@ -293,17 +322,18 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-md">
+    <div className="p-4 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:text-gray-200">
       <h3 className="mb-4 text-lg font-semibold">Filters</h3>
       
       {[...filters].sort((a, b) => {
-        const currentPath = window.location.pathname;
-        const priorityPages = ['/laptops', '/tv', '/audio', '/gaming']; // Добавляем /gaming
+        // Price filter should always appear first
+        if ((a.type === 'range' && a.key === 'price') || (a.type === 'range' && a.id === 'price')) return -1;
+        if ((b.type === 'range' && b.key === 'price') || (b.type === 'range' && b.id === 'price')) return 1;
+
+        // Brand filter should appear second
+        if ((a.key === 'brand' || a.id === 'brand')) return -1;
+        if ((b.key === 'brand' || b.id === 'brand')) return 1;
         
-        if (priorityPages.includes(currentPath)) {
-          if (a.type === 'range' && a.key === 'price') return -1;
-          if (b.type === 'range' && b.key === 'price') return 1;
-        }
         return 0;
       }).map((filter) => {
         const filterId = filter.id || filter.key || '';
@@ -325,7 +355,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   className="w-full input input-bordered input-sm"
                   placeholder="Min"
                 />
-                <span className="text-gray-500">-</span>
+                <span className="text-gray-500 dark:text-gray-400">-</span>
                 <input
                   type="number"
                   min={priceRange.min}

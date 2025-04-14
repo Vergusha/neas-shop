@@ -158,8 +158,8 @@ const GamingPage: React.FC = () => {
           onClick={() => setShowFilters(!showFilters)}
           className="btn btn-sm flex items-center gap-2"
           style={{ 
-            backgroundColor: currentTheme === 'dark' ? '#d45288' : '#003D2D',
-            borderColor: currentTheme === 'dark' ? '#d45288' : '#003D2D',
+            backgroundColor: currentTheme === 'dark' ? '#95c672' : '#003D2D',
+            borderColor: currentTheme === 'dark' ? '#95c672' : '#003D2D',
             color: currentTheme === 'dark' ? '#1f2937' : 'white'
           }}
         >
