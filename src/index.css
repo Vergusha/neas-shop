@@ -1374,3 +1374,45 @@ footer.bg-\[\#003d2d\] div {
 [data-theme="dark"] .hover\:text-\[\#004D3D\]:hover {
   color: #a6d285 !important;
 }
+
+/* index.css */
+.footer {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  margin-top: auto;
+  background-color: #003d2d;
+  color: #fff;
+}
+.footer-dark {
+  background-color: #95c672;
+  color: #1f2937;
+}
+.footer-link {
+  color: #fff;
+}
+.footer-link-dark {
+  color: #1f2937;
+}
+.footer-link:hover {
+  text-decoration: underline;
+}
+
+.footer {
+  background: #003d2d;
+  color: #fff;
+}
+.footer-link {
+  color: #fff;
+}
+.footer-link:hover {
+  text-decoration: underline;
+}
+
+/* Для тёмной темы */
+.dark .footer {
+  background: #95c672;
+  color: #1f2937;
+}
+.dark .footer-link {
+  color: #1f2937;
+}

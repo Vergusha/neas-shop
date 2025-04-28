@@ -21,7 +21,7 @@ const ColorVariantSelector: React.FC<ColorVariantSelectorProps> = ({
   isPending = false
 }) => {
   // Track current theme
-  const [currentTheme, setCurrentTheme] = useState(getTheme());
+  const [, setCurrentTheme] = useState(getTheme());
   
   // Listen for theme changes
   useEffect(() => {

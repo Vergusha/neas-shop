@@ -557,6 +557,7 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, deviceType: e.target.value})}
           className="w-full select select-bordered"
           required
+          title="Select Type"
         >
           <option value="">Выберите тип</option>
           <option value="Mouse">Мышь</option>
@@ -578,6 +579,7 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, connectivity: e.target.value})}
           className="w-full select select-bordered"
           required
+          title="Select Connectivity"
         >
           <option value="">Выберите тип подключения</option>
           <option value="Wired">Проводное</option>
@@ -592,6 +594,7 @@ const AdminPanel: React.FC = () => {
           value={product.compatibleWith || ''}
           onChange={(e) => setProduct({...product, compatibleWith: e.target.value})}
           className="w-full select select-bordered"
+          title="Select Compatibility"
         >
           <option value="">Выберите совместимость</option>
           <option value="PC">PC</option>
@@ -728,6 +731,7 @@ const AdminPanel: React.FC = () => {
             onChange={(e) => setProduct({...product, brand: e.target.value})}
             className="w-full select select-bordered"
             required
+            title="Select Brand"
           >
             <option value="">Select Brand</option>
             <option value="Apple">Apple (MacBook)</option>
@@ -751,6 +755,7 @@ const AdminPanel: React.FC = () => {
                 onChange={(e) => setProduct({...product, model: e.target.value})}
                 className="w-full select select-bordered"
                 required
+                title="Select Model"
               >
                 <option value="">Select Model</option>
                 <option value="MacBook Air">MacBook Air</option>
@@ -775,6 +780,7 @@ const AdminPanel: React.FC = () => {
                 onChange={(e) => setProduct({...product, processor: e.target.value})}
                 className="w-full select select-bordered"
                 required
+                title="Select Chip"
               >
                 <option value="">Select Chip</option>
                 <option value="Apple M1">Apple M1</option>
@@ -805,6 +811,7 @@ const AdminPanel: React.FC = () => {
                 onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
                 className="w-full select select-bordered"
                 required
+                title="Select Year"
               >
                 <option value="">Select Year</option>
                 <option value="2025">2025</option>
@@ -832,6 +839,7 @@ const AdminPanel: React.FC = () => {
                 onChange={(e) => setProduct({...product, screenSize: e.target.value})}
                 className="w-full select select-bordered"
                 required
+                title="Select Screen Size"
               >
                 <option value="">Select Screen Size</option>
                 <option value="13 inch">13 inch</option>
@@ -847,6 +855,7 @@ const AdminPanel: React.FC = () => {
                 onChange={(e) => setProduct({...product, storageType: e.target.value})}
                 className="w-full select select-bordered"
                 required
+                title="Select Storage"
               >
                 <option value="">Select Storage</option>
                 <option value="256GB SSD">256GB SSD</option>
@@ -864,6 +873,7 @@ const AdminPanel: React.FC = () => {
                 onChange={(e) => setProduct({...product, ram: e.target.value})}
                 className="w-full select select-bordered"
                 required
+                title="Select RAM"
               >
                 <option value="">Select RAM</option>
                 <option value="8GB">8GB</option>
@@ -883,6 +893,7 @@ const AdminPanel: React.FC = () => {
                 onChange={(e) => setProduct({...product, operatingSystem: e.target.value})}
                 className="w-full select select-bordered"
                 required
+                title="Select OS"
               >
                 <option value="">Select OS</option>
                 <option value="macOS">macOS</option>
@@ -1058,6 +1069,7 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, diagonal: e.target.value})}
           className="w-full select select-bordered"
           required
+          title="Select Size"
         >
           <option value="">Select Size</option>
           <option value="32">32"</option>
@@ -1076,6 +1088,7 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, resolution: e.target.value})}
           className="w-full select select-bordered"
           required
+          title="Select Resolution"
         >
           <option value="">Select Resolution</option>
           <option value="HD">HD (1366x768)</option>
@@ -1091,6 +1104,7 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, refreshRate: e.target.value})}
           className="w-full select select-bordered"
           required
+          title="Select Refresh Rate"
         >
           <option value="">Select Refresh Rate</option>
           <option value="60Hz">60Hz</option>
@@ -1106,6 +1120,7 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, displayType: e.target.value})}
           className="w-full select select-bordered"
           required
+          title="Select Display Type"
         >
           <option value="">Select Display Type</option>
           <option value="LED">LED</option>
@@ -1158,6 +1173,7 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, brand: e.target.value})}
           className="w-full select select-bordered"
           required
+          title="Select Brand"
         >
           <option value="">Select Brand</option>
           <option value="JBL">JBL</option>
@@ -1199,6 +1215,7 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, subtype: e.target.value as any})}
           className="w-full select select-bordered"
           required
+          title="Select Type"
         >
           <option value="">Select Type</option>
           <option value="headphones">Headphones</option>
@@ -1214,6 +1231,7 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, connectivity: e.target.value})}
           className="w-full select select-bordered"
           required
+          title="Select Connectivity"
         >
           <option value="">Select Connectivity</option>
           <option value="Wired">Wired</option>
@@ -1288,6 +1306,7 @@ const AdminPanel: React.FC = () => {
           onChange={(e) => setProduct({...product, color: e.target.value})}
           className="w-full select select-bordered"
           required
+          title="Select Color"
         >
           <option value="">Select Color</option>
           <option value="Black">Black</option>
@@ -1333,10 +1352,10 @@ const AdminPanel: React.FC = () => {
     <div className="p-4 bg-white rounded-lg shadow-md">
       {/* Add the maintenance section at the top */}
       <div className="mb-8">
-        <div className="card bg-base-100 shadow-xl">
+        <div className="shadow-xl card bg-base-100">
           <div className="card-body">
-            <h2 className="card-title text-2xl">Database Maintenance</h2>
-            <p className="text-lg mb-4">
+            <h2 className="text-2xl card-title">Database Maintenance</h2>
+            <p className="mb-4 text-lg">
               Update search keywords and optimize database
             </p>
             <UpdateSearchKeywordsButton />
@@ -1385,6 +1404,7 @@ const AdminPanel: React.FC = () => {
                 onChange={(e) => setProduct({...product, category: e.target.value as any})}
                 className="select select-bordered select-sm"
                 required
+                title="Select Category"
               >
                 <option value="mobile">Mobile Phones</option>
                 <option value="tv">TV</option>
@@ -1420,6 +1440,8 @@ const AdminPanel: React.FC = () => {
                       onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)}
                       className="w-full file-input file-input-sm file-input-bordered"
                       accept="image/*"
+                      title="Upload product image"
+                      placeholder="Choose image file"
                     />
                   ) : (
                     <input
@@ -1455,6 +1477,7 @@ const AdminPanel: React.FC = () => {
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="select select-bordered select-sm"
+                  title="Select Category to Manage"
                 >
                   <option value="mobile">Mobile Phones</option>
                   <option value="tv">TV</option>
