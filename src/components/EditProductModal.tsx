@@ -254,6 +254,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     onChange={handleInputChange}
                     className={`w-full select select-bordered ${errors.deviceType ? 'select-error' : ''}`}
                     required
+                    title="Select Device Type"
                   >
                     <option value="">Select Type</option>
                     <option value="Mouse">Mouse</option>
@@ -277,6 +278,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     value={editedProduct.connectivity || ''}
                     onChange={handleInputChange}
                     className="w-full select select-bordered"
+                    title="Select Connectivity"
                   >
                     <option value="">Choose Connectivity</option>
                     <option value="Wired">Wired</option>
@@ -355,6 +357,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     onChange={handleInputChange}
                     className={`w-full select select-bordered ${errors.diagonal ? 'select-error' : ''}`}
                     required
+                    title="Select Screen Size"
                   >
                     <option value="">Select Size</option>
                     <option value="32">32"</option>
@@ -376,6 +379,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     onChange={handleInputChange}
                     className={`w-full select select-bordered ${errors.resolution ? 'select-error' : ''}`}
                     required
+                    title="Select Resolution"
                   >
                     <option value="">Select Resolution</option>
                     <option value="HD">HD (1366x768)</option>
@@ -393,6 +397,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     value={editedProduct.refreshRate || ''}
                     onChange={handleInputChange}
                     className="w-full select select-bordered"
+                    title="Select Refresh Rate"
                   >
                     <option value="">Select Refresh Rate</option>
                     <option value="60Hz">60Hz</option>
@@ -410,6 +415,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     onChange={handleInputChange}
                     className={`w-full select select-bordered ${errors.displayType ? 'select-error' : ''}`}
                     required
+                    title="Select Display Type"
                   >
                     <option value="">Select Display Type</option>
                     <option value="LED">LED</option>
@@ -433,6 +439,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     onChange={handleInputChange}
                     className={`w-full select select-bordered ${errors.subtype ? 'select-error' : ''}`}
                     required
+                    title="Select Audio Product Type"
                   >
                     <option value="">Select Type</option>
                     <option value="headphones">Headphones</option>
@@ -450,6 +457,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     value={editedProduct.connectivity || ''}
                     onChange={handleInputChange}
                     className="w-full select select-bordered"
+                    title="Select Connectivity"
                   >
                     <option value="">Select Connectivity</option>
                     <option value="Wired">Wired</option>
@@ -536,6 +544,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                           onChange={handleInputChange}
                           className={`w-full select select-bordered ${errors.processor ? 'select-error' : ''}`}
                           required
+                          title="Select Chip"
                         >
                           <option value="">Select Chip</option>
                           <option value="Apple M1">Apple M1</option>
@@ -636,6 +645,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                         value={editedProduct.operatingSystem || ''}
                         onChange={handleInputChange}
                         className="w-full select select-bordered"
+                        title="Select Operating System"
                       >
                         <option value="">Select OS</option>
                         <option value="macOS">macOS</option>
@@ -722,7 +732,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
           </div>
           
-          <div className="mt-4 flex justify-end gap-2">
+          <div className="flex justify-end gap-2 mt-4">
             <button
               type="button"
               onClick={onClose}

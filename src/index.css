@@ -1,13 +1,169 @@
+@import "tailwindcss";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Make sure DaisyUI is applied */
+/* Плагин DaisyUI должен быть подключен в конфиге Tailwind, а не здесь */
+/* Удалите @plugin "daisyui" и настройте темы в tailwind.config.js */
+
+/* Основные стили */
 :root {
-  --rounded-btn: 0.5rem; /* This sets default rounded-btn value */
+  --rounded-btn: 0.5rem;
 }
 
-/* Apply smooth transition when changing themes */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+/* Темная тема */
+[data-theme="dark"] {
+  --color-text-primary: 229 231 235;
+  --color-text-secondary: 209 213 219;
+  --primary-color: #95c672;
+  --primary-focus-color: #7fb356;
+  --primary-glow-color: rgba(149, 198, 114, 0.5);
+}
+
+/* Кнопки */
+.btn-neas-green {
+  @apply bg-[#003D2D] border-[#003D2D] text-white;
+}
+
+.btn-neas-green:hover {
+  @apply bg-[#005040] border-[#005040];
+}
+
+[data-theme="dark"] .btn-neas-green {
+  @apply bg-[#95c672] border-[#95c672] text-gray-800;
+}
+
+[data-theme="dark"] .btn-neas-green:hover {
+  @apply bg-[#7fb356] border-[#7fb356];
+}
+
+/* Карточки товаров */
+.product-card {
+  @apply transition-all duration-300 shadow-md rounded-xl;
+}
+
+.product-card:hover {
+  @apply shadow-lg;
+}
+
+[data-theme="dark"] .product-card {
+  @apply border border-gray-600 shadow-md;
+}
+
+[data-theme="dark"] .product-card:hover {
+  @apply shadow-lg;
+}
+
+/* Анимации */
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.3s ease-out;
+}
+
+/* Контейнеры */
+.container {
+  @apply w-full px-4 mx-auto;
+  max-width: min(100% - 2rem, 1440px);
+}
+
+@media (min-width: 640px) {
+  .container {
+    @apply px-6;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    @apply px-8;
+  }
+}
+
+/* Подвал */
+.footer {
+  @apply py-8 mt-auto bg-[#003D2D] text-white;
+}
+
+[data-theme="dark"] .footer {
+  @apply bg-[#95c672] text-gray-800;
+}
+
+.footer-link {
+  @apply text-white;
+}
+
+[data-theme="dark"] .footer-link {
+  @apply text-gray-800;
+}
+
+.footer-link:hover {
+  @apply underline;
+}
+
+/* Утилиты */
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .product-card-glow:hover {
+    box-shadow: 0 0 20px rgba(0, 61, 45, 0.2);
+  }
+
+  [data-theme="dark"] .product-card-glow:hover {
+    box-shadow: 0 0 20px rgba(149, 198, 114, 0.3);
+  }
+}
+
+/* Исправления для Tailwind 4 */
+/* Замените все --tw-* переменные на соответствующие классы Tailwind */
+/* Удалите устаревшие @screen директивы - используйте @media */
+/* Упростите сложные селекторы */
+
+/* Пример исправления сложного селектора */
+/* Было: */
+[data-theme="dark"] .min-h-screen.bg-gray-50 .text-gray-500.bg-white {
+  color: #9ca3af !important;
+  background-color: #1f2937 !important;
+}
+
+/* Стало: */
+[data-theme="dark"] .auth-form-container .auth-form {
+  @apply text-gray-400 bg-gray-800;
+}
+
 html {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -28,7 +184,6 @@ body {
 
 /* Dark mode improvements */
 [data-theme="dark"] {
-  /* Improve text readability in dark mode */
   --color-text-primary: 229 231 235; /* text-gray-200 in RGB */
   --color-text-secondary: 209 213 219; /* text-gray-300 in RGB */
   --primary-color: #95c672; /* Change from #d45288 to #95c672 */
@@ -37,14 +192,11 @@ body {
 }
 
 [data-theme="dark"] .btn-neas-green {
-  background-color: #95c672 !important;
-  border-color: #95c672 !important;
-  color: #1f2937 !important; /* darker text for contrast */
+  @apply bg-[#95c672] border-[#95c672] text-gray-800;
 }
 
 [data-theme="dark"] .btn-neas-green:hover {
-  background-color: #7fb356 !important;
-  border-color: #7fb356 !important;
+  @apply bg-[#7fb356] border-[#7fb356];
 }
 
 [data-theme="dark"] .menu {
@@ -377,14 +529,14 @@ footer.bg-\[\#003d2d\] div {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-@screen md {
+@media (min-width: 768px) {
   .responsive-grid {
     @apply gap-6;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   }
 }
 
-@screen xl {
+@media (min-width: 1280px) {
   .responsive-grid {
     @apply gap-8;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -521,13 +673,11 @@ footer.bg-\[\#003d2d\] div {
   
   /* Custom button styles */
   .btn-neas-green {
-    background-color: #003D2D !important;
-    border-color: #003D2D !important;
-    color: white !important;
+    @apply bg-[#003D2D] border-[#003D2D] text-white;
   }
   
   .btn-neas-green:hover {
-    background-color: #005040 !important;
+    @apply bg-[#005040] border-[#005040];
   }
   
   /* Отступы карточек */
@@ -549,13 +699,11 @@ footer.bg-\[\#003d2d\] div {
   
   /* Product card styles */
   .product-card {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    border-radius: 1rem;
-    transition: all 0.3s ease;
+    @apply transition-all duration-300 shadow-md rounded-xl;
   }
 
   .product-card:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    @apply shadow-lg;
   }
 
   .product-card button:focus,
@@ -611,8 +759,7 @@ footer.bg-\[\#003d2d\] div {
 
   /* Improved dark mode for product card styles */
   [data-theme="dark"] .product-card {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(75, 85, 99, 0.2);
+    @apply border border-gray-600 shadow-md;
   }
 
   [data-theme="dark"] .product-card .card-body {
@@ -620,7 +767,7 @@ footer.bg-\[\#003d2d\] div {
   }
 
   [data-theme="dark"] .product-card:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    @apply shadow-lg;
   }
 
   [data-theme="dark"] .product-card-glow:hover {
@@ -1377,24 +1524,23 @@ footer.bg-\[\#003d2d\] div {
 
 /* index.css */
 .footer {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-  margin-top: auto;
-  background-color: #003d2d;
-  color: #fff;
+  @apply py-8 mt-auto bg-[#003D2D] text-white;
 }
-.footer-dark {
-  background-color: #95c672;
-  color: #1f2937;
+
+[data-theme="dark"] .footer {
+  @apply bg-[#95c672] text-gray-800;
 }
+
 .footer-link {
-  color: #fff;
+  @apply text-white;
 }
-.footer-link-dark {
-  color: #1f2937;
+
+[data-theme="dark"] .footer-link {
+  @apply text-gray-800;
 }
+
 .footer-link:hover {
-  text-decoration: underline;
+  @apply underline;
 }
 
 .footer {
@@ -1416,3 +1562,4 @@ footer.bg-\[\#003d2d\] div {
 .dark .footer-link {
   color: #1f2937;
 }
+

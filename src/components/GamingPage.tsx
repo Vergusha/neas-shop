@@ -22,12 +22,8 @@ const GamingPage: React.FC = () => {
     <div>
       <button 
         onClick={() => setShowFilters(!showFilters)}
-        className="btn btn-sm flex items-center gap-2"
-        style={{ 
-          backgroundColor: currentTheme === 'dark' ? '#95c672' : '#003D2D',
-          borderColor: currentTheme === 'dark' ? '#95c672' : '#003D2D',
-          color: currentTheme === 'dark' ? '#1f2937' : 'white'
-        }}
+        className={`flex items-center gap-2 btn btn-sm ${currentTheme === 'dark' ? 'btn-gaming-dark' : 'btn-gaming-light'}`}
+        title={showFilters ? 'Hide Filters' : 'Show Filters'}
       >
         <FaFilter className="filter-icon" />
         {showFilters ? 'Hide Filters' : 'Show Filters'}
