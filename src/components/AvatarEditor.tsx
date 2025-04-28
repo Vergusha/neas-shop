@@ -78,9 +78,9 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
-        <h3 className="text-xl font-bold mb-4 dark:text-gray-100">Edit Avatar</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="w-full max-w-md p-6 bg-white rounded-lg dark:bg-gray-800">
+        <h3 className="mb-4 text-xl font-bold dark:text-gray-100">Edit Avatar</h3>
         
         <div className="relative mb-6">
           <div className="dropzone border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 hover:border-[#003D2D] dark:hover:border-[#95c672] transition-colors">
@@ -106,6 +106,8 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
               accept="image/*"
               className="hidden"
               id="avatar-upload"
+              title="Upload avatar image"
+              placeholder="Choose image file"
             />
           </div>
           
@@ -120,7 +122,7 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
         <div className="space-y-4">
           {/* Zoom control */}
           <div>
-            <label className="block text-sm font-medium mb-2 dark:text-gray-200">Zoom</label>
+            <label className="block mb-2 text-sm font-medium dark:text-gray-200">Zoom</label>
             <input
               type="range"
               min={1}
@@ -128,23 +130,26 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ initialImage, onSave, onCan
               step={0.01}
               value={imageProperties.scale}
               onChange={handleZoom}
-              className="range w-full"
+              className="w-full range"
+              title="Zoom avatar"
             />
           </div>
 
           {/* Rotation controls */}
           <div>
-            <label className="block text-sm font-medium mb-2 dark:text-gray-200">Rotate</label>
+            <label className="block mb-2 text-sm font-medium dark:text-gray-200">Rotate</label>
             <div className="flex gap-2">
               <button 
                 onClick={() => handleRotate('left')}
                 className="btn btn-outline border-[#003D2D] hover:bg-[#003D2D] hover:border-[#003D2D] dark:border-[#95c672] dark:hover:bg-[#95c672] dark:hover:border-[#95c672] dark:text-[#95c672] dark:hover:text-gray-900"
+                title="Rotate left"
               >
                 <FaUndo />
               </button>
               <button 
                 onClick={() => handleRotate('right')}
                 className="btn btn-outline border-[#003D2D] hover:bg-[#003D2D] hover:border-[#003D2D] dark:border-[#95c672] dark:hover:bg-[#95c672] dark:hover:border-[#95c672] dark:text-[#95c672] dark:hover:text-gray-900"
+                title="Rotate right"
               >
                 <FaRedo />
               </button>
