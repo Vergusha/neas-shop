@@ -17,6 +17,22 @@ module.exports = {
       backgroundColor: theme => ({
         'dark-button-primary': '#95c672',
       }),
+      // Вместо CSS-правил вроде ".product-card-glow:hover"
+      boxShadow: {
+        'product-glow': '0 0 20px rgba(0, 61, 45, 0.2)',
+        'product-glow-dark': '0 0 20px rgba(149, 198, 114, 0.3)'
+      },
+      // Вместо пользовательских анимаций в CSS
+      animation: {
+        'cart-flash': 'cartButtonFlash 0.5s ease',
+        'logo-scale': 'logoScale 0.3s ease-in-out'
+      },
+      keyframes: {
+        cartButtonFlash: {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.2)' }
+        }
+      }
     },
   },
   variants: {

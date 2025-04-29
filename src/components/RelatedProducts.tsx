@@ -2,26 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from './ProductCard';
+import { Product } from '../types/product';
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  brand?: string;
-  processor?: string;
-  ram?: string;
-  graphicsCard?: string;
-  storageType?: string;
-  screenSize?: string;
-  operatingSystem?: string;
-  color?: string;
-  category?: string;
-  model: string;
-  modelNumber: string;
-}
-
+// Using the defined Product type from types/product.ts
 interface RelatedProductsProps {
   product: Product;
 }
@@ -35,7 +18,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
       try {
         setLoading(true);
         
-        let productCollection = product.category || 'laptops';
+        let productCollection = product.collection || 'laptops';
         let q;
 
         // For MacBooks, use only essential filters to avoid Firestore limitations

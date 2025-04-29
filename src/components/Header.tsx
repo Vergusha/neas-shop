@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, ShoppingCart, Heart, User, Bell, MessageSquare, LogOut, LogIn, Sun, Moon } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Bell, LogOut, LogIn, Sun, Moon } from 'lucide-react';
 import logo from '../assets/logo.svg';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { collection, getDocs, query, limit } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import Toast from './Toast';
@@ -11,10 +11,6 @@ import { app } from '../firebaseConfig';
 import { database } from '../firebaseConfig';
 import { useAuth } from '../utils/AuthProvider';
 import UserAvatar from './UserAvatar';
-import { Link } from 'react-router-dom';
-import { FaShoppingCart, FaUser, FaBell } from 'react-icons/fa';
-import { IoMdSunny, IoMdMoon } from 'react-icons/io';
-import { toggleTheme, getTheme } from '../utils/themeUtils';
 
 const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -595,11 +591,11 @@ const Header: React.FC = () => {
     <header className={`shadow-md relative ${
       currentTheme === 'dark' ? 'bg-[#95c672] dark-header' : 'bg-[#003D2D]'
     }`}>
-      <div className="container mx-auto px-4 py-2 sm:py-4">
+      <div className="container px-4 py-2 mx-auto sm:py-4">
         {/* Top row: Logo, Search, and buttons */}
         <div className="flex flex-wrap items-center justify-between md:flex-nowrap">
           {/* Logo */}
-          <a href="/" className="block transition-all duration-500 ease-in-out origin-center transform header-logo shrink-0 hover:scale-110 mb-2 md:mb-0">
+          <a href="/" className="block mb-2 transition-all duration-500 ease-in-out origin-center transform header-logo shrink-0 hover:scale-110 md:mb-0">
             <img
               src={logo}
               alt="Logo"
@@ -648,11 +644,11 @@ const Header: React.FC = () => {
                       currentTheme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-200'
                     }`} onClick={() => navigate(`/product/${result.id}`)}>
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 w-14 h-14 bg-white rounded-sm p-1">
+                        <div className="flex-shrink-0 p-1 bg-white rounded-sm w-14 h-14">
                           <img src={result.image} alt={result.name} className="object-contain w-full h-full" />
                         </div>
                         <div className="flex-1 pl-4">
-                          <div className="flex justify-between items-start">
+                          <div className="flex items-start justify-between">
                             <div className={`font-medium pr-2 ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                               {`${result.brand} ${result.model || ''}`}
                               {result.memory ? ` ${result.memory}` : ''}
@@ -676,9 +672,9 @@ const Header: React.FC = () => {
           </div>
 
           {/* Navbar buttons */}
-          <div className="flex items-center gap-1 order-2 md:order-3 header-icons sm:gap-2 md:ml-2">
+          <div className="flex items-center order-2 gap-1 md:order-3 header-icons sm:gap-2 md:ml-2">
             {/* Theme toggle button - add before notifications bell */}
-            <label className="swap swap-rotate transition-all duration-500 ease-in-out hover:scale-110 btn btn-ghost btn-circle">
+            <label className="transition-all duration-500 ease-in-out swap swap-rotate hover:scale-110 btn btn-ghost btn-circle">
               <input 
                 type="checkbox" 
                 className="theme-controller" 
@@ -686,9 +682,9 @@ const Header: React.FC = () => {
                 onChange={handleThemeToggle}
               />
               {/* sun icon */}
-              <Sun className="swap-off h-6 w-6 sm:h-7 sm:w-7 text-white" />
+              <Sun className="w-6 h-6 text-white swap-off sm:h-7 sm:w-7" />
               {/* moon icon */}
-              <Moon className="swap-on h-6 w-6 sm:h-7 sm:w-7 text-white" />
+              <Moon className="w-6 h-6 text-white swap-on sm:h-7 sm:w-7" />
             </label>
             
             {/* Notifications bell */}
@@ -981,11 +977,11 @@ const Header: React.FC = () => {
                     currentTheme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-200'
                   }`} onClick={() => navigate(`/product/${result.id}`)}>
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 w-14 h-14 bg-white rounded-sm p-1">
+                      <div className="flex-shrink-0 p-1 bg-white rounded-sm w-14 h-14">
                         <img src={result.image} alt={result.name} className="object-contain w-full h-full" />
                       </div>
                       <div className="flex-1 pl-4">
-                        <div className="flex justify-between items-start">
+                        <div className="flex items-start justify-between">
                           <div className={`font-medium pr-2 ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                             {`${result.brand} ${result.model || ''}`}
                             {result.memory ? ` ${result.memory}` : ''}

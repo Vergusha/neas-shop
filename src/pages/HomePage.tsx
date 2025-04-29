@@ -6,34 +6,7 @@ import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
 import { extractFilters, applyFilters } from '../utils/filterUtils';
 import { getDatabase, ref, query, orderByChild, limitToLast, get } from 'firebase/database';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  brand?: string;
-  category?: string;
-  memory?: string;
-  color?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  searchKeywords?: string[];
-  clickCount?: number;
-  popularityScore?: number;
-}
-
-interface FilterValue {
-  value: string | number;
-  count: number;
-}
-
-interface FilterOption {
-  name: string;
-  key: string;
-  values: FilterValue[];
-}
+import { Product, FilterOption } from '../types/product';
 
 const HomePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);

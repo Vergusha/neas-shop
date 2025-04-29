@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -9,7 +8,7 @@ const Footer = () => {
           {/* Company Info */}
           <div>
             <h3 className="mb-4 text-lg font-semibold text-white dark:text-gray-900">About Us</h3>
-            <p className="text-sm opacity-90 text-white dark:text-gray-900">
+            <p className="text-sm text-white opacity-90 dark:text-gray-900">
               Your trusted source for electronics and tech products.
             </p>
           </div>

@@ -29,11 +29,11 @@ const AudioPage: React.FC = () => {
           color: currentTheme === 'dark' ? '#1f2937' : 'white'
         }}
       >
-        <FaFilter classNafilter-iconicon" />
+        <FaFilter className="filter-icon" />
         {showFilters ? 'Hide Filters' : 'Show Filters'}
       </button>
       {showFilters && (
-        <div classNafiltersters">
+        <div className="filters">
           {/* Filter options go here */}
         </div>
       )}

@@ -1,17 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
+import { Product } from '../types/product';
 
-// Define your own interface matching the props of ProductCard
-interface ProductCardProps {
-  id: string;
-  image: string;
-  name: string;
-  description: string;
-  price: number;
-}
-
-// Define the local product interface 
-type FavoriteProduct = ProductCardProps;
+// Define type for favorites product based on the Product interface
+type FavoriteProduct = Product;
 
 const FavoritesPage: React.FC = () => {
   const userId = 'user123'; // Replace with actual user ID from authentication context

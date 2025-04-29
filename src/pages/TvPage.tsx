@@ -8,36 +8,8 @@ import ProductFilters from '../components/ProductFilters';
 import { applyFilters } from '../utils/filterUtils';
 import { getTheme } from '../utils/themeUtils';
 import CategoryLayout from '../components/CategoryLayout'; // Import CategoryLayout
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  brand?: string;
-  category?: string;
-  memory?: string;
-  color?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  searchKeywords?: string[];
-  clickCount?: number;
-}
-
-interface FilterValue {
-  value: string | number;
-  count: number;
-}
-
-interface FilterOption {
-  name: string;
-  key: string;
-  values: FilterValue[];
-  type?: 'range' | 'checkbox';
-  min?: number;
-  max?: number;
-}
+import { Product } from '../types/product'; // Import Product type
+import { FilterOption, FilterValue } from '../utils/filterUtils'; // Import FilterOption type
 
 // Добавляем функцию getUniqueValues
 const getUniqueValues = (products: Product[], key: keyof Product): FilterValue[] => {
