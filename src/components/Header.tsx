@@ -640,7 +640,7 @@ const Header: React.FC = () => {
                     setShowResults(true);
                   }
                 }}
-                className={`w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 ${currentTheme === 'dark' ? 'focus:ring-[#95c672]' : 'focus:ring-[#003D2D]'}`}
+                className={`w-full px-10 py-2 text-black border border-gray-300 rounded-full focus:outline-none focus:ring-2 ${currentTheme === 'dark' ? 'bg-gray-800 text-white border-gray-700 focus:ring-[#95c672]' : 'bg-white focus:ring-[#003D2D]'}`}
               />
               
               {/* Search results dropdown */}
@@ -972,8 +972,8 @@ const Header: React.FC = () => {
                   setShowResults(true);
                 }
               }}
-              className={`w-full px-10 py-2 text-black bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 ${
-                currentTheme === 'dark' ? 'bg-gray-700 text-white border-gray-600 focus:ring-[#95c672]' : 'focus:ring-[#003D2D]'
+              className={`w-full px-10 py-2 text-black border border-gray-300 rounded-full focus:outline-none focus:ring-2 ${
+                currentTheme === 'dark' ? 'bg-gray-800 text-white border-gray-700 focus:ring-[#95c672]' : 'bg-white focus:ring-[#003D2D]'
               }`}
             />
             
