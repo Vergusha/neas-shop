@@ -250,6 +250,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   <label className="block text-sm font-medium required">Device Type</label>
                   <select
                     name="deviceType"
+                    title="Device Type"
                     value={editedProduct.deviceType || ''}
                     onChange={handleInputChange}
                     className={`w-full select select-bordered ${errors.deviceType ? 'select-error' : ''}`}
@@ -272,7 +273,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 
                 <div>
                   <label className="block text-sm font-medium">Connectivity</label>
+                  <label htmlFor="gamingConnectivity" className="block text-sm font-medium">Connectivity</label>
                   <select
+                    id="gamingConnectivity"
                     name="connectivity"
                     value={editedProduct.connectivity || ''}
                     onChange={handleInputChange}
@@ -348,9 +351,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             {isTV && (
               <>
                 <div>
-                  <label className="block text-sm font-medium required">Screen Size</label>
+                  <label htmlFor="tvDiagonal" className="block text-sm font-medium required">Screen Size</label>
                   <select
+                    id="tvDiagonal"
                     name="diagonal"
+                    title="Screen Size"
                     value={editedProduct.diagonal || ''}
                     onChange={handleInputChange}
                     className={`w-full select select-bordered ${errors.diagonal ? 'select-error' : ''}`}
@@ -369,9 +374,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium required">Resolution</label>
+                  <label htmlFor="tvResolution" className="block text-sm font-medium required">Resolution</label>
                   <select
+                    id="tvResolution"
                     name="resolution"
+                    title="Resolution"
                     value={editedProduct.resolution || ''}
                     onChange={handleInputChange}
                     className={`w-full select select-bordered ${errors.resolution ? 'select-error' : ''}`}
@@ -390,6 +397,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   <label className="block text-sm font-medium">Refresh Rate</label>
                   <select
                     name="refreshRate"
+                    title="Refresh Rate"
                     value={editedProduct.refreshRate || ''}
                     onChange={handleInputChange}
                     className="w-full select select-bordered"
@@ -406,6 +414,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   <label className="block text-sm font-medium required">Display Type</label>
                   <select
                     name="displayType"
+                    title="Display Type"
                     value={editedProduct.displayType || ''}
                     onChange={handleInputChange}
                     className={`w-full select select-bordered ${errors.displayType ? 'select-error' : ''}`}
@@ -429,6 +438,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   <label className="block text-sm font-medium required">Product Type</label>
                   <select
                     name="subtype"
+                    title="Audio Product Type"
                     value={editedProduct.subtype || ''}
                     onChange={handleInputChange}
                     className={`w-full select select-bordered ${errors.subtype ? 'select-error' : ''}`}
@@ -447,6 +457,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   <label className="block text-sm font-medium">Connectivity</label>
                   <select
                     name="connectivity"
+                    title="Connectivity"
                     value={editedProduct.connectivity || ''}
                     onChange={handleInputChange}
                     className="w-full select select-bordered"
@@ -532,6 +543,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                         <label className="block text-sm font-medium required">Chip</label>
                         <select
                           name="processor"
+                          title="Processor"
                           value={editedProduct.processor || ''}
                           onChange={handleInputChange}
                           className={`w-full select select-bordered ${errors.processor ? 'select-error' : ''}`}
@@ -633,6 +645,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     {editedProduct.brand === 'Apple' ? (
                       <select
                         name="operatingSystem"
+                        title="Operating System"
                         value={editedProduct.operatingSystem || ''}
                         onChange={handleInputChange}
                         className="w-full select select-bordered"
@@ -722,7 +735,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
           </div>
           
-          <div className="mt-4 flex justify-end gap-2">
+          <div className="flex justify-end gap-2 mt-4">
             <button
               type="button"
               onClick={onClose}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { Product } from '../types/product';
 
 interface ProductCardProps {
   id: string;
@@ -13,7 +14,7 @@ interface ProductCardProps {
 
 const DataPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
-  const [products, setProducts] = useState<ProductCardProps[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
@@ -51,13 +52,13 @@ const DataPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">{category}</h1>
+    <div className="container py-8 mx-auto">
+      <h1 className="mb-4 text-2xl font-bold">{category}</h1>
       <div className="flex">
         {/* Sidebar */}
         <aside className="w-1/4 pr-4">
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <h2 className="font-bold mb-2">Filter</h2>
+          <div className="p-4 bg-white rounded-lg shadow-md">
+            <h2 className="mb-2 font-bold">Filter</h2>
             {/* Add your filters here */}
           </div>
         </aside>
@@ -66,7 +67,7 @@ const DataPage: React.FC = () => {
         <main className="w-3/4">
           <div className="grid grid-cols-1 gap-4">
             {products.map((product, index) => (
-              <div key={product.id || index} className="bg-white p-4 rounded-lg shadow-md flex">
+              <div key={product.id || index} className="flex p-4 bg-white rounded-lg shadow-md">
                 <img src={product.image} alt={product.name} className="w-1/4" />
                 <div className="ml-4">
                   <h3 className="font-bold">{product.name}</h3>

@@ -3,12 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
-import { Product as ProductType } from '../types/product'; // Переименуем импорт для ясности
-
-// Интерфейс Product в этом файле должен соответствовать интерфейсу Product из types/product.ts
-interface Product extends ProductType {
-  // Добавляем любые дополнительные поля, если нужно
-}
+import { Product } from '../types/product'; // Переименуем импорт для ясности
 
 const SearchResultsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();

@@ -5,18 +5,7 @@ import ProductCard from '../components/ProductCard';
 import { getAuth } from 'firebase/auth';
 import { ref, get } from 'firebase/database';
 import { database } from '../firebaseConfig';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  brand?: string;
-  category?: string;
-  memory?: string;
-  color?: string;
-}
+import { Product } from '../types/product';
 
 const FavoritesPage: React.FC = () => {
   const [favorites, setFavorites] = useState<Product[]>([]);

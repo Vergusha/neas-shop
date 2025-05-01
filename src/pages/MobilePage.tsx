@@ -6,18 +6,7 @@ import ProductCard from '../components/ProductCard';
 import ProductFilters from '../components/ProductFilters';
 import CategoryLayout from '../components/CategoryLayout';
 import { getTheme } from '../utils/themeUtils';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  brand?: string;
-  category?: string;
-  memory?: string;
-  color?: string;
-}
+import { Product } from '../types/product';
 
 const MobilePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
