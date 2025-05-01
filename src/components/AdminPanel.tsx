@@ -4,7 +4,6 @@ import EditProductModal from './EditProductModal';
 import { db } from '../firebaseConfig';
 import { ProductForm, NewProductForm } from '../types/product';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
-import { updateAllProductsSearchKeywords } from '../utils/updateSearchKeywords';
 import { updatePopularProducts } from '../utils/updatePopularProducts';
 import { updateGamingKeywords } from '../utils/updateGamingKeywords';
 import { Link } from 'react-router-dom';
@@ -386,7 +385,6 @@ const AdminPanel: React.FC = () => {
   const handleUpdateSearchKeywords = async () => {
     try {
       if (window.confirm('Are you sure you want to update search keywords for all products?')) {
-        await updateAllProductsSearchKeywords();
         alert('Search keywords updated successfully!');
       }
     } catch (error) {
@@ -428,8 +426,9 @@ const AdminPanel: React.FC = () => {
   const renderMobileFields = () => (
     <>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Brand</label>
+        <label htmlFor="mobileBrand" className="block text-sm font-medium text-gray-700 required">Brand</label>
         <input
+          id="mobileBrand"
           type="text"
           value={product.brand}
           onChange={(e) => setProduct({...product, brand: e.target.value})}
@@ -439,8 +438,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Model</label>
+        <label htmlFor="mobileModel" className="block text-sm font-medium text-gray-700 required">Model</label>
         <input
+          id="mobileModel"
           type="text"
           value={product.model}
           onChange={(e) => setProduct({...product, model: e.target.value})}
@@ -450,8 +450,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700">Model Number</label>
+        <label htmlFor="mobileModelNumber" className="block text-sm font-medium text-gray-700">Model Number</label>
         <input
+          id="mobileModelNumber"
           type="text"
           value={product.modelNumber}
           onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
@@ -460,8 +461,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Memory</label>
+        <label htmlFor="mobileMemory" className="block text-sm font-medium text-gray-700 required">Memory</label>
         <input
+          id="mobileMemory"
           type="text"
           value={product.memory}
           onChange={(e) => setProduct({...product, memory: e.target.value})}
@@ -471,8 +473,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Color</label>
+        <label htmlFor="mobileColor" className="block text-sm font-medium text-gray-700 required">Color</label>
         <input
+          id="mobileColor"
           type="text"
           value={product.color}
           onChange={(e) => setProduct({...product, color: e.target.value})}
@@ -482,8 +485,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
+        <label htmlFor="mobilePrice" className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
         <input
+          id="mobilePrice"
           type="number"
           value={product.price}
           onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
@@ -495,8 +499,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Description</label>
+        <label htmlFor="mobileDescription" className="block text-sm font-medium text-gray-700 required">Description</label>
         <textarea
+          id="mobileDescription"
           value={product.description}
           onChange={(e) => setProduct({...product, description: e.target.value})}
           className="w-full textarea textarea-bordered"
@@ -519,8 +524,9 @@ const AdminPanel: React.FC = () => {
   const renderGamingFields = () => (
     <>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Бренд</label>
+        <label htmlFor="gamingBrand" className="block text-sm font-medium text-gray-700 required">Бренд</label>
         <input
+          id="gamingBrand"
           type="text"
           value={product.brand}
           onChange={(e) => setProduct({...product, brand: e.target.value})}
@@ -530,8 +536,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Модель</label>
+        <label htmlFor="gamingModel" className="block text-sm font-medium text-gray-700 required">Модель</label>
         <input
+          id="gamingModel"
           type="text"
           value={product.model}
           onChange={(e) => setProduct({...product, model: e.target.value})}
@@ -541,8 +548,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700">Модельный номер</label>
+        <label htmlFor="gamingModelNumber" className="block text-sm font-medium text-gray-700">Модельный номер</label>
         <input
+          id="gamingModelNumber"
           type="text"
           value={product.modelNumber}
           onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
@@ -551,8 +559,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Тип устройства</label>
+        <label htmlFor="gamingDeviceType" className="block text-sm font-medium text-gray-700 required">Тип устройства</label>
         <select
+          id="gamingDeviceType"
           value={product.deviceType || ''}
           onChange={(e) => setProduct({...product, deviceType: e.target.value})}
           className="w-full select select-bordered"
@@ -572,8 +581,9 @@ const AdminPanel: React.FC = () => {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Подключение</label>
+        <label htmlFor="gamingConnectivity" className="block text-sm font-medium text-gray-700 required">Подключение</label>
         <select
+          id="gamingConnectivity"
           value={product.connectivity || ''}
           onChange={(e) => setProduct({...product, connectivity: e.target.value})}
           className="w-full select select-bordered"
@@ -587,8 +597,9 @@ const AdminPanel: React.FC = () => {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700">Совместимость</label>
+        <label htmlFor="gamingCompatibleWith" className="block text-sm font-medium text-gray-700">Совместимость</label>
         <select
+          id="gamingCompatibleWith"
           value={product.compatibleWith || ''}
           onChange={(e) => setProduct({...product, compatibleWith: e.target.value})}
           className="w-full select select-bordered"
@@ -605,8 +616,9 @@ const AdminPanel: React.FC = () => {
       </div>
       {product.deviceType === 'Mouse' && (
         <div>
-          <label className="block text-sm font-medium text-gray-700">DPI</label>
+          <label htmlFor="gamingDpi" className="block text-sm font-medium text-gray-700">DPI</label>
           <input
+            id="gamingDpi"
             type="text"
             value={product.dpi || ''}
             onChange={(e) => setProduct({...product, dpi: e.target.value})}
@@ -617,8 +629,9 @@ const AdminPanel: React.FC = () => {
       )}
       {product.deviceType === 'Keyboard' && (
         <div>
-          <label className="block text-sm font-medium text-gray-700">Тип переключателей</label>
+          <label htmlFor="gamingSwitchType" className="block text-sm font-medium text-gray-700">Тип переключателей</label>
           <input
+            id="gamingSwitchType"
             type="text"
             value={product.switchType || ''}
             onChange={(e) => setProduct({...product, switchType: e.target.value})}
@@ -629,8 +642,9 @@ const AdminPanel: React.FC = () => {
       )}
       {(product.connectivity === 'Wireless' || product.connectivity === 'Bluetooth') && (
         <div>
-          <label className="block text-sm font-medium text-gray-700">Время работы от батареи</label>
+          <label htmlFor="gamingBatteryLife" className="block text-sm font-medium text-gray-700">Время работы от батареи</label>
           <input
+            id="gamingBatteryLife"
             type="text"
             value={product.batteryLife || ''}
             onChange={(e) => setProduct({...product, batteryLife: e.target.value})}
@@ -640,8 +654,9 @@ const AdminPanel: React.FC = () => {
         </div>
       )}
       <div>
-        <label className="block text-sm font-medium text-gray-700">Вес</label>
+        <label htmlFor="gamingWeight" className="block text-sm font-medium text-gray-700">Вес</label>
         <input
+          id="gamingWeight"
           type="text"
           value={product.weight || ''}
           onChange={(e) => setProduct({...product, weight: e.target.value})}
@@ -651,19 +666,20 @@ const AdminPanel: React.FC = () => {
       </div>
       <div className="flex items-center gap-2 mt-2">
         <input
+          id="gamingRgbLighting"
           type="checkbox"
-          id="rgbLighting"
           checked={product.rgbLighting || false}
           onChange={(e) => setProduct({...product, rgbLighting: e.target.checked})}
           className="checkbox"
         />
-        <label htmlFor="rgbLighting" className="text-sm font-medium text-gray-700">
+        <label htmlFor="gamingRgbLighting" className="text-sm font-medium text-gray-700">
           RGB-подсветка
         </label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Версия/Серия</label>
+        <label htmlFor="gamingMemory" className="block text-sm font-medium text-gray-700 required">Версия/Серия</label>
         <input
+          id="gamingMemory"
           type="text"
           value={product.memory}
           onChange={(e) => setProduct({...product, memory: e.target.value})}
@@ -673,8 +689,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Цвет</label>
+        <label htmlFor="gamingColor" className="block text-sm font-medium text-gray-700 required">Цвет</label>
         <input
+          id="gamingColor"
           type="text"
           value={product.color}
           onChange={(e) => setProduct({...product, color: e.target.value})}
@@ -684,8 +701,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Цена (NOK)</label>
+        <label htmlFor="gamingPrice" className="block text-sm font-medium text-gray-700 required">Цена (NOK)</label>
         <input
+          id="gamingPrice"
           type="number"
           value={product.price}
           onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
@@ -697,8 +715,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Описание</label>
+        <label htmlFor="gamingDescription" className="block text-sm font-medium text-gray-700 required">Описание</label>
         <textarea
+          id="gamingDescription"
           value={product.description}
           onChange={(e) => setProduct({...product, description: e.target.value})}
           className="w-full textarea textarea-bordered"
@@ -722,8 +741,9 @@ const AdminPanel: React.FC = () => {
     return (
       <>
         <div>
-          <label className="block text-sm font-medium text-gray-700 required">Brand</label>
+          <label htmlFor="laptopBrand" className="block text-sm font-medium text-gray-700 required">Brand</label>
           <select
+            id="laptopBrand"
             value={product.brand}
             onChange={(e) => setProduct({...product, brand: e.target.value})}
             className="w-full select select-bordered"
@@ -745,8 +765,9 @@ const AdminPanel: React.FC = () => {
         {product.brand === 'Apple' ? (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Model</label>
+              <label htmlFor="laptopModel" className="block text-sm font-medium text-gray-700 required">Model</label>
               <select
+                id="laptopModel"
                 value={product.model}
                 onChange={(e) => setProduct({...product, model: e.target.value})}
                 className="w-full select select-bordered"
@@ -759,8 +780,9 @@ const AdminPanel: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Model Number</label>
+              <label htmlFor="laptopModelNumber" className="block text-sm font-medium text-gray-700">Model Number</label>
               <input
+                id="laptopModelNumber"
                 type="text"
                 value={product.modelNumber}
                 onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
@@ -769,8 +791,9 @@ const AdminPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Chip</label>
+              <label htmlFor="laptopProcessor" className="block text-sm font-medium text-gray-700 required">Chip</label>
               <select
+                id="laptopProcessor"
                 value={product.processor || ''}
                 onChange={(e) => setProduct({...product, processor: e.target.value})}
                 className="w-full select select-bordered"
@@ -799,10 +822,16 @@ const AdminPanel: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Model Year</label>
+              <label
+                htmlFor="laptopModelYear"
+                className="block text-sm font-medium text-gray-700 required"
+              >
+                Model Year
+              </label>
               <select
+                id="laptopModelYear"
                 value={product.modelNumber || ''}
-                onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
+                onChange={(e) => setProduct({ ...product, modelNumber: e.target.value })}
                 className="w-full select select-bordered"
                 required
               >
@@ -816,8 +845,9 @@ const AdminPanel: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Graphics Card</label>
+              <label htmlFor="laptopGraphicsCard" className="block text-sm font-medium text-gray-700">Graphics Card</label>
               <input
+                id="laptopGraphicsCard"
                 type="text"
                 value={product.graphicsCard}
                 onChange={(e) => setProduct({...product, graphicsCard: e.target.value})}
@@ -826,8 +856,9 @@ const AdminPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Screen Size</label>
+              <label htmlFor="laptopScreenSize" className="block text-sm font-medium text-gray-700 required">Screen Size</label>
               <select
+                id="laptopScreenSize"
                 value={product.screenSize || ''}
                 onChange={(e) => setProduct({...product, screenSize: e.target.value})}
                 className="w-full select select-bordered"
@@ -841,8 +872,9 @@ const AdminPanel: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Storage Type</label>
+              <label htmlFor="laptopStorageType" className="block text-sm font-medium text-gray-700 required">Storage Type</label>
               <select
+                id="laptopStorageType"
                 value={product.storageType || ''}
                 onChange={(e) => setProduct({...product, storageType: e.target.value})}
                 className="w-full select select-bordered"
@@ -858,8 +890,9 @@ const AdminPanel: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">RAM</label>
+              <label htmlFor="laptopRam" className="block text-sm font-medium text-gray-700 required">RAM</label>
               <select
+                id="laptopRam"
                 value={product.ram || ''}
                 onChange={(e) => setProduct({...product, ram: e.target.value})}
                 className="w-full select select-bordered"
@@ -877,8 +910,9 @@ const AdminPanel: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Operating System</label>
+              <label htmlFor="laptopOperatingSystem" className="block text-sm font-medium text-gray-700 required">Operating System</label>
               <select
+                id="laptopOperatingSystem"
                 value={product.operatingSystem || ''}
                 onChange={(e) => setProduct({...product, operatingSystem: e.target.value})}
                 className="w-full select select-bordered"
@@ -892,8 +926,9 @@ const AdminPanel: React.FC = () => {
         ) : (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Model</label>
+              <label htmlFor="laptopModel" className="block text-sm font-medium text-gray-700 required">Model</label>
               <input
+                id="laptopModel"
                 type="text"
                 value={product.model}
                 onChange={(e) => setProduct({...product, model: e.target.value})}
@@ -903,8 +938,9 @@ const AdminPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Model Number</label>
+              <label htmlFor="laptopModelNumber" className="block text-sm font-medium text-gray-700">Model Number</label>
               <input
+                id="laptopModelNumber"
                 type="text"
                 value={product.modelNumber}
                 onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
@@ -913,8 +949,9 @@ const AdminPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Processor</label>
+              <label htmlFor="laptopProcessor" className="block text-sm font-medium text-gray-700 required">Processor</label>
               <input
+                id="laptopProcessor"
                 type="text"
                 value={product.processor}
                 onChange={(e) => setProduct({...product, processor: e.target.value})}
@@ -924,8 +961,9 @@ const AdminPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Graphics Card</label>
+              <label htmlFor="laptopGraphicsCard" className="block text-sm font-medium text-gray-700 required">Graphics Card</label>
               <input
+                id="laptopGraphicsCard"
                 type="text"
                 value={product.graphicsCard}
                 onChange={(e) => setProduct({...product, graphicsCard: e.target.value})}
@@ -935,8 +973,9 @@ const AdminPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Screen Size</label>
+              <label htmlFor="laptopScreenSize" className="block text-sm font-medium text-gray-700 required">Screen Size</label>
               <input
+                id="laptopScreenSize"
                 type="text"
                 value={product.screenSize}
                 onChange={(e) => setProduct({...product, screenSize: e.target.value})}
@@ -946,8 +985,9 @@ const AdminPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Storage Type</label>
+              <label htmlFor="laptopStorageType" className="block text-sm font-medium text-gray-700 required">Storage Type</label>
               <input
+                id="laptopStorageType"
                 type="text"
                 value={product.storageType}
                 onChange={(e) => setProduct({...product, storageType: e.target.value})}
@@ -957,8 +997,9 @@ const AdminPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">RAM</label>
+              <label htmlFor="laptopRam" className="block text-sm font-medium text-gray-700 required">RAM</label>
               <input
+                id="laptopRam"
                 type="text"
                 value={product.ram}
                 onChange={(e) => setProduct({...product, ram: e.target.value})}
@@ -968,8 +1009,9 @@ const AdminPanel: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 required">Operating System</label>
+              <label htmlFor="laptopOperatingSystem" className="block text-sm font-medium text-gray-700 required">Operating System</label>
               <input
+                id="laptopOperatingSystem"
                 type="text"
                 value={product.operatingSystem}
                 onChange={(e) => setProduct({...product, operatingSystem: e.target.value})}
@@ -981,8 +1023,9 @@ const AdminPanel: React.FC = () => {
           </>
         )}
         <div>
-          <label className="block text-sm font-medium text-gray-700 required">Color</label>
+          <label htmlFor="laptopColor" className="block text-sm font-medium text-gray-700 required">Color</label>
           <input
+            id="laptopColor"
             type="text"
             value={product.color}
             onChange={(e) => setProduct({...product, color: e.target.value})}
@@ -992,8 +1035,9 @@ const AdminPanel: React.FC = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
+          <label htmlFor="laptopPrice" className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
           <input
+            id="laptopPrice"
             type="number"
             value={product.price}
             onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
@@ -1005,8 +1049,9 @@ const AdminPanel: React.FC = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 required">Description</label>
+          <label htmlFor="laptopDescription" className="block text-sm font-medium text-gray-700 required">Description</label>
           <textarea
+            id="laptopDescription"
             value={product.description}
             onChange={(e) => setProduct({...product, description: e.target.value})}
             className="w-full textarea textarea-bordered"
@@ -1030,8 +1075,9 @@ const AdminPanel: React.FC = () => {
   const renderTVFields = () => (
     <>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Brand</label>
+        <label htmlFor="tvBrand" className="block text-sm font-medium text-gray-700 required">Brand</label>
         <input
+          id="tvBrand"
           type="text"
           value={product.brand}
           onChange={(e) => setProduct({...product, brand: e.target.value})}
@@ -1041,8 +1087,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Model</label>
+        <label htmlFor="tvModel" className="block text-sm font-medium text-gray-700 required">Model</label>
         <input
+          id="tvModel"
           type="text"
           value={product.model}
           onChange={(e) => setProduct({...product, model: e.target.value})}
@@ -1052,8 +1099,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Diagonal</label>
+        <label htmlFor="tvDiagonal" className="block text-sm font-medium text-gray-700 required">Diagonal</label>
         <select
+          id="tvDiagonal"
           value={product.diagonal || ''}
           onChange={(e) => setProduct({...product, diagonal: e.target.value})}
           className="w-full select select-bordered"
@@ -1070,8 +1118,9 @@ const AdminPanel: React.FC = () => {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Resolution</label>
+        <label htmlFor="tvResolution" className="block text-sm font-medium text-gray-700 required">Resolution</label>
         <select
+          id="tvResolution"
           value={product.resolution || ''}
           onChange={(e) => setProduct({...product, resolution: e.target.value})}
           className="w-full select select-bordered"
@@ -1085,8 +1134,9 @@ const AdminPanel: React.FC = () => {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Refresh Rate</label>
+        <label htmlFor="tvRefreshRate" className="block text-sm font-medium text-gray-700 required">Refresh Rate</label>
         <select
+          id="tvRefreshRate"
           value={product.refreshRate || ''}
           onChange={(e) => setProduct({...product, refreshRate: e.target.value})}
           className="w-full select select-bordered"
@@ -1100,8 +1150,9 @@ const AdminPanel: React.FC = () => {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Display Type</label>
+        <label htmlFor="tvDisplayType" className="block text-sm font-medium text-gray-700 required">Display Type</label>
         <select
+          id="tvDisplayType"
           value={product.displayType || ''}
           onChange={(e) => setProduct({...product, displayType: e.target.value})}
           className="w-full select select-bordered"
@@ -1115,8 +1166,9 @@ const AdminPanel: React.FC = () => {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
+        <label htmlFor="tvPrice" className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
         <input
+          id="tvPrice"
           type="number"
           value={product.price}
           onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
@@ -1128,8 +1180,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Description</label>
+        <label htmlFor="tvDescription" className="block text-sm font-medium text-gray-700 required">Description</label>
         <textarea
+          id="tvDescription"
           value={product.description}
           onChange={(e) => setProduct({...product, description: e.target.value})}
           className="w-full textarea textarea-bordered"
@@ -1152,8 +1205,9 @@ const AdminPanel: React.FC = () => {
   const renderAudioFields = () => (
     <>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Brand</label>
+        <label htmlFor="audioBrand" className="block text-sm font-medium text-gray-700 required">Brand</label>
         <select
+          id="audioBrand"
           value={product.brand}
           onChange={(e) => setProduct({...product, brand: e.target.value})}
           className="w-full select select-bordered"
@@ -1172,8 +1226,9 @@ const AdminPanel: React.FC = () => {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Model</label>
+        <label htmlFor="audioModel" className="block text-sm font-medium text-gray-700 required">Model</label>
         <input
+          id="audioModel"
           type="text"
           value={product.model}
           onChange={(e) => setProduct({...product, model: e.target.value})}
@@ -1183,8 +1238,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700">Model Number</label>
+        <label htmlFor="audioModelNumber" className="block text-sm font-medium text-gray-700">Model Number</label>
         <input
+          id="audioModelNumber"
           type="text"
           value={product.modelNumber}
           onChange={(e) => setProduct({...product, modelNumber: e.target.value})}
@@ -1193,8 +1249,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Product Type</label>
+        <label htmlFor="audioSubtype" className="block text-sm font-medium text-gray-700 required">Product Type</label>
         <select
+          id="audioSubtype"
           value={product.subtype || ''}
           onChange={(e) => setProduct({...product, subtype: e.target.value as any})}
           className="w-full select select-bordered"
@@ -1208,8 +1265,9 @@ const AdminPanel: React.FC = () => {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Connectivity</label>
+        <label htmlFor="audioConnectivity" className="block text-sm font-medium text-gray-700 required">Connectivity</label>
         <select
+          id="audioConnectivity"
           value={product.connectivity || ''}
           onChange={(e) => setProduct({...product, connectivity: e.target.value})}
           className="w-full select select-bordered"
@@ -1224,8 +1282,9 @@ const AdminPanel: React.FC = () => {
       </div>
       {(product.connectivity === 'Wireless' || product.connectivity === 'Bluetooth') && (
         <div>
-          <label className="block text-sm font-medium text-gray-700">Battery Life</label>
+          <label htmlFor="audioBatteryLife" className="block text-sm font-medium text-gray-700">Battery Life</label>
           <input
+            id="audioBatteryLife"
             type="text"
             value={product.batteryLife || ''}
             onChange={(e) => setProduct({...product, batteryLife: e.target.value})}
@@ -1235,8 +1294,9 @@ const AdminPanel: React.FC = () => {
         </div>
       )}
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
+        <label htmlFor="audioPrice" className="block text-sm font-medium text-gray-700 required">Price (NOK)</label>
         <input
+          id="audioPrice"
           type="number"
           value={product.price}
           onChange={(e) => setProduct({...product, price: Math.max(0, Number(e.target.value))})}
@@ -1248,8 +1308,9 @@ const AdminPanel: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Description</label>
+        <label htmlFor="audioDescription" className="block text-sm font-medium text-gray-700 required">Description</label>
         <textarea
+          id="audioDescription"
           value={product.description}
           onChange={(e) => setProduct({...product, description: e.target.value})}
           className="w-full textarea textarea-bordered"
@@ -1260,8 +1321,9 @@ const AdminPanel: React.FC = () => {
       {product.subtype === 'speakers' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Power Output</label>
+            <label htmlFor="audioPower" className="block text-sm font-medium text-gray-700">Power Output</label>
             <input
+              id="audioPower"
               type="text"
               value={product.power || ''}
               onChange={(e) => setProduct({...product, power: e.target.value})}
@@ -1270,8 +1332,9 @@ const AdminPanel: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Channels</label>
+            <label htmlFor="audioChannels" className="block text-sm font-medium text-gray-700">Channels</label>
             <input
+              id="audioChannels"
               type="text"
               value={product.channels || ''}
               onChange={(e) => setProduct({...product, channels: e.target.value})}
@@ -1282,8 +1345,9 @@ const AdminPanel: React.FC = () => {
         </>
       )}
       <div>
-        <label className="block text-sm font-medium text-gray-700 required">Color</label>
+        <label htmlFor="audioColor" className="block text-sm font-medium text-gray-700 required">Color</label>
         <select
+          id="audioColor"
           value={product.color}
           onChange={(e) => setProduct({...product, color: e.target.value})}
           className="w-full select select-bordered"
@@ -1333,10 +1397,10 @@ const AdminPanel: React.FC = () => {
     <div className="p-4 bg-white rounded-lg shadow-md">
       {/* Add the maintenance section at the top */}
       <div className="mb-8">
-        <div className="card bg-base-100 shadow-xl">
+        <div className="shadow-xl card bg-base-100">
           <div className="card-body">
-            <h2 className="card-title text-2xl">Database Maintenance</h2>
-            <p className="text-lg mb-4">
+            <h2 className="text-2xl card-title">Database Maintenance</h2>
+            <p className="mb-4 text-lg">
               Update search keywords and optimize database
             </p>
             <UpdateSearchKeywordsButton />
@@ -1380,7 +1444,9 @@ const AdminPanel: React.FC = () => {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold">Add New Product</h3>
+              <label htmlFor="productCategory" className="sr-only">Select product category</label>
               <select 
+                id="productCategory"
                 value={product.category}
                 onChange={(e) => setProduct({...product, category: e.target.value as any})}
                 className="select select-bordered select-sm"
@@ -1397,7 +1463,7 @@ const AdminPanel: React.FC = () => {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {renderFields()}
                 <div className="lg:col-span-3">
-                  <label className="block mb-2 text-sm font-medium text-gray-700">Image</label>
+                  <label htmlFor="productImageFile" className="block mb-2 text-sm font-medium text-gray-700">Image</label>
                   <div className="flex gap-2 mb-2">
                     <button
                       type="button"
@@ -1416,13 +1482,16 @@ const AdminPanel: React.FC = () => {
                   </div>
                   {imageInputType === 'file' ? (
                     <input
+                      id="productImageFile"
                       type="file"
+                      title="Product image file"
                       onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)}
                       className="w-full file-input file-input-sm file-input-bordered"
                       accept="image/*"
                     />
                   ) : (
                     <input
+                      id="productImageUrl"
                       type="url"
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
@@ -1451,17 +1520,21 @@ const AdminPanel: React.FC = () => {
                 {isManageCollapsed ? <FaChevronDown /> : <FaChevronUp />}
               </div>
               {!isManageCollapsed && (
-                <select 
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="select select-bordered select-sm"
-                >
-                  <option value="mobile">Mobile Phones</option>
-                  <option value="tv">TV</option>
-                  <option value="audio">Audio</option>
-                  <option value="gaming">Gaming</option>
-                  <option value="laptops">Laptops</option>
-                </select>
+                <>
+                  <label htmlFor="manageCategory" className="sr-only">Select category to manage</label>
+                  <select 
+                    id="manageCategory"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="select select-bordered select-sm"
+                  >
+                    <option value="mobile">Mobile Phones</option>
+                    <option value="tv">TV</option>
+                    <option value="audio">Audio</option>
+                    <option value="gaming">Gaming</option>
+                    <option value="laptops">Laptops</option>
+                  </select>
+                </>
               )}
             </div>
             {!isManageCollapsed && (

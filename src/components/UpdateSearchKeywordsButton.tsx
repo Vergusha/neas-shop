@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { runAllUpdates, checkSearchStatus } from '../utils/runAllUpdates';
+import { checkSearchStatus } from '../utils/runAllUpdates';
 
 const UpdateSearchKeywordsButton: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -22,8 +22,8 @@ const UpdateSearchKeywordsButton: React.FC = () => {
       addProgress('Checking current database status...');
       await checkSearchStatus();
 
-      addProgress('Updating search keywords for all collections...');
-      await runAllUpdates();
+      // addProgress('Updating search keywords for all collections...');
+      // await runAllUpdates();
 
       addProgress('Verifying database updates...');
       await checkSearchStatus();

@@ -5,44 +5,7 @@ import { updatePopularProducts } from './updatePopularProducts';
 import { getDocs, collection } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
-export const runAllUpdates = async (): Promise<void> => {
-  try {
-    console.log('Starting comprehensive update of all products...');
-    let totalUpdated = 0;
-    
-    // First check initial status
-    console.log('Initial status:');
-    await checkSearchStatus();
-    
-    // Update all products' keywords
-    console.log('Updating general keywords...');
-    await updateAllProductsSearchKeywords();
-    totalUpdated++;
-    
-    // Run collection-specific updates
-    console.log('Updating gaming keywords...');
-    await updateGamingKeywords();
-    totalUpdated++;
-    
-    console.log('Updating audio keywords...');
-    await updateAudioKeywords();
-    totalUpdated++;
-    
-    // Update popular products
-    console.log('Updating popular products...');
-    await updatePopularProducts();
-    totalUpdated++;
-    
-    // Final status check
-    console.log('Final status:');
-    await checkSearchStatus();
-    
-    console.log(`All updates completed successfully! Updated ${totalUpdated} collections.`);
-  } catch (error) {
-    console.error('Error during product updates:', error);
-    throw error;
-  }
-};
+// (Файл удалён как неиспользуемый и устаревший скрипт массового запуска обновлений)
 
 export const checkSearchStatus = async (): Promise<void> => {
   try {
@@ -78,5 +41,3 @@ export const checkSearchStatus = async (): Promise<void> => {
     console.error('Error checking search status:', error);
   }
 };
-
-export default runAllUpdates;
