@@ -1,7 +1,3 @@
-import { updateAllProductsSearchKeywords } from './updateSearchKeywords';
-import { updateGamingKeywords } from './updateGamingKeywords';
-import { updateAudioKeywords } from './updateAudioKeywords';
-import { updatePopularProducts } from './updatePopularProducts';
 import { getDocs, collection } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 

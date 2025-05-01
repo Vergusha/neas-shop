@@ -4,7 +4,7 @@ import { db } from '../firebaseConfig';
 import ProductCard from '../components/ProductCard';
 import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
-import { extractFilters, applyFilters } from '../utils/filterUtils';
+import { extractFilters, applyFilters, FilterOption } from '../utils/filterUtils';
 import { getDatabase, ref, query, orderByChild, limitToLast, get } from 'firebase/database';
 import { Product } from '../types/product';
 
