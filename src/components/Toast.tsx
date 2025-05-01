@@ -30,32 +30,34 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose, duration = 3000 }
   const Icon = () => {
     switch (type) {
       case 'success':
-        return <ShoppingCart className="h-5 w-5 text-green-500" />;
+        return <ShoppingCart className="w-5 h-5 text-green-500" />;
       case 'error':
-        return <AlertCircle className="h-5 w-5 text-red-500" />;
+        return <AlertCircle className="w-5 h-5 text-red-500" />;
       case 'info':
-        return <CheckCircle className="h-5 w-5 text-blue-500" />;
+        return <CheckCircle className="w-5 h-5 text-blue-500" />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-slide-in">
+    <div className="fixed z-50 top-4 right-4 animate-slide-in">
       <div className={`p-4 rounded-md border shadow-lg flex items-center ${toastClasses[type]}`}>
         <div className="flex-shrink-0">
           <Icon />
         </div>
-        <div className="ml-3 flex-1">
+        <div className="flex-1 ml-3">
           <p className="text-sm font-medium">{message}</p>
         </div>
-        <div className="ml-4 flex-shrink-0">
+        <div className="flex-shrink-0 ml-4">
           <button
             type="button"
-            className="inline-flex rounded-md bg-transparent text-gray-400 hover:text-gray-500"
+            className="inline-flex text-gray-400 bg-transparent rounded-md hover:text-gray-500"
             onClick={onClose}
+            aria-label="Close notification"
+            title="Close notification"
           >
-            <X className="h-5 w-5" />
+            <X className="w-5 h-5" />
           </button>
         </div>
       </div>

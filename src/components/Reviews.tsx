@@ -3,7 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { ref, get, set, onValue, update, remove } from 'firebase/database';
 import { database } from '../firebaseConfig';
 import Rating from './Rating';
-import { User, Clock, ThumbsUp, Edit, Trash2, MessageSquare, X, Star } from 'lucide-react';
+import { User, Clock, ThumbsUp, Edit, Trash2, MessageSquare, X } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { defaultAvatarSVG, handleAvatarError } from '../utils/AvatarHelper';
@@ -955,7 +955,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId }) => {
                     <img 
                       src={review.userAvatar} 
                       alt={review.userName}
-                      className="object-cover w-10 h-10 border rounded-full border-gray-200"
+                      className="object-cover w-10 h-10 border border-gray-200 rounded-full"
                       onError={handleAvatarError}
                     />
                   ) : (

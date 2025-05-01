@@ -218,31 +218,23 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       <div className="relative px-1 mt-4 mb-6">
         <div className={`relative w-full h-3 ${themeColors.track} rounded-lg`}>
           <div 
-            className={`absolute top-0 h-full ${currentTheme === 'dark' ? 'bg-[#95c672]' : 'bg-[#003D2D]'} rounded-lg transition-all duration-150`}
-            style={{
-              left: `${((priceRange.current[0] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
-              width: `${((priceRange.current[1] - priceRange.current[0]) / (priceRange.max - priceRange.min)) * 100}%`
-            }}
+            className={`absolute top-0 h-full ${currentTheme === 'dark' ? 'bg-[#95c672]' : 'bg-[#003D2D]'} rounded-lg transition-all duration-150 price-range-bar`}
           />
           
           <button
             type="button"
-            className={`absolute z-20 w-6 h-6 -ml-3 -mt-1.5 ${themeColors.thumb} ${themeColors.border} border-2 rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all focus:outline-none ${themeColors.focus} focus:ring-2`}
-            style={{
-              left: `${((priceRange.current[0] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
-              top: '50%'
-            }}
+            className={`absolute z-20 w-6 h-6 -ml-3 -mt-1.5 ${themeColors.thumb} ${themeColors.border} border-2 rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all focus:outline-none ${themeColors.focus} focus:ring-2 price-thumb price-thumb-min`}
+            aria-label="Minimum price"
+            title="Minimum price"
             onMouseDown={(e) => handleDrag(e, true)}
             onClick={(e) => e.stopPropagation()}
           />
           
           <button
             type="button"
-            className={`absolute z-20 w-6 h-6 -ml-3 -mt-1.5 ${themeColors.thumb} ${themeColors.border} border-2 rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all focus:outline-none ${themeColors.focus} focus:ring-2`}
-            style={{
-              left: `${((priceRange.current[1] - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
-              top: '50%'
-            }}
+            className={`absolute z-20 w-6 h-6 -ml-3 -mt-1.5 ${themeColors.thumb} ${themeColors.border} border-2 rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all focus:outline-none ${themeColors.focus} focus:ring-2 price-thumb price-thumb-max`}
+            aria-label="Maximum price"
+            title="Maximum price"
             onMouseDown={(e) => handleDrag(e, false)}
             onClick={(e) => e.stopPropagation()}
           />

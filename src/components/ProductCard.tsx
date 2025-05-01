@@ -365,7 +365,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: initialProduct }) =>
               images={getProductImages()} 
               productName={product.name}
               onClick={handleClick}
-              className="object-contain rounded-lg"
             />
             <div className="absolute flex flex-col gap-2 top-6 right-3 sm:right-6">
               <button

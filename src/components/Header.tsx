@@ -69,9 +69,21 @@ const Header: React.FC = () => {
           );
           const querySnapshot = await getDocs(q);
           
+          // Define the type for your items
+          type Product = {
+            id: string;
+            name?: string;
+            brand?: string;
+            model?: string;
+            description?: string;
+            memory?: string;
+            color?: string;
+            // add other fields as needed
+          };
+
           // Фильтруем документы локально
           const collectionResults = querySnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .map(doc => ({ id: doc.id, ...doc.data() } as Product))
             .filter(item => {
               const name = (item.name || '').toLowerCase();
               const brand = (item.brand || '').toLowerCase();

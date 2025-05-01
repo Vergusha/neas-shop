@@ -28,7 +28,7 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
   if (validImages.length === 0) {
     return (
       <div 
-        className="h-48 w-full flex items-center justify-center bg-gray-100 rounded-xl"
+        className="flex items-center justify-center w-full h-48 bg-gray-100 rounded-xl"
         onClick={onClick}
       >
         <span className="text-gray-400">No image available</span>
@@ -42,7 +42,7 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
       <img 
         src={validImages[0]} 
         alt={productName} 
-        className="rounded-xl h-48 w-full object-contain"
+        className="object-contain w-full h-48 rounded-xl"
         onClick={onClick}
       />
     );
@@ -86,14 +86,14 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
 
   return (
     <div 
-      className="relative h-48 w-full"
+      className="relative w-full h-48"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onClick={onClick}
     >
       {/* Main image */}
-      <div className="carousel w-full h-full">
+      <div className="w-full h-full carousel">
         {validImages.map((image, idx) => (
           <div 
             key={idx} 
@@ -102,7 +102,7 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
             <img 
               src={image} 
               alt={`${productName} - Image ${idx + 1}`} 
-              className="w-full h-full object-contain rounded-xl"
+              className="object-contain w-full h-full rounded-xl"
             />
           </div>
         ))}
@@ -110,28 +110,34 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
 
       {/* Navigation arrows */}
       <button 
+        type="button"
         onClick={prevImage}
-        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/70 dark:bg-gray-700/70 hover:bg-white dark:hover:bg-gray-600 p-1 rounded-full shadow-md"
+        className="absolute p-1 transform -translate-y-1/2 rounded-full shadow-md left-2 top-1/2 bg-white/70 dark:bg-gray-700/70 hover:bg-white dark:hover:bg-gray-600"
+        aria-label="Previous image"
       >
         <ChevronLeft size={16} className="dark:text-gray-200" />
       </button>
       <button 
+        type="button"
         onClick={nextImage}
-        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/70 dark:bg-gray-700/70 hover:bg-white dark:hover:bg-gray-600 p-1 rounded-full shadow-md"
+        className="absolute p-1 transform -translate-y-1/2 rounded-full shadow-md right-2 top-1/2 bg-white/70 dark:bg-gray-700/70 hover:bg-white dark:hover:bg-gray-600"
+        aria-label="Next image"
       >
         <ChevronRight size={16} className="dark:text-gray-200" />
       </button>
 
       {/* Dots indicator */}
-      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+      <div className="absolute flex space-x-1 transform -translate-x-1/2 bottom-2 left-1/2">
         {validImages.map((_, idx) => (
           <button
             key={idx}
+            type="button"
             className={`w-2 h-2 rounded-full ${
               idx === currentIndex 
                 ? 'bg-[#003D2D] dark:bg-[#95c672]' // Change from #eebbca to #95c672
                 : 'bg-gray-300 dark:bg-gray-600'
             }`}
+            aria-label={`Go to image ${idx + 1}`}
             onClick={(e) => {
               e.stopPropagation();
               setCurrentIndex(idx);

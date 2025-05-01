@@ -254,6 +254,7 @@ const Navbar: React.FC = () => {
           <button
             onClick={() => handleSearch(searchQuery)}
             className="absolute top-0 right-0 mt-2 mr-2"
+            aria-label="Search"
           >
             <FaSearch className={currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-500'} />
           </button>
@@ -323,7 +324,7 @@ const Navbar: React.FC = () => {
               <button onClick={handleLogout} className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-primary'}`}>Logout</button> {/* Заменен цвет #eebbca на #95c672 */}
             </>
           ) : (
-            <Link to="/login" className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-primary'}`}>Login</Link> {/* Заменен цвет #eebbca на #95c672 */}
+            <Link to="/login">Login</Link>
           )}
         </div>
       </div>
