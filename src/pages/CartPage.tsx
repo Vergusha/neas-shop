@@ -321,6 +321,8 @@ const CartPage: React.FC = () => {
                   <div key={item.id} className="relative p-4 border-b border-gray-200 last:border-b-0">
                     {/* Position delete button at the top right corner */}
                     <button 
+                      type="button"
+                      title="Remove item"
                       className="absolute text-red-600 top-2 right-2 hover:text-red-900"
                       onClick={() => removeItem(item.id)}
                     >
@@ -336,6 +338,8 @@ const CartPage: React.FC = () => {
                         <p className="mt-1 text-sm text-gray-500">{Number(item.price).toFixed(2)} NOK</p>
                         <div className="flex items-center mt-2">
                           <button 
+                            type="button"
+                            title="Decrease quantity"
                             className="p-1 rounded-full hover:bg-gray-200"
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           >
@@ -343,6 +347,8 @@ const CartPage: React.FC = () => {
                           </button>
                           <span className="w-8 mx-2 text-center">{item.quantity}</span>
                           <button 
+                            type="button"
+                            title="Increase quantity"
                             className="p-1 rounded-full hover:bg-gray-200"
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           >
@@ -398,6 +404,8 @@ const CartPage: React.FC = () => {
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center space-x-1">
                           <button 
+                            type="button"
+                            title="Decrease quantity"
                             className="p-1 text-xs bg-gray-100 rounded-full hover:bg-gray-200"
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           >
@@ -405,6 +413,8 @@ const CartPage: React.FC = () => {
                           </button>
                           <span className="w-6 text-sm text-center">{item.quantity}</span>
                           <button 
+                            type="button"
+                            title="Increase quantity"
                             className="p-1 text-xs bg-gray-100 rounded-full hover:bg-gray-200"
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           >

@@ -6,7 +6,7 @@ import { FaFilter } from 'react-icons/fa';
 import ProductFilters from '../components/ProductFilters';
 import { extractFilters, applyFilters } from '../utils/filterUtils';
 import { getDatabase, ref, query, orderByChild, limitToLast, get } from 'firebase/database';
-import { Product, FilterOption } from '../types/product';
+import { Product } from '../types/product';
 
 const HomePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -166,14 +166,14 @@ const HomePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen">
         <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-red-500 text-center py-8">{error}</div>;
+    return <div className="py-8 text-center text-red-500">{error}</div>;
   }
 
   // Listen for favorites updates
@@ -188,19 +188,19 @@ const HomePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container px-4 py-8 mx-auto">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Featured Products</h1>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className="btn bg-primary hover:bg-primary-focus text-white flex items-center gap-2"
+          className="flex items-center gap-2 text-white btn bg-primary hover:bg-primary-focus"
         >
           <FaFilter />
           {showFilters ? 'Hide Filters' : 'Show Filters'}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
         {showFilters && (
           <div className="md:col-span-1">
             <ProductFilters
@@ -213,17 +213,17 @@ const HomePage: React.FC = () => {
 
         <div className={`${showFilters ? 'md:col-span-3' : 'md:col-span-4'}`}>
           {filteredProducts.length > 0 ? (
-            <div className="px-12 sm:px-16 overflow-x-hidden">
+            <div className="px-12 overflow-x-hidden sm:px-16">
               <div className="flex flex-row flex-wrap">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className="w-full sm:w-1/2 lg:w-1/3 mb-6">
+                  <div key={product.id} className="w-full mb-6 sm:w-1/2 lg:w-1/3">
                     <ProductCard key={product.id} product={product} />
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="col-span-full text-center py-8">
+            <div className="py-8 text-center col-span-full">
               No products found matching the selected filters.
             </div>
           )}
@@ -232,8 +232,8 @@ const HomePage: React.FC = () => {
 
       {/* Popular Products */}
       <section className="py-12">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-8">Popular Products</h2>
+        <div className="container px-4 mx-auto">
+          <h2 className="mb-8 text-3xl font-bold">Popular Products</h2>
           
           {isPopularLoading ? (
             <div className="flex justify-center">
@@ -241,7 +241,7 @@ const HomePage: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div className="flex flex-row overflow-x-scroll product-row pb-4">
+              <div className="flex flex-row pb-4 overflow-x-scroll product-row">
                 {popularProducts.map((product) => (
                   <div key={product.id} className="product-card-wrapper">
                     <ProductCard product={product} />

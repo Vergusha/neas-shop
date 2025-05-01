@@ -116,7 +116,7 @@ const Register: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm space-y-4">
+          <div className="space-y-4 rounded-md shadow-sm">
             {/* Nickname field */}
             <div>
               <label htmlFor="nickname" className={`block text-sm font-medium ${
@@ -147,7 +147,7 @@ const Register: React.FC = () => {
                 />
                 {isNicknameChecking ? (
                   <span className="absolute right-2 top-2">
-                    <span className="loading loading-spinner loading-sm text-gray-400"></span>
+                    <span className="text-gray-400 loading loading-spinner loading-sm"></span>
                   </span>
                 ) : isNicknameAvailable !== null && (
                   <span className={`absolute right-2 top-2 text-sm ${
@@ -178,6 +178,7 @@ const Register: React.FC = () => {
                       : 'border-gray-300 focus:ring-[#003D2D] focus:border-[#003D2D]'
                   }`}
                   required
+                  placeholder="Enter your first name"
                 />
               </div>
               <div>
@@ -197,6 +198,7 @@ const Register: React.FC = () => {
                       : 'border-gray-300 focus:ring-[#003D2D] focus:border-[#003D2D]'
                   }`}
                   required
+                  placeholder="Enter your last name"
                 />
               </div>
             </div>
@@ -296,14 +298,14 @@ const Register: React.FC = () => {
               disabled={isLoading || !isNicknameAvailable}
             >
               {isLoading && (
-                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                   <span className="loading loading-spinner loading-sm"></span>
                 </span>
               )}
               {isLoading ? 'Creating account...' : 'Register Now'}
             </button>
 
-            <div className="text-center text-sm">
+            <div className="text-sm text-center">
               <p className={currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
                 Already have an account?{' '}
                 <Link to="/login" className={`font-medium transition-colors duration-200 ${

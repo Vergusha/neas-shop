@@ -22,12 +22,8 @@ const DataPage: React.FC = () => {
       const querySnapshot = await getDocs(collection(db, 'products'));
       const productsData = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
-        image: doc.data().image || '',
-        name: doc.data().name || '',
-        description: doc.data().description || '',
-        price: doc.data().price || 0
-      })) as ProductCardProps[];
+        ...doc.data()
+      })) as Product[];
       setProducts(productsData);
     };
 

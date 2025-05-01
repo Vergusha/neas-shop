@@ -647,12 +647,16 @@ const ProductPage: React.FC = () => {
                 {productImages.length > 1 && (
                   <>
                     <button 
+                      type="button"
+                      title="Previous image"
                       onClick={prevImage}
                       className="absolute p-2 transform -translate-y-1/2 rounded-full shadow-md left-2 top-1/2 bg-white/80 hover:bg-white"
                     >
                       <ChevronLeft size={20} />
                     </button>
                     <button 
+                      type="button"
+                      title="Next image"
                       onClick={nextImage}
                       className="absolute p-2 transform -translate-y-1/2 rounded-full shadow-md right-2 top-1/2 bg-white/80 hover:bg-white"
                     >
@@ -746,6 +750,8 @@ const ProductPage: React.FC = () => {
               <span className="quantity-label">Quantity:</span>
               <div className="quantity-controls">
                 <button 
+                  type="button"
+                  title="Decrease quantity"
                   className="quantity-button quantity-button-minus"
                   onClick={decrementQuantity}
                   disabled={quantity <= 1}
@@ -767,8 +773,12 @@ const ProductPage: React.FC = () => {
                   }}
                   className="quantity-input"
                   min="1"
+                  placeholder="Enter quantity"
+                  title="Quantity"
                 />
                 <button 
+                  type="button"
+                  title="Increase quantity"
                   className="quantity-button quantity-button-plus"
                   onClick={incrementQuantity}
                 >

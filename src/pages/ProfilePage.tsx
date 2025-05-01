@@ -410,7 +410,9 @@ const ProfilePage: React.FC = () => {
                 )}
               </div>
             </div>
-            <button 
+            <button
+              type="button"
+              title="Edit avatar"
               onClick={handleAvatarClick}
               className="absolute bottom-0 right-0 p-2 text-white transition-colors rounded-full shadow-lg bg-[#003D2D] hover:bg-[#004D3D]"
             >
@@ -440,6 +442,8 @@ const ProfilePage: React.FC = () => {
                       value={nickname}
                       onChange={(e) => setNickname(e.target.value)}
                       disabled={!isEditing}
+                      placeholder="Enter your nickname"
+                      title="Nickname"
                       className={`w-full px-4 py-2 transition-colors border rounded-lg outline-none 
                         ${currentTheme === 'dark' 
                           ? 'bg-gray-700 text-gray-200 border-gray-600 disabled:bg-gray-800' 
@@ -447,6 +451,8 @@ const ProfilePage: React.FC = () => {
                     />
                     {!isEditing && (
                       <button
+                        type="button"
+                        title="Edit nickname"
                         onClick={() => setIsEditing(true)}
                         className="absolute right-2 top-2 text-[#003D2D] hover:text-[#004D3D]"
                       >
@@ -465,6 +471,8 @@ const ProfilePage: React.FC = () => {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     disabled={!isEditing}
+                    placeholder="Enter your first name"
+                    title="First Name"
                     className={`w-full px-4 py-2 transition-colors border rounded-lg outline-none 
                       ${currentTheme === 'dark' 
                         ? 'bg-gray-700 text-gray-200 border-gray-600 disabled:bg-gray-800' 
@@ -481,6 +489,8 @@ const ProfilePage: React.FC = () => {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     disabled={!isEditing}
+                    placeholder="Enter your last name"
+                    title="Last Name"
                     className={`w-full px-4 py-2 transition-colors border rounded-lg outline-none 
                       ${currentTheme === 'dark' 
                         ? 'bg-gray-700 text-gray-200 border-gray-600 disabled:bg-gray-800' 
@@ -497,6 +507,8 @@ const ProfilePage: React.FC = () => {
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     disabled={!isEditing}
+                    placeholder="Enter your phone number"
+                    title="Phone Number"
                     className={`w-full px-4 py-2 transition-colors border rounded-lg outline-none 
                       ${currentTheme === 'dark' 
                         ? 'bg-gray-700 text-gray-200 border-gray-600 disabled:bg-gray-800' 
