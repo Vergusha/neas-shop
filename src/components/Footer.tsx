@@ -13,8 +13,7 @@ const Footer = () => {
 
   return (
     <footer
-      className="py-8 mt-auto text-white dark:text-white"
-      style={{ backgroundColor: currentTheme === 'dark' ? '#7fb356' : '#1a4731' }}
+      className={`py-8 mt-auto text-white dark:text-white ${currentTheme === 'dark' ? 'bg-[#7fb356]' : 'bg-[#1a4731]'}`}
     >
       <div className="container px-4 mx-auto">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
