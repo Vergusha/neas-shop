@@ -10,7 +10,7 @@ module.exports = {
         DEFAULT: 'transparent',
       },
       colors: {
-        primary: '#003D2D',
+        primary: '#1a4731', // pine green
         'primary-focus': '#004D3D',
         'dark-primary': '#95c672',
       },

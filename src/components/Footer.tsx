@@ -1,8 +1,21 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { getTheme } from '../utils/themeUtils';
 
 const Footer = () => {
+  const [currentTheme, setCurrentTheme] = useState(getTheme());
+
+  useEffect(() => {
+    const handleThemeChange = () => setCurrentTheme(getTheme());
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
+
   return (
-    <footer className="py-8 mt-auto text-white bg-[#003d2d] dark:bg-[#95c672] dark:text-gray-900">
+    <footer
+      className="py-8 mt-auto text-white dark:text-gray-900"
+      style={{ backgroundColor: currentTheme === 'dark' ? '#7fb356' : '#1a4731' }}
+    >
       <div className="container px-4 mx-auto">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Company Info */}
