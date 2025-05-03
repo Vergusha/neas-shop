@@ -686,18 +686,16 @@ const Header: React.FC = () => {
           {/* Navbar buttons */}
           <div className="flex items-center order-2 gap-1 md:order-3 header-icons sm:gap-2 md:ml-2">
             {/* Theme toggle button - add before notifications bell */}
-            <label className="transition-all duration-500 ease-in-out swap swap-rotate hover:scale-110 btn btn-ghost btn-circle">
-              <input 
-                type="checkbox" 
-                className="theme-controller" 
-                checked={currentTheme !== 'light'}
-                onChange={handleThemeToggle}
-              />
-              {/* sun icon */}
-              <Sun className="w-6 h-6 text-white swap-off sm:h-7 sm:w-7" />
-              {/* moon icon */}
-              <Moon className="w-6 h-6 text-white swap-on sm:h-7 sm:w-7" />
-            </label>
+            <button 
+              onClick={handleThemeToggle}
+              className="transition-all duration-500 ease-in-out btn btn-ghost btn-circle hover:scale-110"
+            >
+              {currentTheme === 'light' ? (
+                <Sun className="w-6 h-6 text-white sm:h-7 sm:w-7" />
+              ) : (
+                <Moon className="w-6 h-6 text-white sm:h-7 sm:w-7" />
+              )}
+            </button>
             
             {/* Notifications bell */}
             {user && (

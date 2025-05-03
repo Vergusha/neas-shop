@@ -41,7 +41,7 @@ module.exports = {
       ringOpacity: ['focus', 'active'],
     },
   },
-  plugins: [require("daisyui")],
+  plugins: [require('daisyui')],
   daisyui: {
     themes: [
       "light", 
