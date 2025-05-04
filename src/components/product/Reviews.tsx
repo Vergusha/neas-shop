@@ -1,37 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import Rating from '../ui/Rating';
 import UserAvatar from '../user/UserAvatar';
 import { getTheme } from '../../utils/themeUtils';
-
-interface Review {
-  id: string;
-  userId: string;
-  userName: string;
-  rating: number;
-  comment: string;
-  createdAt: any;
-}
+import { useReviews, Review } from '../../contexts/ReviewContext';
 
 interface ReviewsProps {
   productId: string;
-  productName: string;
+  productName?: string;
+  collectionName?: string;
 }
 
-const Reviews: React.FC<ReviewsProps> = ({ productId, productName }) => {
-  const [reviews, setReviews] = useState<Review[]>([]);
+const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collectionName }) => {
   const [userRating, setUserRating] = useState<number>(0);
   const [userComment, setUserComment] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [userReview, setUserReview] = useState<Review | null>(null);
   const [editing, setEditing] = useState<boolean>(false);
-  const [averageRating, setAverageRating] = useState<number>(0);
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
 
+  // Используем контекст отзывов
+  const {
+    reviews,
+    loadingReviews,
+    productRating,
+    reviewsCount,
+    addReview,
+    updateReview,
+    deleteReview,
+    getUserReview,
+    getProductReviews,
+    formatReviewDate
+  } = useReviews();
+
   const auth = getAuth();
-  const db = getFirestore();
+  const userReview = auth.currentUser ? getUserReview(productId) : undefined;
 
   // Listen for theme changes
   useEffect(() => {
@@ -43,45 +45,15 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName }) => {
     return () => window.removeEventListener('themeChanged', handleThemeChange);
   }, []);
 
+  // Загружаем отзывы при монтировании компонента
   useEffect(() => {
-    fetchReviews();
-  }, [productId]);
-
-  const fetchReviews = async () => {
-    setLoading(true);
-    try {
-      const reviewsRef = collection(db, 'reviews');
-      const q = query(
-        reviewsRef,
-        where('productId', '==', productId),
-        orderBy('createdAt', 'desc')
-      );
-
-      const querySnapshot = await getDocs(q);
-      const reviewsData: Review[] = [];
-      let totalRating = 0;
-      
-      querySnapshot.forEach((doc) => {
-        const reviewData = { id: doc.id, ...doc.data() } as Review;
-        reviewsData.push(reviewData);
-        totalRating += reviewData.rating || 0;
-
-        // Check if the current user is the reviewer
-        if (auth.currentUser && reviewData.userId === auth.currentUser.uid) {
-          setUserReview(reviewData);
-          setUserRating(reviewData.rating);
-          setUserComment(reviewData.comment);
-        }
-      });
-
-      setReviews(reviewsData);
-      setAverageRating(reviewsData.length > 0 ? totalRating / reviewsData.length : 0);
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
-    } finally {
-      setLoading(false);
+    getProductReviews(productId);
+    
+    if (userReview) {
+      setUserRating(userReview.rating);
+      setUserComment(userReview.comment);
     }
-  };
+  }, [productId, userReview]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,33 +72,15 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName }) => {
 
     try {
       if (userReview && editing) {
-        // Update existing review
-        const reviewRef = doc(db, 'reviews', userReview.id);
-        await updateDoc(reviewRef, {
-          rating: userRating,
-          comment: userComment,
-          updatedAt: serverTimestamp(),
-        });
-        
+        // Обновляем существующий отзыв
+        await updateReview(userReview.id, userRating, userComment);
         setEditing(false);
       } else {
-        // Add new review
-        await addDoc(collection(db, 'reviews'), {
-          productId,
-          productName,
-          userId: auth.currentUser.uid,
-          userName: auth.currentUser.displayName || 'Anonymous',
-          rating: userRating,
-          comment: userComment,
-          createdAt: serverTimestamp(),
-        });
-        
+        // Добавляем новый отзыв
+        await addReview(productId, userRating, userComment, collectionName);
         setUserComment('');
         setUserRating(0);
       }
-      
-      // Refresh reviews
-      fetchReviews();
     } catch (error) {
       console.error('Error submitting review:', error);
       alert('Failed to submit review. Please try again.');
@@ -140,11 +94,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName }) => {
     
     if (window.confirm('Are you sure you want to delete your review?')) {
       try {
-        await deleteDoc(doc(db, 'reviews', userReview.id));
-        setUserReview(null);
-        setUserRating(0);
-        setUserComment('');
-        fetchReviews();
+        await deleteReview(userReview.id);
       } catch (error) {
         console.error('Error deleting review:', error);
         alert('Failed to delete review. Please try again.');
@@ -153,7 +103,11 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName }) => {
   };
 
   const startEditing = () => {
-    setEditing(true);
+    if (userReview) {
+      setUserRating(userReview.rating);
+      setUserComment(userReview.comment);
+      setEditing(true);
+    }
   };
 
   const cancelEditing = () => {
@@ -164,7 +118,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName }) => {
     setEditing(false);
   };
 
-  if (loading) {
+  if (loadingReviews) {
     return (
       <div className={`py-6 ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
         Loading reviews...
@@ -181,13 +135,13 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName }) => {
       {reviews.length > 0 ? (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
-            <Rating value={averageRating} readOnly size="lg" />
+            <Rating value={productRating} readonly size="lg" />
             <span className={`text-lg font-medium ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-              {averageRating.toFixed(1)} out of 5
+              {productRating.toFixed(1)} out of 5
             </span>
           </div>
           <p className={`text-sm ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-            Based on {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+            Based on {reviewsCount} review{reviewsCount !== 1 ? 's' : ''}
           </p>
         </div>
       ) : (
@@ -358,7 +312,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName }) => {
                         )}
                       </h4>
                       <div className="flex items-center mt-1">
-                        <Rating value={review.rating} readOnly size="sm" />
+                        <Rating value={review.rating} readonly size="sm" />
                       </div>
                     </div>
                   </div>
@@ -391,11 +345,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName }) => {
                 </div>
                 <p className={`mt-4 ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{review.comment}</p>
                 <p className={`mt-2 text-sm ${currentTheme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-                  {review.createdAt?.toDate().toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
+                  {formatReviewDate(review.createdAt)}
                 </p>
               </div>
             );

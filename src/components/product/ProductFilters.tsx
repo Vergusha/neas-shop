@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaFilter, FaTimes } from 'react-icons/fa';
 import { getTheme } from '../../utils/themeUtils';
+import { useFilters } from '../../contexts/FilterContext';
 
 interface FilterOption {
   value: string;
@@ -17,10 +18,10 @@ interface FilterCategory {
 // Support both old and new prop structures
 interface ProductFiltersProps {
   categories?: FilterCategory[];
-  filters?: Array<{ id: string; name: string; values: any[]; key?: string }>;
+  filters?: Array<{ id: string; name: string; values: any[]; key?: string; type?: string }>;
   selectedFilters?: Record<string, string[]>;
   activeFilters?: { [key: string]: Set<string | number> | [number, number] } | Record<string, string[]>;
-  onFilterChange: (categoryId: string, values: string[] | [number, number]) => void;
+  onFilterChange?: (categoryId: string, values: string[] | [number, number]) => void;
   onClearFilters?: () => void;
   onSortChange?: (value: string) => void;
   sortValue?: string;
@@ -32,9 +33,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   categories,
   filters,
   selectedFilters = {},
-  activeFilters,
-  onFilterChange,
-  onClearFilters,
+  activeFilters: propActiveFilters,
+  onFilterChange: propOnFilterChange,
+  onClearFilters: propOnClearFilters,
   onSortChange,
   sortValue = 'featured',
   productCount,
@@ -43,6 +44,20 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   const [isOpen, setIsOpen] = useState(!isMobile);
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
   
+  // Получаем доступ к контексту фильтров
+  const {
+    activeFilters: contextActiveFilters,
+    availableFilters: contextFilters,
+    handleFilterChange: contextHandleFilterChange,
+    clearFilters: contextClearFilters
+  } = useFilters();
+
+  // Используем значения из пропсов или контекста
+  const effectiveActiveFilters = propActiveFilters || contextActiveFilters;
+  const effectiveFilters = filters || contextFilters;
+  const effectiveOnFilterChange = propOnFilterChange || contextHandleFilterChange;
+  const effectiveOnClearFilters = propOnClearFilters || contextClearFilters;
+
   // Listen for theme changes
   useEffect(() => {
     const handleThemeChange = () => {
@@ -55,7 +70,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
   const handleFilterChange = (categoryId: string, value: string) => {
     // Если используется старый формат selectedFilters
-    if (!activeFilters) {
+    if (!effectiveActiveFilters) {
       const currentValues = selectedFilters[categoryId] || [];
       const isSelected = currentValues.includes(value);
       
@@ -63,16 +78,16 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         ? currentValues.filter((v) => v !== value)
         : [...currentValues, value];
       
-      onFilterChange(categoryId, newValues);
+      effectiveOnFilterChange(categoryId, newValues);
     } 
     // Если используется новый формат activeFilters
     else {
       // Находим ключ фильтра в filters, если он используется
-      const filterKey = filters?.find(f => f.id === categoryId)?.key || categoryId;
+      const filterKey = effectiveFilters?.find(f => f.id === categoryId)?.key || categoryId;
       
       // Получаем текущие значения из activeFilters
       let currentValues: string[] = [];
-      const activeFilter = activeFilters[filterKey];
+      const activeFilter = effectiveActiveFilters[filterKey];
       
       if (activeFilter instanceof Set) {
         currentValues = Array.from(activeFilter).map(String);
@@ -86,19 +101,19 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         ? currentValues.filter((v) => v !== value)
         : [...currentValues, value];
       
-      onFilterChange(filterKey, newValues);
+      effectiveOnFilterChange(filterKey, newValues);
     }
   };
 
   const isOptionChecked = (categoryId: string, optionValue: string): boolean => {
     // Если используется старый формат selectedFilters
-    if (!activeFilters) {
+    if (!effectiveActiveFilters) {
       return (selectedFilters[categoryId] || []).includes(optionValue);
     }
     
     // Если используется новый формат activeFilters
-    const filterKey = filters?.find(f => f.id === categoryId)?.key || categoryId;
-    const activeFilter = activeFilters[filterKey];
+    const filterKey = effectiveFilters?.find(f => f.id === categoryId)?.key || categoryId;
+    const activeFilter = effectiveActiveFilters[filterKey];
     
     if (activeFilter instanceof Set) {
       return activeFilter.has(optionValue);
@@ -115,8 +130,8 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     // Проверяем, существует ли selectedFilters, чтобы избежать ошибки
     if (!selectedFilters || Object.keys(selectedFilters).length === 0) {
       // Если используется activeFilters, попробуем посчитать его элементы
-      if (activeFilters && Object.keys(activeFilters).length > 0) {
-        return Object.values(activeFilters).reduce((count, value) => {
+      if (effectiveActiveFilters && Object.keys(effectiveActiveFilters).length > 0) {
+        return Object.values(effectiveActiveFilters).reduce((count, value) => {
           if (value instanceof Set) {
             return count + value.size;
           } else if (Array.isArray(value)) {
@@ -141,7 +156,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   };
 
   // Convert filters to categories format if categories not provided
-  const processedCategories = categories || (filters ? filters.map(filter => ({
+  const processedCategories = categories || (effectiveFilters ? effectiveFilters.map(filter => ({
     id: filter.id,
     name: filter.name,
     options: filter.values.map(val => ({
@@ -150,6 +165,37 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       count: typeof val === 'object' ? val.count : undefined
     }))
   })) : []);
+
+  // Специальная обработка для фильтров с типом 'range'
+  const renderRangeFilter = (filter: any) => {
+    if (filter.type !== 'range') return null;
+    
+    // Текущие значения диапазона (или значения по умолчанию)
+    const currentRange = effectiveActiveFilters[filter.key || filter.id] as [number, number] || [filter.min, filter.max];
+    
+    return (
+      <div className="mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm">{filter.min}</span>
+          <span className="text-sm">{filter.max}</span>
+        </div>
+        <input 
+          type="range" 
+          min={filter.min} 
+          max={filter.max} 
+          value={currentRange[1]} // Используем верхнюю границу для демонстрации
+          onChange={(e) => {
+            const newMax = Number(e.target.value);
+            effectiveOnFilterChange(filter.key || filter.id, [filter.min, newMax]);
+          }}
+          className="w-full"
+        />
+        <div className="mt-2 text-sm">
+          Current range: {currentRange[0]} - {currentRange[1]}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={`mb-4 ${isMobile ? 'md:hidden' : ''}`}>
@@ -190,9 +236,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 <span>{productCount} products</span>
               )}
             </div>
-            {getSelectedFiltersCount() > 0 && onClearFilters && (
+            {getSelectedFiltersCount() > 0 && effectiveOnClearFilters && (
               <button
-                onClick={onClearFilters}
+                onClick={effectiveOnClearFilters}
                 className={`flex items-center ${
                   currentTheme === 'dark' ? 'text-[#95c672] hover:text-[#85b662]' : 'text-[#003D2D] hover:text-[#004D3D]'
                 }`}
@@ -237,36 +283,42 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               }`}>
                 {category.name}
               </h3>
-              <div className="space-y-2">
-                {category.options.map((option) => (
-                  <div key={option.value} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={`${category.id}-${option.value}`}
-                      checked={isOptionChecked(category.id, option.value)}
-                      onChange={() => handleFilterChange(category.id, option.value)}
-                      className={`mr-2 form-checkbox ${
-                        currentTheme === 'dark'
-                          ? 'text-[#95c672] border-gray-600 bg-gray-700 focus:ring-[#85b662]'
-                          : 'text-[#003D2D] border-gray-300 focus:ring-[#004D3D]'
-                      }`}
-                    />
-                    <label 
-                      htmlFor={`${category.id}-${option.value}`}
-                      className={`text-sm ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
-                    >
-                      {option.label || option.value}
-                      {option.count !== undefined && (
-                        <span className={`ml-1 text-xs ${
-                          currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                          ({option.count})
-                        </span>
-                      )}
-                    </label>
-                  </div>
-                ))}
-              </div>
+              
+              {/* Проверяем, является ли этот фильтр диапазоном */}
+              {effectiveFilters?.find(f => f.id === category.id && f.type === 'range') ? (
+                renderRangeFilter(effectiveFilters.find(f => f.id === category.id))
+              ) : (
+                <div className="space-y-2">
+                  {category.options.map((option) => (
+                    <div key={option.value} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`${category.id}-${option.value}`}
+                        checked={isOptionChecked(category.id, option.value)}
+                        onChange={() => handleFilterChange(category.id, option.value)}
+                        className={`mr-2 form-checkbox ${
+                          currentTheme === 'dark'
+                            ? 'text-[#95c672] border-gray-600 bg-gray-700 focus:ring-[#85b662]'
+                            : 'text-[#003D2D] border-gray-300 focus:ring-[#004D3D]'
+                        }`}
+                      />
+                      <label 
+                        htmlFor={`${category.id}-${option.value}`}
+                        className={`text-sm ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                      >
+                        {option.label || option.value}
+                        {option.count !== undefined && (
+                          <span className={`ml-1 text-xs ${
+                            currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            ({option.count})
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

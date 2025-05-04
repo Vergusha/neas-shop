@@ -516,7 +516,7 @@ const ProductPage: React.FC = () => {
         return (
           <ul className="pl-5 mt-2 space-y-1 list-disc">
             {listItems.map((item, index) => (
-              <li key={index} className="text-gray-700 dark:text-gray-300">{item.trim()}</li>
+              <li key={index} className={currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>{item.trim()}</li>
             ))}
           </ul>
         );
@@ -524,7 +524,7 @@ const ProductPage: React.FC = () => {
     }
     
     // Если нет маркеров, возвращаем обычный текст
-    return <p className="mt-2 text-gray-700 dark:text-gray-300">{description}</p>;
+    return <p className={`mt-2 ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{description}</p>;
   };
 
   const formatTitle = (product: ProductData): string => {
@@ -639,7 +639,7 @@ const ProductPage: React.FC = () => {
           })()}
         </div>
       )}
-      <div className="p-4 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:shadow-gray-900">
+      <div className={`p-4 rounded-lg shadow-md ${currentTheme === 'dark' ? 'bg-gray-800 shadow-gray-900' : 'bg-white'}`}>
         <div className="flex flex-col md:flex-row">
           <div className="w-full mb-4 md:w-2/5 md:mb-0">
             {/* Image carousel */}
@@ -661,7 +661,11 @@ const ProductPage: React.FC = () => {
                       type="button"
                       title="Previous image"
                       onClick={prevImage}
-                      className="absolute p-2 transform -translate-y-1/2 rounded-full shadow-md left-2 top-1/2 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-700 dark:text-gray-200"
+                      className={`absolute p-2 transform -translate-y-1/2 rounded-full shadow-md left-2 top-1/2 ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-800/80 hover:bg-gray-700 text-gray-200' 
+                          : 'bg-white/80 hover:bg-white text-gray-700'
+                      }`}
                     >
                       <ChevronLeft size={20} />
                     </button>
@@ -669,7 +673,11 @@ const ProductPage: React.FC = () => {
                       type="button"
                       title="Next image"
                       onClick={nextImage}
-                      className="absolute p-2 transform -translate-y-1/2 rounded-full shadow-md right-2 top-1/2 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-700 dark:text-gray-200"
+                      className={`absolute p-2 transform -translate-y-1/2 rounded-full shadow-md right-2 top-1/2 ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-800/80 hover:bg-gray-700 text-gray-200' 
+                          : 'bg-white/80 hover:bg-white text-gray-700'
+                      }`}
                     >
                       <ChevronRight size={20} />
                     </button>
@@ -685,7 +693,9 @@ const ProductPage: React.FC = () => {
                       key={idx} 
                       onClick={() => goToImage(idx)}
                       className={`w-16 h-16 border-2 rounded-md overflow-hidden ${
-                        idx === currentImageIndex ? 'border-blue-500 dark:border-[#95c672]' : 'border-gray-200 dark:border-gray-700'
+                        idx === currentImageIndex 
+                          ? currentTheme === 'dark' ? 'border-[#95c672]' : 'border-blue-500' 
+                          : currentTheme === 'dark' ? 'border-gray-700' : 'border-gray-200'
                       }`}
                     >
                       <img 
@@ -717,13 +727,13 @@ const ProductPage: React.FC = () => {
             <div className="flex items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
                 <Rating value={product?.rating || 0} />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className={`text-sm ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   {product?.rating ? product.rating.toFixed(1) : "0"} 
                   ({product?.reviewCount || 0} reviews)
                 </span>
               </div>
               <button 
-                className={`p-2 rounded-full transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400 dark:text-gray-300'}`}
+                className={`p-2 rounded-full transition-colors ${isFavorite ? 'text-red-500' : currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-400'}`}
                 onClick={toggleFavoriteStatus}
                 title={isAuthenticated ? 'Add to favorites' : 'Login required to add to favorites'}
               >
@@ -732,22 +742,22 @@ const ProductPage: React.FC = () => {
             </div>
             
             {/* Заголовок продукта теперь без кнопки избранного */}
-            <h1 className="mb-4 text-2xl font-bold dark:text-gray-200">{formatTitle(product)}</h1>
+            <h1 className={`mb-4 text-2xl font-bold ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>{formatTitle(product)}</h1>
             
             <div className="mb-6">
-              <h3 className="mb-2 text-lg font-semibold dark:text-gray-200">Description</h3>
+              <h3 className={`mb-2 text-lg font-semibold ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>Description</h3>
               {formatDescription(product?.description || '')}
             </div>
 
             {/* Обновленный блок с ценой - используем новые CSS классы */}
-            <div className="product-page-price-block dark:bg-gray-700/30">
-              <div className="price-gradient dark:opacity-20"></div>
+            <div className={`p-4 mb-4 rounded-lg shadow-sm ${currentTheme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}`}>
+              <div className={`price-gradient ${currentTheme === 'dark' ? 'opacity-20' : 'opacity-10'}`}></div>
               <div className="product-page-price-container">
-                <p className="product-page-price dark:text-gray-100">
-                  {Number(product?.price).toFixed(2)} <span className="product-page-price-currency dark:text-gray-300">NOK</span>
+                <p className={`text-3xl font-bold ${currentTheme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
+                  {Number(product?.price).toFixed(2)} <span className={`text-xl ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>NOK</span>
                 </p>
                 {product?.price > 1000 && (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className={`mt-1 text-xs ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                     or {(product.price / 12).toFixed(2)} NOK/month with 12-month payment plan
                   </p>
                 )}
@@ -755,57 +765,80 @@ const ProductPage: React.FC = () => {
             </div>
             
             {/* Quantity selector and Add to cart button в одном ряду */}
-            <div className="quantity-control-wrapper">
-              <span className="quantity-label dark:text-gray-300">Quantity:</span>
-              <div className="quantity-controls">
-                <button 
-                  type="button"
-                  title="Decrease quantity"
-                  className="quantity-button quantity-button-minus dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
-                  onClick={decrementQuantity}
-                  disabled={quantity <= 1}
-                >
-                  <Minus size={16} className="stroke-[2.5]" />
-                </button>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={quantity}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value.replace(/[^0-9]/g, ''));
-                    if (!isNaN(val) && val > 0) {
-                      setQuantity(val);
-                    } else if (e.target.value === '') {
-                      setQuantity(1);
-                    }
-                  }}
-                  className="quantity-input dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                  min="1"
-                  placeholder="Enter quantity"
-                  title="Quantity"
-                />
-                <button 
-                  type="button"
-                  title="Increase quantity"
-                  className="quantity-button quantity-button-plus dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
-                  onClick={incrementQuantity}
-                >
-                  <Plus size={16} className="stroke-[2.5]" />
-                </button>
+            <div className="flex flex-wrap items-center gap-4 mb-4">
+              <div className={`flex items-center ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className="mr-3 font-medium">Quantity:</span>
+                <div className="flex items-center border rounded">
+                  <button 
+                    type="button"
+                    title="Decrease quantity"
+                    className={`px-2 py-1 border-r ${
+                      currentTheme === 'dark' 
+                        ? 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600' 
+                        : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                    }`}
+                    onClick={decrementQuantity}
+                    disabled={quantity <= 1}
+                  >
+                    <Minus size={16} className="stroke-[2.5]" />
+                  </button>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value.replace(/[^0-9]/g, ''));
+                      if (!isNaN(val) && val > 0) {
+                        setQuantity(val);
+                      } else if (e.target.value === '') {
+                        setQuantity(1);
+                      }
+                    }}
+                    className={`w-12 py-1 text-center ${
+                      currentTheme === 'dark' 
+                        ? 'bg-gray-700 text-gray-200 border-gray-600' 
+                        : 'bg-white text-gray-700 border-gray-300'
+                    }`}
+                    min="1"
+                    placeholder="1"
+                    title="Quantity"
+                  />
+                  <button 
+                    type="button"
+                    title="Increase quantity"
+                    className={`px-2 py-1 border-l ${
+                      currentTheme === 'dark' 
+                        ? 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600' 
+                        : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                    }`}
+                    onClick={incrementQuantity}
+                  >
+                    <Plus size={16} className="stroke-[2.5]" />
+                  </button>
+                </div>
               </div>
 
               <button
-                className={`add-to-cart-button ${currentTheme === 'dark' ? 'bg-[#95c672] hover:bg-[#86b363] text-gray-900' : ''}`}
+                className={`flex items-center justify-center px-6 py-2 font-medium rounded-lg ${
+                  currentTheme === 'dark'
+                    ? 'bg-[#95c672] hover:bg-[#86b363] text-gray-900'
+                    : 'bg-[#003D2D] hover:bg-[#004D3D] text-white'
+                }`}
                 onClick={addToCart}
               >
-                {window.innerWidth <= 768 ? <ShoppingCart size={22} /> : 'Add to Cart'}
+                <ShoppingCart size={18} className="mr-2" />
+                Add to Cart
               </button>
             </div>
             
             {/* Success message with animation */}
             {addedToCart && (
-              <div className="add-success-message">
+              <div className={`p-3 text-center rounded-md ${
+                currentTheme === 'dark'
+                  ? 'bg-green-800/50 text-green-200'
+                  : 'bg-green-100 text-green-800'
+              }`}>
                 <div className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />

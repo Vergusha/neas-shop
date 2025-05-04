@@ -4,6 +4,7 @@ import { Heart, ShoppingCart } from 'lucide-react';
 import { getTheme } from '../../utils/themeUtils';
 import Rating from '../ui/Rating';
 import { Product } from '../../types/product';
+import { useProductCard } from '../../contexts/ProductCardContext';
 
 interface ProductCardProps {
   product: Product;
@@ -16,13 +17,28 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({
   product,
-  isFavorite = false,
-  onToggleFavorite,
-  onAddToCart,
-  showRating = true,
-  showStock = true,
+  isFavorite: propIsFavorite,
+  onToggleFavorite: propToggleFavorite,
+  onAddToCart: propAddToCart,
+  showRating,
+  showStock,
 }) => {
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
+  
+  // Получаем функции и настройки из контекста
+  const {
+    handleToggleFavorite: contextToggleFavorite,
+    handleAddToCart: contextAddToCart,
+    isFavorite: isProductFavorite,
+    defaultProps
+  } = useProductCard();
+
+  // Используем пропсы, если они переданы, иначе используем значения из контекста
+  const effectiveShowRating = showRating !== undefined ? showRating : defaultProps.showRating;
+  const effectiveShowStock = showStock !== undefined ? showStock : defaultProps.showStock;
+  const effectiveIsFavorite = propIsFavorite !== undefined ? propIsFavorite : isProductFavorite(product.id || '');
+  const effectiveToggleFavorite = propToggleFavorite || contextToggleFavorite;
+  const effectiveAddToCart = propAddToCart || contextAddToCart;
 
   // Listen for theme changes
   useEffect(() => {
@@ -51,27 +67,25 @@ const ProductCard: React.FC<ProductCardProps> = ({
         currentTheme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-white'
       }`}
     >
-      {/* Favorite Button - Всегда видимая */}
-      {onToggleFavorite && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onToggleFavorite(product);
-          }}
-          className={`absolute top-2 right-2 z-10 p-2 rounded-full ${
-            currentTheme === 'dark'
-              ? isFavorite ? 'bg-red-500' : 'bg-gray-700'
-              : isFavorite ? 'bg-red-100' : 'bg-white'
-          } shadow-md`}
-          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          <Heart
-            size={20}
-            className={isFavorite ? 'fill-red-500 text-red-500' : currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-500'}
-          />
-        </button>
-      )}
+      {/* Favorite Button */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          effectiveToggleFavorite(product);
+        }}
+        className={`absolute top-2 right-2 z-10 p-2 rounded-full ${
+          currentTheme === 'dark'
+            ? effectiveIsFavorite ? 'bg-red-500' : 'bg-gray-700'
+            : effectiveIsFavorite ? 'bg-red-100' : 'bg-white'
+        } shadow-md`}
+        aria-label={effectiveIsFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      >
+        <Heart
+          size={20}
+          className={effectiveIsFavorite ? 'fill-red-500 text-red-500' : currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-500'}
+        />
+      </button>
 
       {/* Product Link */}
       <Link to={`/product/${product.id}`} className="flex flex-col h-full">
@@ -95,7 +109,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <h3 className={`text-sm font-medium line-clamp-2 min-h-[2.5rem] ${currentTheme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
               {product.name || product.model || 'Unnamed Product'}
             </h3>
-            {showRating && (
+            {effectiveShowRating && (
               <div className="flex items-center mt-1 space-x-1">
                 <Rating value={product.rating || 0} readonly size="small" />
                 {product.reviewCount ? (
@@ -127,7 +141,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 )}
               </div>
               
-              {showStock && (
+              {effectiveShowStock && (
                 <span className={`text-xs px-1.5 py-0.5 rounded ${
                   product.inStock 
                     ? currentTheme === 'dark' ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
@@ -139,31 +153,29 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </div>
           </div>
 
-          {/* Add to Cart Button - Always visible */}
-          {onAddToCart && (
-            <div className="mt-3">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onAddToCart(product);
-                }}
-                disabled={!product.inStock}
-                className={`w-full py-2 px-3 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-2 ${
-                  product.inStock
-                    ? currentTheme === 'dark'
-                      ? 'bg-[#95c672] text-gray-900 hover:bg-[#85b662]'
-                      : 'bg-[#003D2D] text-white hover:bg-[#004D3D]'
-                    : currentTheme === 'dark'
-                      ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                <ShoppingCart size={16} />
-                {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-              </button>
-            </div>
-          )}
+          {/* Add to Cart Button */}
+          <div className="mt-3">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                effectiveAddToCart(product);
+              }}
+              disabled={!product.inStock}
+              className={`w-full py-2 px-3 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-2 ${
+                product.inStock
+                  ? currentTheme === 'dark'
+                    ? 'bg-[#95c672] text-gray-900 hover:bg-[#85b662]'
+                    : 'bg-[#003D2D] text-white hover:bg-[#004D3D]'
+                  : currentTheme === 'dark'
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <ShoppingCart size={16} />
+              {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+            </button>
+          </div>
         </div>
       </Link>
     </div>
