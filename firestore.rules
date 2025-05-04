@@ -1,9 +1,59 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
+    // Функция для проверки авторизации пользователя
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Функция для проверки, является ли пользователь владельцем документа
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Правила для коллекции продуктов
+    match /products/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.email == 'zherbalex1@gmail.com';
+      allow write: if isAuthenticated();
+    }
+    
+    // Правила специально для коллекции отзывов
+    match /reviews/{reviewId} {
+      // Любой может читать отзывы
+      allow read: if true;
+      
+      // Любой авторизованный пользователь может создавать отзывы
+      allow create: if isAuthenticated() && 
+                     request.resource.data.userId == request.auth.uid && 
+                     request.resource.data.createdAt == request.time;
+      
+      // Пользователь может редактировать или удалять только свои собственные отзывы
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+    
+    // Правила для коллекций мобильных устройств, телевизоров, аудио, игр и ноутбуков
+    match /{collection}/{productId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+      
+      // Разрешаем обновление полей rating и reviewCount для продуктов
+      allow update: if isAuthenticated() && 
+                      (request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['rating', 'reviewCount']));
+    }
+    
+    // Правила для профилей пользователей
+    match /userProfiles/{userId} {
+      // Пользователь может читать любые профили
+      allow read: if true;
+      
+      // Пользователь может редактировать только свой профиль
+      allow write: if isOwner(userId);
+    }
+    
+    // Для остальных коллекций требуется авторизация
+    match /{document=**} {
+      allow read, write: if isAuthenticated();
     }
   }
 }

@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "neas-shop-e878c"
-  }
+    "default": "neas-store",
+    "neas-store": "neas-shop-e878c"
+  },
+  "targets": {},
+  "etags": {}
 }

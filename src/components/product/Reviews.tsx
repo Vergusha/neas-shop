@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getAuth } from 'firebase/auth';
+import { getAuth, signOut } from 'firebase/auth';
 import Rating from '../ui/Rating';
 import UserAvatar from '../user/UserAvatar';
 import { getTheme } from '../../utils/themeUtils';
 import { useReviews, Review } from '../../contexts/ReviewContext';
+import { getUserDisplayName } from '../../utils/userProfileUtils';
+import Toast from '../ui/Toast';
+import { handleFirestoreError, ensureFirestoreAccess, forceReauthentication } from '../../firebaseConfig';
 
 interface ReviewsProps {
   productId: string;
@@ -17,6 +20,13 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
+  const [error, setError] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
+  const [authVerified, setAuthVerified] = useState<boolean>(false);
+  const [authStatus, setAuthStatus] = useState<'verifying'|'verified'|'failed'>('verifying');
+  const [refreshingAuth, setRefreshingAuth] = useState(false);
 
   // Используем контекст отзывов
   const {
@@ -34,6 +44,40 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
 
   const auth = getAuth();
   const userReview = auth.currentUser ? getUserReview(productId) : undefined;
+
+  // Verify auth on component mount and when auth state changes
+  useEffect(() => {
+    const verifyAuth = async () => {
+      if (auth.currentUser) {
+        try {
+          setAuthStatus('verifying');
+          const verified = await ensureFirestoreAccess();
+          setAuthStatus(verified ? 'verified' : 'failed');
+          if (!verified) {
+            setError('Authentication issue detected. Please refresh your session or sign out and sign back in.');
+          } else {
+            setError(null);
+          }
+        } catch (err) {
+          console.error('Auth verification error:', err);
+          setAuthStatus('failed');
+          setError('Authentication verification failed. Please try refreshing your session.');
+        }
+      } else {
+        setAuthStatus('failed');
+      }
+    };
+
+    verifyAuth();
+    
+    // Set up listener for auth changes
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) verifyAuth();
+      else setAuthStatus('failed');
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
 
   // Listen for theme changes
   useEffect(() => {
@@ -55,35 +99,97 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
     }
   }, [productId, userReview]);
 
+  const handleForceRefreshAuth = async () => {
+    if (!auth.currentUser) {
+      setToastMessage('You must be logged in to refresh your session.');
+      setToastType('error');
+      setShowToast(true);
+      return;
+    }
+
+    setRefreshingAuth(true);
+    try {
+      const success = await forceReauthentication();
+      if (success) {
+        setAuthStatus('verified');
+        setToastMessage('Authentication refreshed successfully!');
+        setToastType('success');
+        setError(null);
+      } else {
+        setToastMessage('Failed to refresh authentication. Please sign out and sign back in.');
+        setToastType('error');
+      }
+    } catch (error) {
+      console.error('Error refreshing authentication:', error);
+      setToastMessage('Error refreshing authentication. Please try signing out and back in.');
+      setToastType('error');
+    } finally {
+      setRefreshingAuth(false);
+      setShowToast(true);
+    }
+  };
+
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!auth.currentUser) {
-      alert('You must be logged in to submit a review.');
+      setToastMessage('You must be logged in to submit a review.');
+      setToastType('error');
+      setShowToast(true);
+      return;
+    }
+
+    if (authStatus !== 'verified') {
+      setToastMessage('Authentication issue detected. Please refresh your session first.');
+      setToastType('error');
+      setShowToast(true);
       return;
     }
 
     if (userRating === 0) {
-      alert('Please select a rating.');
+      setToastMessage('Please select a rating.');
+      setToastType('error');
+      setShowToast(true);
       return;
     }
 
     setSubmitting(true);
+    setError(null);
 
     try {
+      // Always force refresh authentication before submitting
+      await forceReauthentication();
+      
       if (userReview && editing) {
         // Обновляем существующий отзыв
         await updateReview(userReview.id, userRating, userComment);
         setEditing(false);
+        setToastMessage('Your review was updated successfully!');
+        setToastType('success');
+        setShowToast(true);
       } else {
         // Добавляем новый отзыв
         await addReview(productId, userRating, userComment, collectionName);
         setUserComment('');
         setUserRating(0);
+        setToastMessage('Your review was submitted successfully!');
+        setToastType('success');
+        setShowToast(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting review:', error);
-      alert('Failed to submit review. Please try again.');
+      
+      // Use our improved error handling
+      const errorMessage = handleFirestoreError(error);
+      setError(errorMessage);
+      setToastMessage(errorMessage);
+      setToastType('error');
+      setShowToast(true);
+      
+      // If it's a permission error, update the auth status
+      if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
+        setAuthStatus('failed');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -118,6 +224,21 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
     setEditing(false);
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      window.location.href = '/login'; // Redirect to login page
+      setToastMessage('Signed out successfully. Please sign in again.');
+      setToastType('info');
+      setShowToast(true);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      setToastMessage('Error signing out. Please try again.');
+      setToastType('error');
+      setShowToast(true);
+    }
+  };
+
   if (loadingReviews) {
     return (
       <div className={`py-6 ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -131,6 +252,68 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
       <h2 className={`text-2xl font-bold mb-4 ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
         Customer Reviews
       </h2>
+
+      {showToast && (
+        <Toast 
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
+          autoClose={5000}
+        />
+      )}
+      
+      {auth.currentUser && (
+        <div className={`mb-4 flex items-center justify-between p-3 rounded-md ${
+          currentTheme === 'dark' 
+            ? 'bg-gray-800 text-gray-200 border border-gray-700' 
+            : 'bg-gray-100 text-gray-700 border border-gray-200'
+        }`}>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${
+              authStatus === 'verifying' ? 'bg-yellow-500' : 
+              authStatus === 'verified' ? 'bg-green-500' : 'bg-red-500'
+            }`}></div>
+            <span>
+              {authStatus === 'verifying' ? 'Verifying permissions...' : 
+               authStatus === 'verified' ? 'Authentication verified' : 
+               'Authentication issue detected'}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleForceRefreshAuth}
+              disabled={refreshingAuth || authStatus === 'verifying'}
+              className={`px-3 py-1 text-sm rounded ${
+                currentTheme === 'dark'
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              } ${(refreshingAuth || authStatus === 'verifying') ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {refreshingAuth ? 'Refreshing...' : 'Refresh Session'}
+            </button>
+            <button
+              onClick={handleSignOut}
+              className={`px-3 py-1 text-sm rounded ${
+                currentTheme === 'dark'
+                  ? 'bg-red-800 text-white hover:bg-red-700'
+                  : 'bg-red-200 text-red-800 hover:bg-red-300'
+              }`}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {error && (
+        <div className={`mb-4 p-3 rounded-md ${
+          currentTheme === 'dark' 
+            ? 'bg-red-900/30 text-red-200 border border-red-800' 
+            : 'bg-red-100 text-red-700 border border-red-300'
+        }`}>
+          <p>{error}</p>
+        </div>
+      )}
 
       {reviews.length > 0 ? (
         <div className="mb-6">

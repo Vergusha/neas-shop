@@ -1,7 +1,8 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, serverTimestamp, getDoc, deleteDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { db } from '../firebaseConfig';
+import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, serverTimestamp, getDoc, deleteDoc, connectFirestoreEmulator, FirestoreError } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { db, handleFirestoreError, ensureFirestoreAccess } from '../firebaseConfig';
+import { getUserDisplayName } from '../utils/userProfileUtils';
 
 // Определение типов данных для отзывов
 export interface Review {
@@ -207,11 +208,20 @@ export const ReviewProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   // Добавить новый отзыв
   const addReview = async (productId: string, rating: number, comment: string, collectionName?: string) => {
+    const auth = getAuth();
+    
+    // Ensure user is authenticated
     if (!auth.currentUser) {
       throw new Error('You must be logged in to leave a review');
     }
     
     try {
+      // Ensure Firestore access with proper authentication
+      const hasAccess = await ensureFirestoreAccess();
+      if (!hasAccess) {
+        throw new Error('Authentication failed. Please sign out and sign back in.');
+      }
+
       // Проверяем, оставлял ли пользователь уже отзыв для этого продукта
       const userReviewQuery = query(
         collection(db, 'reviews'),
@@ -225,11 +235,14 @@ export const ReviewProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         throw new Error('You have already reviewed this product');
       }
       
+      // Get user display name from profile utilities
+      const userName = getUserDisplayName(auth.currentUser.uid);
+      
       // Создаем новый отзыв
       const newReview = {
         productId,
         userId: auth.currentUser.uid,
-        userName: auth.currentUser.displayName || 'Anonymous User',
+        userName: userName, // Use the name from our utility function
         userAvatar: auth.currentUser.photoURL || '',
         rating,
         comment,
@@ -272,17 +285,28 @@ export const ReviewProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       return docRef.id;
     } catch (error) {
       console.error('Error adding review:', error);
-      throw error;
+      throw new FirestoreError(
+        (error as FirestoreError).code || 'unknown',
+        (error as Error).message || 'Failed to add review'
+      );
     }
   };
 
   // Обновить существующий отзыв
   const updateReview = async (reviewId: string, rating: number, comment: string) => {
+    const auth = getAuth();
+    
     if (!auth.currentUser) {
       throw new Error('You must be logged in to update a review');
     }
     
     try {
+      // Ensure Firestore access with proper authentication
+      const hasAccess = await ensureFirestoreAccess();
+      if (!hasAccess) {
+        throw new Error('Authentication failed. Please sign out and sign back in.');
+      }
+      
       const reviewRef = doc(db, 'reviews', reviewId);
       const reviewSnap = await getDoc(reviewRef);
       
@@ -345,11 +369,16 @@ export const ReviewProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   // Удалить отзыв
   const deleteReview = async (reviewId: string) => {
+    const auth = getAuth();
+    
     if (!auth.currentUser) {
       throw new Error('You must be logged in to delete a review');
     }
     
     try {
+      // Force token refresh to ensure we have a valid token
+      await auth.currentUser.getIdToken(true);
+      
       const reviewRef = doc(db, 'reviews', reviewId);
       const reviewSnap = await getDoc(reviewRef);
       

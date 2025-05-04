@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 import App from './App'
 import { setupForHosting } from './utils/hostingDetection';
-import { setupFirebaseErrorHandling, ensureFirestoreAccess } from './firebaseConfig';
+import { ensureFirestoreAccess } from './firebaseConfig';
 
 // Настройка для хостинга Firebase с обработкой ошибок
 try {
@@ -12,18 +12,17 @@ try {
   console.warn('Error setting up hosting detection:', e);
 }
 
-// Улучшенная обработка ошибок Firebase
+// Проверяем доступ к Firestore при запуске приложения
 try {
-  setupFirebaseErrorHandling();
+  ensureFirestoreAccess().then(hasAccess => {
+    if (hasAccess) {
+      console.log('Successfully connected to Firestore');
+    } else {
+      console.warn('User not authenticated for Firestore access');
+    }
+  });
 } catch (e) {
-  console.warn('Error setting up Firebase error handling:', e);
-}
-
-// Включаем персистентность, но оборачиваем в try-catch, чтобы избежать белого экрана
-try {
-  ensureFirestoreAccess();
-} catch (e) {
-  console.error('Failed to setup Firestore access:', e);
+  console.error('Failed to check Firestore access:', e);
 }
 
 // Рендеринг приложения не должен зависеть от успешности настройки Firebase

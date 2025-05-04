@@ -4,16 +4,20 @@ import { getTheme } from '../../utils/themeUtils';
 interface RatingProps {
   value: number;
   readonly?: boolean;
+  interactive?: boolean; // Add interactive prop to interface
   onChange?: (rating: number) => void;
-  size?: 'small' | 'medium' | 'large';
+  size?: 'sm' | 'md' | 'lg' | 'small' | 'medium' | 'large';
 }
 
 const Rating: React.FC<RatingProps> = ({
   value = 0,
   readonly = true,
+  interactive = false, // Add interactive prop with default false
   onChange,
   size = 'medium'
 }) => {
+  // Use either readonly or interactive prop, giving interactive priority
+  const isReadOnly = interactive ? false : readonly;
   const [rating, setRating] = useState(Math.round(value));
   const [hover, setHover] = useState(0);
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
@@ -34,7 +38,7 @@ const Rating: React.FC<RatingProps> = ({
   }, [value]);
 
   const handleClick = (index: number) => {
-    if (readonly) return;
+    if (isReadOnly) return;
     setRating(index);
     if (onChange) {
       onChange(index);
@@ -45,10 +49,13 @@ const Rating: React.FC<RatingProps> = ({
   const starSizeClass = () => {
     switch (size) {
       case 'small':
+      case 'sm':
         return 'w-3 h-3';
       case 'large':
+      case 'lg':
         return 'w-6 h-6';
       case 'medium':
+      case 'md':
       default:
         return 'w-5 h-5';
     }
@@ -64,10 +71,10 @@ const Rating: React.FC<RatingProps> = ({
       {[1, 2, 3, 4, 5].map((index) => (
         <span 
           key={index}
-          className={`${readonly ? '' : 'cursor-pointer'} ${starSizeClass()} mx-0.5`}
+          className={`${isReadOnly ? '' : 'cursor-pointer'} ${starSizeClass()} mx-0.5`}
           onClick={() => handleClick(index)}
-          onMouseEnter={() => !readonly && setHover(index)}
-          onMouseLeave={() => !readonly && setHover(0)}
+          onMouseEnter={() => !isReadOnly && setHover(index)}
+          onMouseLeave={() => !isReadOnly && setHover(0)}
         >
           <svg 
             className="w-full h-full" 
