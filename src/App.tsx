@@ -1,31 +1,29 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-// Add this import for the router's future flags
-
-import Header from './components/Header';
-import Footer from './components/Footer';
-import MobilePage from './pages/MobilePage';
-import ProductPage from './pages/ProductPage';
-import DataPage from './pages/DataPage';
-import GamingPage from './pages/GamingPage';
-import TvPage from './pages/TvPage';
-import SupportPage from './pages/SupportPage';
-import SearchResultsPage from './pages/SearchResultsPage';
-import Register from './pages/Register';
-import Login from './pages/Login';
-import ProfilePage from './pages/ProfilePage';
-import FavoritesPage from './pages/FavoritesPage';
-import CartPage from './pages/CartPage';
-import Home from './pages/Home';
-import Breadcrumbs from './components/Breadcrumbs';
-import AdminPanel from './components/AdminPanel';
+import { useState, useEffect } from 'react';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+import MobilePage from './pages/CategoryPages/MobilePage';
+import ProductPage from './pages/NavPages/ProductPage';
+import DataPage from './pages/OtherPages/DataPage';
+import GamingPage from './pages/CategoryPages/GamingPage';
+import TvPage from './pages/CategoryPages/TvPage';
+import SupportPage from './pages/CategoryPages/SupportPage';
+import SearchResultsPage from './pages/NavPages/SearchResultsPage';
+import Register from './pages/OtherPages/Register';
+import Login from './pages/OtherPages/Login';
+import ProfilePage from './pages/NavPages/ProfilePage';
+import FavoritesPage from './pages/NavPages/FavoritesPage';
+import CartPage from './pages/NavPages/CartPage';
+import Home from './pages/MainPages/Home';
+import Breadcrumbs from './components/layout/Breadcrumbs';
+import AdminPanel from './components/admin/AdminPanel';
 import { isAdmin } from './utils/constants';
 import { getAuth } from 'firebase/auth';
-import { useEffect } from 'react';
 import { AuthProvider } from './utils/AuthProvider';
-import LoginRedirect from './components/LoginRedirect';
+import LoginRedirect from './components/user/LoginRedirect';
 import KeywordDebugger from './utils/KeywordDebugger';
-import LaptopsPage from './pages/LaptopsPage';
-import { initializeTheme } from './utils/themeUtils';
+import LaptopsPage from './pages/CategoryPages/LaptopsPage';
+import { initializeTheme, getTheme } from './utils/themeUtils';
 
 // Оптимизированные настройки для маршрутизации
 const router_future = {
@@ -45,24 +43,32 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
+  const [currentTheme, setCurrentTheme] = useState(getTheme());
+
   useEffect(() => {
     // Initialize theme on app start
     initializeTheme();
     
-    // Run the migrations once to ensure database structure is correct
-    // You can comment these out after the first run
-    // migrateProductRatings();
-    // cleanupDuplicateReviews();
+    const handleThemeChange = () => {
+      setCurrentTheme(getTheme());
+    };
+    
+    window.addEventListener('themeChanged', handleThemeChange);
+    return () => window.removeEventListener('themeChanged', handleThemeChange);
   }, []);
 
   return (
     <Router future={router_future}>
       <AuthProvider>
         <LoginRedirect />
-        <div className="flex flex-col min-h-screen">
+        <div className={`flex flex-col min-h-screen ${
+          currentTheme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'
+        }`}>
           <Header />
           <Breadcrumbs />
-          <main className="flex-grow">
+          <main className={`flex-grow ${
+            currentTheme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'
+          }`}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/mobile" element={<MobilePage />} />

@@ -15,7 +15,7 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
-    outDir: 'dist', // Changed from 'build' to 'dist' for Firebase deployment
+    outDir: 'build', // Changed back to 'build' to match your actual directory structure
   },
   server: {
     port: 7777,
