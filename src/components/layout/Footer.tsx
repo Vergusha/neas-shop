@@ -84,7 +84,7 @@ const Footer = () => {
         </div>
 
         <div className="pt-8 mt-8 text-sm text-center border-t border-white/20">
-          <p>&copy; {new Date().getFullYear()} NEAS Shop. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} NEAS Store. All rights reserved.</p>
         </div>
       </div>
     </footer>

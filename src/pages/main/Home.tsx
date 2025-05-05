@@ -181,7 +181,7 @@ const Home = () => {
       <main className="container flex-grow px-4 mx-auto sm:px-6 lg:px-8">
         <section className="py-6 my-4 rounded-lg hero bg-base-200 md:py-8">
           <div className="px-4 md:px-8">
-            <h1 className="text-2xl font-bold sm:text-3xl md:text-4xl">Welcome to NEAS Shop</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl md:text-4xl">Welcome to NEAS Store</h1>
             <p className="mt-2 text-sm md:mt-4 sm:text-base">Find the best electronics and gadgets here.</p>
           </div>
         </section>

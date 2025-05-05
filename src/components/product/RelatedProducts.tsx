@@ -3,7 +3,7 @@ import { collection, query, limit, getDocs, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import ProductCard from './ProductCard';
 import { Product } from '../types/product';
-import { getTheme } from '../utils/themeUtils';
+import { getTheme } from '../../utils/themeUtils';
 
 interface RelatedProductsProps {
   product: Product;
