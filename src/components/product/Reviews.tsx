@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import Rating from '../ui/Rating';
 import UserAvatar from '../user/UserAvatar';
@@ -14,6 +14,11 @@ interface ReviewsProps {
   collectionName?: string;
 }
 
+// Расширенный тип Review с локальными свойствами UI
+interface UIReview extends Review {
+  uiUserName?: string; // локальное имя для отображения
+}
+
 const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collectionName }) => {
   const [userRating, setUserRating] = useState<number>(0);
   const [userComment, setUserComment] = useState<string>('');
@@ -27,6 +32,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
   const [authVerified, setAuthVerified] = useState<boolean>(false);
   const [authStatus, setAuthStatus] = useState<'verifying'|'verified'|'failed'>('verifying');
   const [refreshingAuth, setRefreshingAuth] = useState(false);
+  const [localReviews, setLocalReviews] = useState<UIReview[]>([]);
 
   // Используем контекст отзывов
   const {
@@ -44,6 +50,39 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
 
   const auth = getAuth();
   const userReview = auth.currentUser ? getUserReview(productId) : undefined;
+
+  // Обновляем локальный список отзывов при изменении основного списка
+  useEffect(() => {
+    const enhancedReviews = reviews.map(review => {
+      // Используем актуальное имя из оригинального объекта отзыва
+      const uiUserName = getUserDisplayName(review.userId);
+      return {
+        ...review,
+        uiUserName
+      };
+    });
+    setLocalReviews(enhancedReviews);
+  }, [reviews]);
+
+  // Обрабатываем событие обновления имени пользователя
+  useEffect(() => {
+    const handleUserNameUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { userId, name } = customEvent.detail;
+      
+      // Обновляем локальные отзывы с новым именем
+      setLocalReviews(currentReviews => 
+        currentReviews.map(review => 
+          review.userId === userId 
+            ? { ...review, uiUserName: name } 
+            : review
+        )
+      );
+    };
+    
+    window.addEventListener('userNameUpdated', handleUserNameUpdate);
+    return () => window.removeEventListener('userNameUpdated', handleUserNameUpdate);
+  }, []);
 
   // Verify auth on component mount and when auth state changes
   useEffect(() => {
@@ -97,7 +136,7 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
       setUserRating(userReview.rating);
       setUserComment(userReview.comment);
     }
-  }, [productId, userReview]);
+  }, [productId, userReview, getProductReviews]);
 
   const handleForceRefreshAuth = async () => {
     if (!auth.currentUser) {
@@ -201,9 +240,14 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
     if (window.confirm('Are you sure you want to delete your review?')) {
       try {
         await deleteReview(userReview.id);
+        setToastMessage('Review deleted successfully.');
+        setToastType('success');
+        setShowToast(true);
       } catch (error) {
         console.error('Error deleting review:', error);
-        alert('Failed to delete review. Please try again.');
+        setToastMessage('Failed to delete review. Please try again.');
+        setToastType('error');
+        setShowToast(true);
       }
     }
   };
@@ -464,10 +508,11 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
         </div>
       ) : null}
 
-      {reviews.length > 0 && (
+      {localReviews.length > 0 && (
         <div className="space-y-6">
-          {reviews.map((review) => {
+          {localReviews.map((review) => {
             const isUserReview = auth.currentUser && review.userId === auth.currentUser.uid;
+            const displayName = review.uiUserName || review.userName || 'Пользователь';
             
             return (
               <div 
@@ -480,10 +525,10 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <UserAvatar userId={review.userId} size={40} />
+                    <UserAvatar userId={review.userId} photoURL={review.userAvatar} size={40} />
                     <div>
                       <h4 className={`font-medium ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
-                        {review.userName}
+                        {displayName}
                         {isUserReview && (
                           <span className={`ml-2 text-xs px-2 py-1 rounded ${
                             currentTheme === 'dark' 

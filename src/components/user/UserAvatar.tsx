@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Edit3 } from 'lucide-react';
-import defaultAvatar from '../../assets/defaultAvatar.svg';
+import { defaultAvatarSVG, handleAvatarError } from '../../utils/AvatarHelper';
+import { getDatabase, ref, get } from 'firebase/database';
 
 interface UserAvatarProps {
-  photoURL: string | null;
+  photoURL?: string | null;
+  userId?: string;
   size?: number;
   className?: string;
   isEditing?: boolean;
@@ -11,23 +13,50 @@ interface UserAvatarProps {
 
 const UserAvatar: React.FC<UserAvatarProps> = React.memo(({ 
   photoURL, 
+  userId,
   size = 40, 
   className = '',
   isEditing = false
 }) => {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(photoURL || null);
+
+  // Получаем аватарку по userId, если photoURL не передан
+  useEffect(() => {
+    const fetchUserAvatar = async () => {
+      if (!photoURL && userId) {
+        try {
+          const database = getDatabase();
+          
+          // Попытка получить аватар из базы данных
+          const userRef = ref(database, `users/${userId}`);
+          const snapshot = await get(userRef);
+          
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            if (userData.avatarURL) {
+              setAvatarUrl(userData.avatarURL);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch user avatar:', error);
+        }
+      }
+    };
+    
+    fetchUserAvatar();
+  }, [photoURL, userId]);
+
   return (
     <div className="relative">
       <div className={`flex items-center justify-center w-8 h-8 rounded-full overflow-hidden ${
-        !photoURL ? 'bg-[#003D2D] dark:bg-[#95c672] text-white dark:text-gray-900' : ''
+        !avatarUrl ? 'bg-[#003D2D] dark:bg-[#95c672] text-white dark:text-gray-900' : ''
       }`}>
-        {photoURL ? (
+        {avatarUrl ? (
           <img
-            src={photoURL}
+            src={avatarUrl}
             alt="User avatar"
             className="object-cover w-full h-full"
-            onError={(e) => {
-              e.currentTarget.src = defaultAvatar;
-            }}
+            onError={handleAvatarError}
           />
         ) : (
           <User size={24} />

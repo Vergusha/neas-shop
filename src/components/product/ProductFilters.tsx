@@ -284,8 +284,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   // Get the selected filters to display as a summary
   const activeFilterItems = getAllSelectedFilters();
   const hasActiveFilters = activeFilterItems.length > 0 || Object.values(effectiveActiveFilters || {}).some(v => 
-    (Array.isArray(v) && v.length === 2 && typeof v[0] === 'number' && typeof filter?.min !== 'undefined' && 
-     (v[0] !== filter.min || v[1] !== filter.max))
+    (Array.isArray(v) && v.length === 2 && typeof v[0] === 'number' && 
+     effectiveFilters?.some(f => f.type === 'range' && f.min !== undefined && 
+     ((v as [number, number])[0] !== f.min || (v as [number, number])[1] !== f.max)))
   );
 
   return (
@@ -440,7 +441,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   {effectiveFilters?.find(f => f.id === category.id && f.type === 'range') ? (
                     renderRangeFilter(effectiveFilters.find(f => f.id === category.id))
                   ) : (
-                    <div className="space-y-2 mt-2">
+                    <div className="mt-2 space-y-2">
                       {category.options.map((option) => {
                         const isChecked = isOptionChecked(category.id, option.value);
                         return (

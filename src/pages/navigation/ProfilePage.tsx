@@ -289,22 +289,48 @@ const ProfilePage: React.FC = () => {
     try {
       setIsUploading(true);
       
-      if (!user?.uid) {
-        throw new Error('No user ID found');
+      if (!user?.email) {
+        throw new Error('No user email found');
       }
 
-      const userRef = ref(database, `users/${user.uid}`);
+      // Use email prefix as user ID in database, which is consistent with other parts of the app
+      const emailPrefix = user.email.split('@')[0].toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '')
+        .replace(/\s+/g, '-');
       
+      // Save to the correct path in Firebase
+      const userRef = ref(database, `users/${emailPrefix}`);
+      
+      // Update database
       await update(userRef, {
         avatarURL: imageData,
         lastUpdated: new Date().toISOString()
       });
 
-      await updateUserAvatar(imageData);
+      // Update Firebase Auth profile
+      if (imageData.length <= 1024) {
+        await updateProfile(user, {
+          photoURL: imageData
+        });
+      } else {
+        console.warn('Avatar URL too long for Auth profile, updating only in database');
+      }
 
+      // Update local state
       setPreviewAvatar(imageData);
       setAvatarURL(imageData);
+      
+      // Store in localStorage for offline access
+      localStorage.setItem('avatarURL', imageData);
+      
+      // Update userProfile in localStorage
+      const currentProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      localStorage.setItem('userProfile', JSON.stringify({
+        ...currentProfile,
+        avatarURL: imageData
+      }));
 
+      // Notify any listeners that avatar has been updated
       window.dispatchEvent(new CustomEvent('avatarUpdated', {
         detail: { avatarURL: imageData }
       }));
@@ -354,12 +380,17 @@ const ProfilePage: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    if (user) {
-      const userRef = ref(database, `users/${user.uid}`);
+    if (user?.email) {
+      // Use email prefix for Firebase path consistency
+      const emailPrefix = user.email.split('@')[0].toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '')
+        .replace(/\s+/g, '-');
+      
+      const userRef = ref(database, `users/${emailPrefix}`);
       const unsubscribe = onValue(userRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
-          setCustomUserId(data.customUserId || '');
+          setCustomUserId(data.customUserId || emailPrefix);
           if (data.avatarURL) {
             setPreviewAvatar(data.avatarURL);
             setAvatarURL(data.avatarURL);
@@ -372,7 +403,7 @@ const ProfilePage: React.FC = () => {
 
       return () => unsubscribe();
     }
-  }, [user]);
+  }, [user, database]);
 
   const toggleOrderDetails = (orderId: string) => {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);

@@ -2,8 +2,8 @@
  * Helper functions for handling user avatars across the application
  */
 
-// Default avatar SVG as base64 - simple user icon
-export const defaultAvatarSVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlMGUwZDAiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjM1IiByPSIxNSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik01MCA1MGMtMTUgMC0zMCAxNS0zMCAzMHMxNSAzMCAzMCAzMCAzMC0xNSAzMC0zMFM2NSA1MCA1MCA1MHptMCA1MGMtMTAgMC0xOCA4LTE4IDE4czggMTggMTggMThjMTAuMSAwIDE4LTggMTgtMThzLTgtMTgtMTgtMTh6IiBmaWxsPSIjZmZmIi8+PC9zdmc+';
+// Default avatar SVG as a proper data URI with correct namespace
+export const defaultAvatarSVG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="#e0e0d0"/><circle cx="50" cy="35" r="15" fill="#fff"/><path d="M50 50c-15 0-30 15-30 30s15 30 30 30 30-15 30-30S65 50 50 50zm0 0" fill="#fff"/></svg>';
 
 // Constants for localStorage keys
 export const AVATAR_KEY = 'avatarURL';
@@ -100,7 +100,7 @@ export const syncAvatarFromFirebase = async (userId: string): Promise<void> => {
 export const handleAvatarError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
   const target = event.currentTarget;
   // Only update if not already using the default to prevent loops
-  if (!target.src.includes('data:image/svg+xml;base64')) {
+  if (!target.src.includes('data:image/svg+xml')) {
     target.src = defaultAvatarSVG;
   }
 };
