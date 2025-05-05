@@ -60,11 +60,19 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 py-12 bg-gray-50 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white shadow-lg rounded-xl">
+    <div className={`flex items-center justify-center min-h-screen px-4 py-12 ${
+      currentTheme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+    } sm:px-6 lg:px-8`}>
+      <div className={`w-full max-w-md p-8 space-y-8 shadow-lg rounded-xl ${
+        currentTheme === 'dark' ? 'bg-gray-800' : 'bg-white'
+      }`}>
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Welcome back!</h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <h2 className={`mt-6 text-3xl font-extrabold ${
+            currentTheme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+          }`}>Welcome back!</h2>
+          <p className={`mt-2 text-sm ${
+            currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+          }`}>
             Please sign in to your account
           </p>
         </div>
@@ -131,16 +139,20 @@ const Login: React.FC = () => {
           <div className="mt-6 space-y-4">
             <button
               type="submit"
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white transition-all duration-200 text-base shadow-md ${
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent font-medium rounded-md text-white transition-all duration-200 text-base shadow-md ${
                 currentTheme === 'dark'
                   ? 'bg-[#95c672] hover:bg-[#7fb356] focus:ring-[#95c672]'
                   : 'bg-[#003D2D] hover:bg-[#004D3D] focus:ring-[#003D2D]'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2`}
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                currentTheme === 'dark' ? 'focus:ring-offset-gray-800' : ''
+              }`}
               disabled={isLoading}
             >
               {isLoading && (
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <span className={`loading loading-spinner loading-sm ${
+                    currentTheme === 'dark' ? 'text-gray-200' : ''
+                  }`}></span>
                 </span>
               )}
               {isLoading ? 'Signing in...' : 'Login Now'}

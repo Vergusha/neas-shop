@@ -217,110 +217,65 @@ const ProductPage: React.FC = () => {
     try {
       const collectionRef = collection(db, currentProduct.collection);
       
-      // Extract the exact model from the product ID
+      // Универсальный метод извлечения базового ID для всех типов продуктов
       const productId = currentProduct.id || '';
+      const baseProductId = getBaseProductId(productId);
       
-      // For iPhone, we need to distinguish between models like iPhone 15 and iPhone 15 Pro
-      // Get model name without "pro", "plus", etc. suffixes for exact matching
-      let baseModelName = '';
-      if (currentProduct.collection === 'mobile' && currentProduct.brand === 'Apple') {
-        // Split the ID to extract the model parts (e.g., "apple-iphone-15-128gb-blue")
-        const parts = productId.split('-');
-        
-        // Find the part that contains the model number (e.g., "15" or "15-pro")
-        // For iPhone, it's typically after "iphone" in the ID
-        const iphoneIndex = parts.findIndex(part => part.toLowerCase() === 'iphone');
-        if (iphoneIndex >= 0 && iphoneIndex + 1 < parts.length) {
-          // For iPhone 15, iPhone 15 Pro, iPhone 15 Pro Max, etc.
-          // We want to capture "15", "15-pro", "15-pro-max" as the full model identifier
-          let modelParts = [];
-          let i = iphoneIndex + 1;
-          
-          // First part is definitely part of the model (e.g., "15")
-          modelParts.push(parts[i]);
-          
-          // Check if next parts are "pro", "plus", "max", etc.
-          i++;
-          while (i < parts.length && 
-                (parts[i].toLowerCase() === 'pro' || 
-                 parts[i].toLowerCase() === 'plus' || 
-                 parts[i].toLowerCase() === 'max')) {
-            modelParts.push(parts[i]);
-            i++;
-          }
-          
-          baseModelName = modelParts.join('-');
-          console.log(`Extracted iPhone model: ${baseModelName}`);
-        }
-      }
+      console.log(`Base product ID for color variants: ${baseProductId}`);
       
-      console.log(`Looking for variants of model: ${baseModelName || currentProduct.model}`);
-      
-      // Create a specific query based on product type
+      // Создаем более конкретный запрос на основе типа продукта
       let conditions = [
         where('brand', '==', currentProduct.brand),
+        where('model', '==', currentProduct.model)
       ];
       
-      // For mobile phones, we need to be very specific
+      // Добавляем специфические условия в зависимости от типа продукта
       if (currentProduct.collection === 'mobile') {
-        // For memory capacity
         if (currentProduct.memory) {
           conditions.push(where('memory', '==', currentProduct.memory));
         }
-      } 
-      // For other product types
-      // ...existing code...
-      
+      } else if (currentProduct.collection === 'laptops') {
+        if (currentProduct.processor) {
+          conditions.push(where('processor', '==', currentProduct.processor));
+        }
+        if (currentProduct.ram) {
+          conditions.push(where('ram', '==', currentProduct.ram));
+        }
+        if (currentProduct.storageType) {
+          conditions.push(where('storageType', '==', currentProduct.storageType));
+        }
+      } else if (currentProduct.collection === 'tv') {
+        if (currentProduct.screenSize) {
+          conditions.push(where('screenSize', '==', currentProduct.screenSize));
+        }
+        if (currentProduct.displayType) {
+          conditions.push(where('displayType', '==', currentProduct.displayType));
+        }
+      } else if (currentProduct.collection === 'audio' || currentProduct.collection === 'gaming') {
+        // Для аудио и игровых устройств добавляем дополнительную фильтрацию по deviceType
+        if (currentProduct.deviceType) {
+          conditions.push(where('deviceType', '==', currentProduct.deviceType));
+        }
+      }
+
       const q = query(collectionRef, ...conditions);
       const querySnapshot = await getDocs(q);
       const variants: Array<{id: string, color: string, image: string}> = [];
 
       console.log(`Found ${querySnapshot.size} potential variants to filter`);
-
+      
+      // Обрабатываем результаты запроса
       querySnapshot.forEach((docSnapshot) => {
         const data = docSnapshot.data();
         const variantId = docSnapshot.id;
         
-        // Apply additional filtering based on product type
-        let isMatchingVariant = true;
+        // Получаем базовый ID для текущего варианта
+        const currentVariantBaseId = getBaseProductId(variantId);
         
-        // For mobile phones, ensure exact model pattern
-        if (currentProduct.collection === 'mobile') {
-          if (currentProduct.brand === 'Apple' && baseModelName) {
-            // For iPhones, extract the model part from the variant ID
-            const parts = variantId.split('-');
-            const iphoneIndex = parts.findIndex(part => part.toLowerCase() === 'iphone');
-            
-            let variantModelParts = [];
-            if (iphoneIndex >= 0 && iphoneIndex + 1 < parts.length) {
-              let i = iphoneIndex + 1;
-              variantModelParts.push(parts[i]);
-              
-              i++;
-              while (i < parts.length && 
-                    (parts[i].toLowerCase() === 'pro' || 
-                     parts[i].toLowerCase() === 'plus' || 
-                     parts[i].toLowerCase() === 'max')) {
-                variantModelParts.push(parts[i]);
-                i++;
-              }
-            }
-            
-            const variantModelName = variantModelParts.join('-');
-            
-            // Check if the model parts match exactly
-            isMatchingVariant = (variantModelName === baseModelName) && 
-                                (data.memory === currentProduct.memory);
-            
-            console.log(`Checking ${variantId}: model ${variantModelName} vs ${baseModelName}, memory match: ${data.memory === currentProduct.memory}, isMatch: ${isMatchingVariant}`);
-          } else {
-            // For non-Apple phones, use the original model field
-            isMatchingVariant = data.model === currentProduct.model && 
-                              data.memory === currentProduct.memory;
-          }
-        }
-        // For laptops, TVs, etc. - keep existing logic
-        // ...existing code...
+        // Проверяем соответствие базовых ID (исключая различия в цвете)
+        const isMatchingVariant = (currentVariantBaseId === baseProductId);
+        
+        console.log(`Checking variant ${variantId}: base ID match: ${isMatchingVariant}, base: ${currentVariantBaseId} vs ${baseProductId}`);
 
         if (isMatchingVariant && data.color) {
           const variant = {
@@ -329,7 +284,7 @@ const ProductPage: React.FC = () => {
             image: data.image || ''
           };
 
-          // Add only unique variants based on color
+          // Добавляем только уникальные варианты по цвету
           if (!variants.some(v => v.color === variant.color)) {
             console.log(`Found matching variant: ${variantId} - ${data.color}`);
             variants.push(variant);
@@ -339,7 +294,7 @@ const ProductPage: React.FC = () => {
         }
       });
 
-      // Sort variants by color name
+      // Сортируем варианты по названию цвета
       variants.sort((a, b) => a.color.localeCompare(b.color));
       
       console.log(`Final ${variants.length} variants:`, variants.map(v => v.color).join(', '));
@@ -348,6 +303,95 @@ const ProductPage: React.FC = () => {
     } catch (error) {
       console.error("Error fetching color variants:", error);
     }
+  };
+
+  // Функция для получения базового ID продукта без учета цвета
+  const getBaseProductId = (productId: string): string => {
+    // Разбиваем ID на части
+    const parts = productId.split('-');
+    console.log(`Original product ID parts:`, parts);
+    
+    // Находим части, отвечающие за цвет
+    const commonColors = ['red', 'blue', 'black', 'white', 'gold', 'silver', 'green', 'yellow', 
+                          'pink', 'purple', 'gray', 'grey', 'brown', 'orange', 'violet', 'cyan', 
+                          'magenta', 'turquoise', 'crimson', 'navy'];
+    
+    // Цветовые модификаторы, часто встречающиеся перед названиями цветов
+    const colorModifiers = ['ice', 'dark', 'light', 'deep', 'bright', 'pale', 'night', 'midnight', 'sky',
+                            'ocean', 'forest', 'emerald', 'royal', 'rose', 'hot', 'electric', 'space', 'cosmic',
+                            'graphite', 'titanium', 'pearl', 'aqua', 'neon', 'pastel', 'shadow', 'matte'];
+    
+    // Строим базовый ID, исключая названия цвета и их модификаторы
+    let baseIdParts: string[] = [];
+    let skipNextPart = false;
+    
+    for (let i = 0; i < parts.length; i++) {
+      if (skipNextPart) {
+        skipNextPart = false;
+        continue;
+      }
+      
+      const part = parts[i].toLowerCase();
+      let shouldSkip = false;
+      
+      // Проверяем, является ли часть названием цвета
+      if (commonColors.includes(part)) {
+        console.log(`Skipping color part: ${part}`);
+        shouldSkip = true;
+      }
+      
+      // Проверяем модификатор цвета + следующая часть = цвет
+      if (i < parts.length - 1) {
+        const nextPart = parts[i + 1].toLowerCase();
+        
+        // Если текущая часть - модификатор цвета, а следующая - цвет
+        if (colorModifiers.includes(part) && commonColors.includes(nextPart)) {
+          console.log(`Skipping color modifier '${part}' and color '${nextPart}'`);
+          skipNextPart = true; // Пропустим следующую часть (цвет)
+          shouldSkip = true;
+        }
+      }
+      
+      // Проверяем "edition" и специальные издания
+      if (part.includes('edition')) {
+        console.log(`Skipping edition part: ${part}`);
+        shouldSkip = true;
+        
+        // Также пропускаем слово перед "edition", если оно не является основным идентификатором модели
+        if (i > 0 && !['galaxy', 'iphone', 'pixel', 'xperia', 'redmi', 'mi', 'note', 'pro', 'plus', 'max'].includes(baseIdParts[baseIdParts.length - 1])) {
+          const prevPart = baseIdParts.pop(); // Удаляем предыдущую часть
+          console.log(`Also skipping preceding word: ${prevPart}`);
+        }
+      }
+      
+      // Цветовая серия в названии (например, "blue series")
+      if (part === 'series' && i > 0) {
+        const prevPart = baseIdParts[baseIdParts.length - 1];
+        if (commonColors.includes(prevPart) || colorModifiers.includes(prevPart)) {
+          baseIdParts.pop(); // Удаляем предыдущую часть (название цвета)
+          console.log(`Skipping color series: ${prevPart} ${part}`);
+          shouldSkip = true;
+        }
+      }
+      
+      if (!shouldSkip) {
+        baseIdParts.push(parts[i]);
+      }
+    }
+    
+    // Проверяем последнюю часть на GB/TB (размер памяти) и пропускаем все после неё
+    for (let i = 0; i < baseIdParts.length; i++) {
+      const part = baseIdParts[i].toLowerCase();
+      if (part.match(/^\d+gb$/) || part.match(/^\d+tb$/)) {
+        // Нашли указание на память, оставляем всё до этой части включительно
+        baseIdParts = baseIdParts.slice(0, i + 1);
+        break;
+      }
+    }
+    
+    const result = baseIdParts.join('-');
+    console.log(`Generated base product ID: ${result}`);
+    return result;
   };
 
   // Function to handle color variant selection
