@@ -137,43 +137,89 @@ export const extractFilters = (products: any[], category?: string): FilterOption
 
 // Apply category-specific filter modifications
 const applyCategorySpecificFilters = (filters: FilterOption[], category: string): FilterOption[] => {
+  // Проверка на пустые фильтры
+  if (!filters || filters.length === 0) {
+    return []; 
+  }
+
+  // Базовый набор фильтров, который должен быть во всех категориях
+  const baseFilters = ['price', 'brand'];
+
   switch (category) {
     case 'tv':
-      return filters.filter(filter => 
-        !['memory', 'ram', 'storage', 'processor'].includes(filter.key)
-      );
+      // Для ТВ важны: цена, бренд, размер экрана, разрешение, тип дисплея
+      return filters
+        .filter(filter => 
+          [...baseFilters, 'diagonal', 'resolution', 'displayType', 'refreshRate'].includes(filter.key)
+        )
+        .sort((a, b) => {
+          const order = ['price', 'brand', 'diagonal', 'resolution', 'displayType', 'refreshRate'];
+          return order.indexOf(a.key) - order.indexOf(b.key);
+        });
     
     case 'audio':
-      return filters.filter(filter => 
-        !['memory', 'ram', 'storage', 'processor', 'operatingSystem', 'refreshRate', 'diagonal'].includes(filter.key)
-      );
+      // Для аудио важны: цена, бренд, тип аудио, подключение
+      return filters
+        .filter(filter => 
+          [...baseFilters, 'audioType', 'connectivity', 'subtype', 'color'].includes(filter.key)
+        )
+        .sort((a, b) => {
+          const order = ['price', 'brand', 'audioType', 'subtype', 'connectivity', 'color'];
+          return order.indexOf(a.key) - order.indexOf(b.key);
+        });
     
     case 'mobile':
-      // Keep only relevant filters for mobile devices
-      return filters.filter(filter => 
-        ['price', 'brand', 'memory', 'color', 'operatingSystem'].includes(filter.key)
-      );
+      // Для мобильных важны: цена, бренд, память, цвет, ОС
+      return filters
+        .filter(filter => 
+          [...baseFilters, 'memory', 'color', 'operatingSystem', 'storage'].includes(filter.key)
+        )
+        .sort((a, b) => {
+          const order = ['price', 'brand', 'memory', 'storage', 'color', 'operatingSystem'];
+          return order.indexOf(a.key) - order.indexOf(b.key);
+        });
 
     case 'laptops':
-      // Prioritize laptop-specific filters
-      const priorityOrder = ['price', 'brand', 'processor', 'ram', 'storage', 'screen'];
-      return filters.sort((a, b) => {
-        const aIndex = priorityOrder.indexOf(a.key);
-        const bIndex = priorityOrder.indexOf(b.key);
-        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-        if (aIndex !== -1) return -1;
-        if (bIndex !== -1) return 1;
-        return a.name.localeCompare(b.name);
-      });
+      // Для ноутбуков важны: цена, бренд, процессор, ОЗУ, хранилище, экран
+      return filters
+        .filter(filter => 
+          [...baseFilters, 'processor', 'ram', 'storage', 'diagonal', 'operatingSystem'].includes(filter.key)
+        )
+        .sort((a, b) => {
+          const order = ['price', 'brand', 'processor', 'ram', 'storage', 'diagonal', 'operatingSystem'];
+          const aIndex = order.indexOf(a.key);
+          const bIndex = order.indexOf(b.key);
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+          return a.name.localeCompare(b.name);
+        });
     
     case 'gaming':
-      // Keep only relevant filters for gaming products
-      return filters.filter(filter => 
-        ['price', 'brand', 'deviceType', 'connectivity', 'color'].includes(filter.key)
-      );
+      // Для игровых товаров важны: цена, бренд, тип устройства, подключение, цвет
+      return filters
+        .filter(filter => 
+          [...baseFilters, 'deviceType', 'connectivity', 'color'].includes(filter.key)
+        )
+        .sort((a, b) => {
+          const order = ['price', 'brand', 'deviceType', 'connectivity', 'color'];
+          const aIndex = order.indexOf(a.key);
+          const bIndex = order.indexOf(b.key);
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+          return a.name.localeCompare(b.name);
+        });
 
     default:
-      return filters;
+      // Для остальных категорий выводим все доступные фильтры
+      return filters.sort((a, b) => {
+        if (a.key === 'price') return -1;
+        if (b.key === 'price') return 1;
+        if (a.key === 'brand') return -1;
+        if (b.key === 'brand') return 1;
+        return a.name.localeCompare(b.name);
+      });
   }
 };
 
