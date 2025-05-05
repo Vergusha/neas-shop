@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getFirestore, doc, setDoc, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, getFirestore, doc, setDoc, getDocs, deleteDoc, query, where } from 'firebase/firestore';
 import EditProductModal from './EditProductModal';
 import { db } from '../../firebaseConfig';
 import { ProductForm, NewProductForm } from '../../types/product';
@@ -31,6 +31,9 @@ const categoryColumns: Record<string, ColumnConfig[]> = {
     { header: 'Model', key: 'model' },
     { header: 'Memory', key: 'memory' },
     { header: 'Color', key: 'color' },
+    { header: 'In Stock', key: 'inStock', width: 'w-24', render: (product) => 
+      product.inStock ? '✓ Yes' : '✗ No' 
+    },
   ],
   laptops: [
     ...commonColumns,
@@ -39,6 +42,9 @@ const categoryColumns: Record<string, ColumnConfig[]> = {
     { header: 'RAM', key: 'ram' },
     { header: 'Storage', key: 'storageType' },
     { header: 'Color', key: 'color' },
+    { header: 'In Stock', key: 'inStock', width: 'w-24', render: (product) => 
+      product.inStock ? '✓ Yes' : '✗ No' 
+    },
   ],
   gaming: [
     ...commonColumns,
@@ -46,13 +52,19 @@ const categoryColumns: Record<string, ColumnConfig[]> = {
     { header: 'Type', key: 'deviceType' },
     { header: 'Connectivity', key: 'connectivity' },
     { header: 'Color', key: 'color' },
+    { header: 'In Stock', key: 'inStock', width: 'w-24', render: (product) => 
+      product.inStock ? '✓ Yes' : '✗ No' 
+    },
   ],
   tv: [
     ...commonColumns,
     { header: 'Model', key: 'model' },
-    { header: 'Screen Size', key: 'diagonal' },
+    { header: 'Screen Size', key: 'diagonal', render: (product) => `${product.diagonal}"` },
     { header: 'Resolution', key: 'resolution' },
     { header: 'Display Type', key: 'displayType' },
+    { header: 'In Stock', key: 'inStock', width: 'w-24', render: (product) => 
+      product.inStock ? '✓ Yes' : '✗ No' 
+    },
   ],
   audio: [
     ...commonColumns,
@@ -60,6 +72,9 @@ const categoryColumns: Record<string, ColumnConfig[]> = {
     { header: 'Type', key: 'subtype' },
     { header: 'Connectivity', key: 'connectivity' },
     { header: 'Color', key: 'color' },
+    { header: 'In Stock', key: 'inStock', width: 'w-24', render: (product) => 
+      product.inStock ? '✓ Yes' : '✗ No' 
+    },
   ],
 };
 
@@ -82,6 +97,7 @@ const AdminPanel: React.FC = () => {
     storageType: '',
     ram: '',
     operatingSystem: '',
+    inStock: false, // Add inStock flag with default false
   });
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -181,6 +197,7 @@ const AdminPanel: React.FC = () => {
         searchKeywords: generateSearchKeywords(productName, product.modelNumber),
         clickCount: 0,
         updatedAt: new Date().toISOString(),
+        inStock: product.inStock || false, // Add inStock flag with default false
         filterCategories: {
           brand: product.brand.toLowerCase(),
           color: (product.color || '').toLowerCase(),
@@ -251,6 +268,7 @@ const AdminPanel: React.FC = () => {
         storageType: '',
         ram: '',
         operatingSystem: '',
+        inStock: false, // Reset inStock flag to default false
       });
       setImageFile(null);
       setImageUrl('');
@@ -520,6 +538,18 @@ const AdminPanel: React.FC = () => {
           required
         />
       </div>
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          id="mobileInStock"
+          type="checkbox"
+          checked={product.inStock}
+          onChange={(e) => setProduct({...product, inStock: e.target.checked})}
+          className="checkbox"
+        />
+        <label htmlFor="mobileInStock" className="text-sm font-medium text-gray-700">
+          In Stock
+        </label>
+      </div>
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
         <div className="mt-1 text-sm text-gray-900">
@@ -735,6 +765,18 @@ const AdminPanel: React.FC = () => {
           placeholder="Описание продукта"
           required
         />
+      </div>
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          id="gamingInStock"
+          type="checkbox"
+          checked={product.inStock}
+          onChange={(e) => setProduct({...product, inStock: e.target.checked})}
+          className="checkbox"
+        />
+        <label htmlFor="gamingInStock" className="text-sm font-medium text-gray-700">
+          In Stock
+        </label>
       </div>
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
@@ -1070,6 +1112,18 @@ const AdminPanel: React.FC = () => {
             required
           />
         </div>
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            id="laptopInStock"
+            type="checkbox"
+            checked={product.inStock}
+            onChange={(e) => setProduct({...product, inStock: e.target.checked})}
+            className="checkbox"
+          />
+          <label htmlFor="laptopInStock" className="text-sm font-medium text-gray-700">
+            In Stock
+          </label>
+        </div>
         <div className="p-4 mt-4 bg-gray-100 rounded-lg">
           <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
           <div className="mt-1 text-sm text-gray-900">
@@ -1200,6 +1254,18 @@ const AdminPanel: React.FC = () => {
           placeholder="Product description"
           required
         />
+      </div>
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          id="tvInStock"
+          type="checkbox"
+          checked={product.inStock}
+          onChange={(e) => setProduct({...product, inStock: e.target.checked})}
+          className="checkbox"
+        />
+        <label htmlFor="tvInStock" className="text-sm font-medium text-gray-700">
+          In Stock
+        </label>
       </div>
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
@@ -1372,6 +1438,18 @@ const AdminPanel: React.FC = () => {
           <option value="Gray">Gray</option>
           <option value="Pink">Pink</option>
         </select>
+      </div>
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          id="audioInStock"
+          type="checkbox"
+          checked={product.inStock}
+          onChange={(e) => setProduct({...product, inStock: e.target.checked})}
+          className="checkbox"
+        />
+        <label htmlFor="audioInStock" className="text-sm font-medium text-gray-700">
+          In Stock
+        </label>
       </div>
       <div className="p-4 mt-4 bg-gray-100 rounded-lg">
         <label className="block text-sm font-medium text-gray-700">Generated Product ID:</label>
@@ -1597,9 +1675,19 @@ const AdminPanel: React.FC = () => {
               </div>
             )}
           </div>
+          {/* Delete confirmation dialog */}
           {showDeleteConfirm && productToDelete && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="w-full max-w-md p-6 bg-white rounded-lg">
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              {/* Blurred backdrop */}
+              <div className="absolute inset-0 backdrop-blur-sm bg-black/30" onClick={() => {
+                setShowDeleteConfirm(false);
+                setProductToDelete(null);
+              }}></div>
+              
+              <div 
+                className="relative z-10 w-full max-w-md p-6 bg-white dark:bg-gray-800 rounded-lg shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <h3 className="mb-4 text-lg font-bold">Delete Product</h3>
                 <p className="mb-4">
                   Are you sure you want to delete "{productToDelete.name}"? This action cannot be undone.
@@ -1632,16 +1720,49 @@ const AdminPanel: React.FC = () => {
                 setIsEditModalOpen(false);
                 setSelectedProduct(null);
               }}
-              onSave={async (updatedProduct) => {
+              onSave={async (updatedProduct, oldId) => {
                 try {
-                  const docRef = doc(db, selectedCategory, updatedProduct.id);
-                  await setDoc(docRef, updatedProduct, { merge: true });
+                  const hasIdChanged = updatedProduct.id !== oldId;
                   
-                  setProducts(prevProducts => 
-                    prevProducts.map(p => 
-                      p.id === updatedProduct.id ? updatedProduct : p
-                    )
-                  );
+                  // Если ID изменился, нужно создать новый документ и удалить старый
+                  if (hasIdChanged && oldId) {
+                    console.log(`Product ID changed from ${oldId} to ${updatedProduct.id}`);
+                    
+                    // Создаем новый документ с обновленными данными
+                    const newDocRef = doc(db, selectedCategory, updatedProduct.id);
+                    await setDoc(newDocRef, {
+                      ...updatedProduct,
+                      updatedAt: new Date().toISOString()
+                    });
+                    
+                    // Обновляем связанные данные (рейтинги, отзывы)
+                    await updateRelatedData(oldId, updatedProduct.id);
+                    
+                    // Удаляем старый документ
+                    const oldDocRef = doc(db, selectedCategory, oldId);
+                    await deleteDoc(oldDocRef);
+                    
+                    // Обновляем список продуктов
+                    setProducts(prevProducts => 
+                      prevProducts.map(p => 
+                        p.id === oldId ? updatedProduct : p
+                      ).filter(p => p.id !== oldId)
+                    );
+                  } else {
+                    // Просто обновляем существующий документ
+                    const docRef = doc(db, selectedCategory, updatedProduct.id);
+                    await setDoc(docRef, {
+                      ...updatedProduct,
+                      updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                    
+                    // Обновляем список продуктов
+                    setProducts(prevProducts => 
+                      prevProducts.map(p => 
+                        p.id === updatedProduct.id ? updatedProduct : p
+                      )
+                    );
+                  }
                   
                   return Promise.resolve();
                 } catch (error) {
@@ -1655,6 +1776,127 @@ const AdminPanel: React.FC = () => {
       )}
     </div>
   );
+};
+
+// Функция для обновления связанных данных при изменении ID товара
+const updateRelatedData = async (oldId: string, newId: string): Promise<void> => {
+  try {
+    console.log(`Updating related data from ${oldId} to ${newId}`);
+    
+    // Обновляем отзывы (reviews)
+    const reviewsRef = collection(db, 'reviews');
+    const reviewsQuery = query(reviewsRef, where('productId', '==', oldId));
+    const reviewsSnapshot = await getDocs(reviewsQuery);
+    
+    const reviewsUpdatePromises = reviewsSnapshot.docs.map(doc => {
+      const reviewData = doc.data();
+      return setDoc(
+        doc.ref, 
+        { ...reviewData, productId: newId, updatedAt: new Date().toISOString() }
+      );
+    });
+    
+    // Обновляем рейтинги (ratings)
+    const ratingsRef = collection(db, 'ratings');
+    const ratingsQuery = query(ratingsRef, where('productId', '==', oldId));
+    const ratingsSnapshot = await getDocs(ratingsQuery);
+    
+    const ratingsUpdatePromises = ratingsSnapshot.docs.map(doc => {
+      const ratingData = doc.data();
+      return setDoc(
+        doc.ref, 
+        { ...ratingData, productId: newId, updatedAt: new Date().toISOString() }
+      );
+    });
+    
+    // Обновляем продукт в избранном у пользователей (favorites)
+    const usersRef = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersRef);
+    
+    const favoritesUpdatePromises = usersSnapshot.docs.map(async userDoc => {
+      const userData = userDoc.data();
+      
+      if (userData.favorites && Array.isArray(userData.favorites)) {
+        const favoriteIndex = userData.favorites.indexOf(oldId);
+        
+        if (favoriteIndex !== -1) {
+          const newFavorites = [...userData.favorites];
+          newFavorites[favoriteIndex] = newId;
+          
+          return setDoc(
+            userDoc.ref, 
+            { ...userData, favorites: newFavorites, updatedAt: new Date().toISOString() },
+            { merge: true }
+          );
+        }
+      }
+      
+      return Promise.resolve();
+    });
+    
+    // Обновляем продукт в корзине у пользователей (cartItems)
+    const cartUpdatePromises = usersSnapshot.docs.map(async userDoc => {
+      const userData = userDoc.data();
+      
+      if (userData.cart && Array.isArray(userData.cart)) {
+        const updatedCart = userData.cart.map((item: any) => {
+          if (item.productId === oldId) {
+            return { ...item, productId: newId };
+          }
+          return item;
+        });
+        
+        if (JSON.stringify(updatedCart) !== JSON.stringify(userData.cart)) {
+          return setDoc(
+            userDoc.ref, 
+            { ...userData, cart: updatedCart, updatedAt: new Date().toISOString() }, 
+            { merge: true }
+          );
+        }
+      }
+      
+      return Promise.resolve();
+    });
+    
+    // Обновляем связанные товары (relatedProducts)
+    const productsRef = collection(db, selectedCategory);
+    const productsSnapshot = await getDocs(productsRef);
+    
+    const relatedProductsUpdatePromises = productsSnapshot.docs.map(async productDoc => {
+      const productData = productDoc.data();
+      
+      if (productData.relatedProducts && Array.isArray(productData.relatedProducts)) {
+        const relatedIndex = productData.relatedProducts.indexOf(oldId);
+        
+        if (relatedIndex !== -1) {
+          const newRelated = [...productData.relatedProducts];
+          newRelated[relatedIndex] = newId;
+          
+          return setDoc(
+            productDoc.ref, 
+            { ...productData, relatedProducts: newRelated, updatedAt: new Date().toISOString() }, 
+            { merge: true }
+          );
+        }
+      }
+      
+      return Promise.resolve();
+    });
+    
+    // Выполняем все обновления параллельно
+    await Promise.all([
+      ...reviewsUpdatePromises,
+      ...ratingsUpdatePromises,
+      ...favoritesUpdatePromises,
+      ...cartUpdatePromises,
+      ...relatedProductsUpdatePromises
+    ]);
+    
+    console.log(`Successfully updated all related data from ${oldId} to ${newId}`);
+  } catch (error) {
+    console.error('Error updating related data:', error);
+    throw error;
+  }
 };
 
 export default AdminPanel;

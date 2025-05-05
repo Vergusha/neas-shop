@@ -42,12 +42,14 @@ export const formatMobileName = (product: {
   model?: string;
   memory?: string;
   color?: string;
+  modelNumber?: string;
 }): string => {
   if (!product.brand || !product.model) return '';
 
   const parts = [
     product.brand,
     product.model,
+    product.modelNumber,
     product.memory,
     product.color
   ].filter(Boolean);

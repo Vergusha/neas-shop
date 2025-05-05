@@ -77,34 +77,78 @@ export const normalizeProductData = (product: Partial<ProductForm>): ProductForm
 // Helper function to generate a formatted name based on product type/category
 const generateFormattedName = (product: Partial<ProductForm>): string => {
   const collection = product.collection || '';
+  const category = product.category || '';
   
-  if (collection === 'laptops' || product.category === 'laptops') {
-    return `${product.brand || ''} ${product.model || ''} ${product.processor || ''}`.trim();
+  // Мобильные устройства
+  if (collection === 'mobile' || category === 'mobile') {
+    return `${product.brand || ''} ${product.model || ''} ${product.modelNumber || ''} ${product.memory || ''} ${product.color || ''}`.trim();
   }
   
-  if (collection === 'mobile' || product.category === 'mobile') {
-    return `${product.brand || ''} ${product.model || ''} ${product.memory || ''}`.trim();
+  // Ноутбуки
+  if (collection === 'laptops' || category === 'laptops') {
+    if (product.brand === 'Apple') {
+      const screenSize = product.screenSize?.replace(' inch', '"') || '';
+      const chip = product.processor || '';
+      const memory = product.ram ? `${product.ram}` : '';
+      const storage = product.storageType || '';
+      
+      return `${product.brand} ${product.model} ${screenSize} ${chip} ${memory} ${storage} ${product.color || ''}`.trim();
+    } else {
+      return `${product.brand || ''} ${product.model || ''} ${product.processor || ''} ${product.ram || ''} ${product.storageType || ''} ${product.color || ''}`.trim();
+    }
   }
   
-  if (collection === 'tv' || product.category === 'tv') {
+  // Телевизоры
+  if (collection === 'tv' || category === 'tv') {
     const size = product.diagonal || product.screenSize || '';
-    return `${product.brand || ''} ${size ? size + '"' : ''} ${product.displayType || ''} ${product.resolution || ''}`.trim();
+    return `${product.brand || ''} ${size ? size + '"' : ''} ${product.displayType || ''} ${product.resolution || ''} ${product.refreshRate || ''} ${product.model || ''}`.trim();
   }
   
-  if (collection === 'audio' || product.category === 'audio') {
-    return `${product.brand || ''} ${product.model || ''} ${product.subtype || ''}`.trim();
+  // Аудио устройства
+  if (collection === 'audio' || category === 'audio') {
+    return `${product.brand || ''} ${product.model || ''} ${product.connectivity || ''} ${product.subtype || ''} ${product.color || ''}`.trim();
   }
   
-  if (collection === 'gaming' || product.category === 'gaming') {
-    return `${product.brand || ''} ${product.model || ''} ${product.deviceType || ''}`.trim();
+  // Игровые устройства
+  if (collection === 'gaming' || category === 'gaming') {
+    return `${product.brand || ''} ${product.model || ''} ${product.modelNumber || ''} ${product.connectivity || ''} ${product.deviceType || ''} ${product.color || ''}`.trim();
   }
   
   return product.name || '';
 };
 
+// Format product description with support for # as line break markers
+export const formatProductDescription = (description: string | undefined, asList = false): string | JSX.Element[] => {
+  if (!description) return '';
+  
+  // Check if the description contains # markers
+  if (description.includes('#')) {
+    // Split by # character and remove empty lines
+    const lines = description.split('#').map(line => line.trim()).filter(line => line);
+    
+    if (asList) {
+      // Return as an array for React to render
+      return lines;
+    } else {
+      // Return as bullet-formatted text for simpler displays
+      return lines.join(' • ');
+    }
+  }
+  
+  return description;
+};
+
 // Create a short description from the full description
 const generateShortDescription = (description: string): string => {
   if (!description) return '';
+  
+  // If the description has # markers, treat them as separate points
+  if (description.includes('#')) {
+    const points = description.split('#')
+      .map(point => point.trim())
+      .filter(point => point);
+    return points.slice(0, 2).join(' • ');
+  }
   
   // If the description has bullet points
   if (description.includes('•')) {

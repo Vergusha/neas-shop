@@ -507,7 +507,22 @@ const ProductPage: React.FC = () => {
   const formatDescription = (description: string) => {
     if (!description) return null;
     
-    // Проверяем, содержит ли описание маркеры списка
+    // Check for # markers first (our new format)
+    if (description.includes('#')) {
+      const listItems = description.split('#').filter(item => item.trim().length > 0);
+      
+      if (listItems.length > 0) {
+        return (
+          <ul className="pl-5 mt-2 space-y-1 list-disc">
+            {listItems.map((item, index) => (
+              <li key={index} className={currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>{item.trim()}</li>
+            ))}
+          </ul>
+        );
+      }
+    }
+    
+    // Check for legacy bullet points (•) format
     if (description.includes('•')) {
       // Разбиваем текст на элементы списка по символу •
       const listItems = description.split('•').filter(item => item.trim().length > 0);

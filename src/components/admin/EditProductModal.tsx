@@ -1,13 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { ProductForm } from '../../types/product';
 import { getTheme } from '../../utils/themeUtils';
+import { db } from '../../firebaseConfig';
+import { doc, updateDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
 interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (product: ProductForm) => Promise<void>;
+  onSave: (product: ProductForm, oldId: string) => Promise<void>;
   product: ProductForm;
 }
+
+const generateProductId = (product: ProductForm): string => {
+  // Создаем ID товара на основе бренда, модели, памяти и цвета
+  const parts = [
+    product.brand,
+    product.model,
+    product.modelNumber,
+    product.memory,
+    product.color,
+  ].filter(Boolean);
+  
+  // Преобразуем в нижний регистр и заменяем пробелы на дефисы
+  return parts
+    .join(' ')
+    .toLowerCase()
+    .replace(/\s+/g, '-') // Заменяем пробелы на дефисы
+    .replace(/[^a-z0-9-]/g, '') // Удаляем все символы, кроме латинских букв, цифр и дефисов
+    .replace(/-+/g, '-'); // Заменяем множественные дефисы на один
+};
 
 const EditProductModal: React.FC<EditProductModalProps> = ({
   isOpen,
@@ -18,6 +39,22 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const [editedProduct, setEditedProduct] = useState<ProductForm>(product);
   const [isSaving, setIsSaving] = useState(false);
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
+  const [originalId, setOriginalId] = useState<string>(product.id || '');
+  const [willUpdateId, setWillUpdateId] = useState<boolean>(false);
+  const [newProductId, setNewProductId] = useState<string>('');
+  
+  // Обновляем ID при изменении ключевых полей
+  useEffect(() => {
+    if (product.id) {
+      const newId = generateProductId(editedProduct);
+      if (newId !== originalId && newId.length > 0) {
+        setNewProductId(newId);
+        setWillUpdateId(true);
+      } else {
+        setWillUpdateId(false);
+      }
+    }
+  }, [editedProduct.brand, editedProduct.model, editedProduct.modelNumber, editedProduct.memory, editedProduct.color]);
   
   // Listen for theme changes
   useEffect(() => {
@@ -32,7 +69,27 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   // Update the form when the product changes
   useEffect(() => {
     setEditedProduct(product);
+    setOriginalId(product.id || '');
   }, [product]);
+
+  // Add scroll lock when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Disable scrolling on body when modal is open
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '15px'; // Prevent layout shift
+    } else {
+      // Re-enable scrolling when modal is closed
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+    
+    return () => {
+      // Clean up on unmount
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -65,8 +122,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    
     try {
-      await onSave(editedProduct);
+      // Если ID изменился, обновляем его в товаре
+      if (willUpdateId && newProductId) {
+        editedProduct.id = newProductId;
+      }
+      
+      await onSave(editedProduct, originalId);
       onClose();
     } catch (error) {
       console.error('Error saving product:', error);
@@ -75,18 +138,47 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     }
   };
 
+  // Получаем список коллекций на основе категории
+  const getCategoryCollection = (category: string): string => {
+    const categoryCollectionMap: Record<string, string> = {
+      'mobile': 'mobile',
+      'laptops': 'laptops',
+      'tv': 'tv',
+      'audio': 'audio',
+      'gaming': 'gaming',
+      'accessories': 'accessories',
+    };
+    
+    return categoryCollectionMap[category] || category;
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className={`relative w-full max-w-2xl max-h-[90vh] overflow-auto p-6 rounded-lg shadow-xl ${
-        currentTheme === 'dark' ? 'bg-gray-800' : 'bg-white'
-      }`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Blurred backdrop */}
+      <div className="absolute inset-0 backdrop-blur-sm bg-black/30" onClick={onClose}></div>
+      
+      <div 
+        className={`relative z-10 w-full max-w-3xl max-h-[90vh] overflow-auto p-6 rounded-lg shadow-xl ${
+          currentTheme === 'dark' ? 'bg-gray-800' : 'bg-white'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className={`text-xl font-bold mb-4 ${currentTheme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
           Edit Product
         </h2>
         
-        <form onSubmit={handleSubmit}>
+        {willUpdateId && (
+          <div className="mb-4 p-3 rounded-lg bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
+            <p className="font-medium">Product ID will be updated</p>
+            <p className="text-sm">Current ID: <span className="font-mono">{originalId}</span></p>
+            <p className="text-sm">New ID: <span className="font-mono">{newProductId}</span></p>
+            <p className="text-xs mt-1">Note: All related data (reviews, ratings) will be transferred to the new ID</p>
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
-          <div className="mb-6">
+          <div>
             <h3 className={`text-lg font-semibold mb-3 ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
               Basic Information
             </h3>
@@ -157,6 +249,27 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               
               <div>
                 <label 
+                  htmlFor="modelNumber" 
+                  className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                >
+                  Model Number
+                </label>
+                <input
+                  type="text"
+                  id="modelNumber"
+                  name="modelNumber"
+                  value={editedProduct.modelNumber || ''}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded-md ${
+                    currentTheme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                      : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                  }`}
+                />
+              </div>
+              
+              <div>
+                <label 
                   htmlFor="category" 
                   className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
                 >
@@ -183,11 +296,53 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   <option value="accessories">Accessories</option>
                 </select>
               </div>
+              
+              <div>
+                <label 
+                  htmlFor="collection" 
+                  className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                >
+                  Collection
+                </label>
+                <input
+                  type="text"
+                  id="collection"
+                  name="collection"
+                  value={editedProduct.collection || getCategoryCollection(editedProduct.category || '')}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded-md ${
+                    currentTheme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                      : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                  }`}
+                />
+              </div>
+              
+              <div>
+                <label 
+                  htmlFor="color" 
+                  className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                >
+                  Color
+                </label>
+                <input
+                  type="text"
+                  id="color"
+                  name="color"
+                  value={editedProduct.color || ''}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded-md ${
+                    currentTheme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                      : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                  }`}
+                />
+              </div>
             </div>
           </div>
           
           {/* Pricing */}
-          <div className="mb-6">
+          <div>
             <h3 className={`text-lg font-semibold mb-3 ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
               Pricing
             </h3>
@@ -263,7 +418,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           </div>
           
           {/* Stock Information */}
-          <div className="mb-6">
+          <div>
             <h3 className={`text-lg font-semibold mb-3 ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
               Stock Information
             </h3>
@@ -289,8 +444,290 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
           </div>
           
+          {/* Product Specifications */}
+          <div>
+            <h3 className={`text-lg font-semibold mb-3 ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+              Specifications
+            </h3>
+            
+            {/* Dynamic specification fields based on category */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Mobile & Laptop Specs */}
+              {(editedProduct.category === 'mobile' || editedProduct.category === 'laptops') && (
+                <>
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Memory
+                    </label>
+                    <input
+                      type="text"
+                      name="memory"
+                      value={editedProduct.memory || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 256GB"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Processor
+                    </label>
+                    <input
+                      type="text"
+                      name="processor"
+                      value={editedProduct.processor || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Apple A16 Bionic"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                </>
+              )}
+              
+              {/* Laptop Specific */}
+              {editedProduct.category === 'laptops' && (
+                <>
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      RAM
+                    </label>
+                    <input
+                      type="text"
+                      name="ram"
+                      value={editedProduct.ram || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 16GB"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Storage
+                    </label>
+                    <input
+                      type="text"
+                      name="storageType"
+                      value={editedProduct.storageType || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 512GB SSD"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Graphics Card
+                    </label>
+                    <input
+                      type="text"
+                      name="graphicsCard"
+                      value={editedProduct.graphicsCard || ''}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Operating System
+                    </label>
+                    <input
+                      type="text"
+                      name="operatingSystem"
+                      value={editedProduct.operatingSystem || ''}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Screen Size
+                    </label>
+                    <input
+                      type="text"
+                      name="screenSize"
+                      value={editedProduct.screenSize || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 15.6 inch"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                </>
+              )}
+              
+              {/* TV & Display Specs */}
+              {editedProduct.category === 'tv' && (
+                <>
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Diagonal
+                    </label>
+                    <input
+                      type="text"
+                      name="diagonal"
+                      value={editedProduct.diagonal || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 55"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Resolution
+                    </label>
+                    <input
+                      type="text"
+                      name="resolution"
+                      value={editedProduct.resolution || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 4K UHD"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Display Type
+                    </label>
+                    <input
+                      type="text"
+                      name="displayType"
+                      value={editedProduct.displayType || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. OLED, QLED"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Refresh Rate
+                    </label>
+                    <input
+                      type="text"
+                      name="refreshRate"
+                      value={editedProduct.refreshRate || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 120Hz"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                </>
+              )}
+              
+              {/* Gaming & Audio Specs */}
+              {(editedProduct.category === 'gaming' || editedProduct.category === 'audio') && (
+                <>
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Device Type
+                    </label>
+                    <input
+                      type="text"
+                      name="deviceType"
+                      value={editedProduct.deviceType || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Mouse, Headset"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Connectivity
+                    </label>
+                    <input
+                      type="text"
+                      name="connectivity"
+                      value={editedProduct.connectivity || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Wireless, Bluetooth"
+                      className={`w-full px-3 py-2 border rounded-md ${
+                        currentTheme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                      }`}
+                    />
+                  </div>
+                  
+                  {editedProduct.category === 'audio' && (
+                    <div>
+                      <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Subtype
+                      </label>
+                      <input
+                        type="text"
+                        name="subtype"
+                        value={editedProduct.subtype || ''}
+                        onChange={handleInputChange}
+                        placeholder="e.g. In-ear, Over-ear"
+                        className={`w-full px-3 py-2 border rounded-md ${
+                          currentTheme === 'dark' 
+                            ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                            : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                        }`}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+          
           {/* Description */}
-          <div className="mb-6">
+          <div>
             <h3 className={`text-lg font-semibold mb-3 ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
               Description
             </h3>
@@ -309,43 +746,70 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           </div>
           
           {/* Images */}
-          <div className="mb-6">
+          <div>
             <h3 className={`text-lg font-semibold mb-3 ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
               Images
             </h3>
-            <div>
-              <label 
-                htmlFor="image" 
-                className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
-              >
-                Main Image URL
-              </label>
-              <input
-                type="text"
-                id="image"
-                name="image"
-                value={editedProduct.image || ''}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md ${
-                  currentTheme === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
-                    : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
-                }`}
-              />
-              {editedProduct.image && (
-                <div className="mt-2">
-                  <img
-                    src={editedProduct.image}
-                    alt="Product preview"
-                    className="h-24 object-contain border rounded"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Main Image URL
+                </label>
+                <input
+                  type="text"
+                  name="image"
+                  value={editedProduct.image || ''}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded-md ${
+                    currentTheme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                      : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                  }`}
+                />
+                {editedProduct.image && (
+                  <div className="mt-2">
+                    <img
+                      src={editedProduct.image}
+                      alt="Product preview"
+                      className="h-24 object-contain border rounded"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              {/* Additional image fields */}
+              {['image2', 'image3', 'image4', 'image5'].map((imageName, index) => (
+                <div key={imageName}>
+                  <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Image {index + 2} URL
+                  </label>
+                  <input
+                    type="text"
+                    name={imageName}
+                    value={editedProduct[imageName] || ''}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md ${
+                      currentTheme === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-[#95c672] focus:ring-[#95c672]' 
+                        : 'bg-white border-gray-300 text-gray-900 focus:border-[#003D2D] focus:ring-[#003D2D]'
+                    }`}
                   />
+                  {editedProduct[imageName] && (
+                    <div className="mt-2">
+                      <img
+                        src={editedProduct[imageName]}
+                        alt={`Product image ${index + 2}`}
+                        className="h-24 object-contain border rounded"
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
           </div>
           
           {/* Form Actions */}
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}

@@ -5,6 +5,7 @@ import { getTheme } from '../../utils/themeUtils';
 import Rating from '../ui/Rating';
 import { Product } from '../../types/product';
 import { useProductCard } from '../../contexts/ProductCardContext';
+import { formatProductDescription } from '../../utils/productUtils';
 
 interface ProductCardProps {
   product: Product;
@@ -50,15 +51,68 @@ const ProductCard: React.FC<ProductCardProps> = ({
     return () => window.removeEventListener('themeChanged', handleThemeChange);
   }, []);
 
-  // Function to format product description
-  const formatDescription = (description: string | undefined): string => {
-    if (!description) return '';
-    // Return first sentence or truncate to 100 chars
-    const firstSentence = description.split('.')[0];
-    if (firstSentence && firstSentence.length <= 100) {
-      return firstSentence;
+  // Format product description using the utility function
+  const formatDescription = (description: string | undefined): JSX.Element | null => {
+    if (!description) return null;
+    
+    // Convert description with # markers to a formatted list
+    const formattedDescription = formatProductDescription(description, true);
+    
+    if (typeof formattedDescription === 'string') {
+      return <span>{formattedDescription}</span>;
     }
-    return `${description.substring(0, 97)}...`;
+    
+    // Return an actual list with line breaks
+    return (
+      <ul className="pl-3 list-disc">
+        {formattedDescription.slice(0, 3).map((item, index) => (
+          <li key={index} className="text-xs">{item}</li>
+        ))}
+      </ul>
+    );
+  };
+
+  // Function to format product name with all details
+  const getFormattedProductName = (product: Product): string => {
+    if (product.formattedName) {
+      return product.formattedName;
+    }
+
+    const collection = product.collection || '';
+    const category = product.category || '';
+    
+    // Мобильные устройства
+    if (collection === 'mobile' || category === 'mobile') {
+      return `${product.brand || ''} ${product.model || ''} ${product.modelNumber || ''} ${product.memory || ''} ${product.color || ''}`.trim();
+    }
+    
+    // Ноутбуки
+    if (collection === 'laptops' || category === 'laptops') {
+      if (product.brand === 'Apple') {
+        return `${product.brand} ${product.model} ${product.processor?.replace('Apple ', '')} ${product.ram} ${product.storageType} ${product.color}`.trim();
+      } else {
+        return `${product.brand || ''} ${product.model || ''} ${product.processor || ''} ${product.ram || ''} ${product.storageType || ''}`.trim();
+      }
+    }
+    
+    // Телевизоры
+    if (collection === 'tv' || category === 'tv') {
+      const size = product.diagonal || product.screenSize || '';
+      return `${product.brand || ''} ${size ? size + '"' : ''} ${product.displayType || ''} ${product.resolution || ''} ${product.model || ''}`.trim();
+    }
+    
+    // Игровые устройства
+    if (collection === 'gaming' || category === 'gaming') {
+      return `${product.brand || ''} ${product.model || ''} ${product.modelNumber || ''} ${product.connectivity || ''} ${product.deviceType || ''} ${product.color || ''}`.trim();
+    }
+    
+    // Аудио устройства
+    if (collection === 'audio' || category === 'audio') {
+      return `${product.brand || ''} ${product.model || ''} ${product.subtype || ''} ${product.color || ''}`.trim();
+    }
+    
+    // Если ничего не подходит, возвращаем оригинальное имя или сочетание бренда и модели
+    return product.name || `${product.brand || ''} ${product.model || ''} ${product.color || ''}`.trim() || 'Unnamed Product';
   };
 
   return (
@@ -93,7 +147,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className={`relative h-40 overflow-hidden ${currentTheme === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
           <img
             src={product.image || '/placeholder-image.jpg'}
-            alt={product.name || 'Product'}
+            alt={getFormattedProductName(product)}
             className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
@@ -107,7 +161,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               {product.brand || ''}
             </span>
             <h3 className={`text-sm font-medium line-clamp-2 min-h-[2.5rem] ${currentTheme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>
-              {product.name || product.model || 'Unnamed Product'}
+              {getFormattedProductName(product)}
             </h3>
             {effectiveShowRating && (
               <div className="flex items-center mt-1 space-x-1">
@@ -122,7 +176,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
           
           {/* Product Description */}
-          <div className={`mt-2 mb-2 text-xs line-clamp-2 ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+          <div className={`mt-2 mb-2 ${currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             {formatDescription(product.description)}
           </div>
 

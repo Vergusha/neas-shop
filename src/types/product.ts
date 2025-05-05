@@ -152,6 +152,7 @@ export interface NewProductForm extends Omit<ProductForm, 'id'> {
   dpi?: string;
   power?: string;
   channels?: string;
+  inStock?: boolean; // Added inStock flag
 }
 
 export interface TestResults {
