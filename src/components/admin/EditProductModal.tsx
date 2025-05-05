@@ -41,11 +41,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
   const [originalId, setOriginalId] = useState<string>(product.id || '');
   const [willUpdateId, setWillUpdateId] = useState<boolean>(false);
+  const [allowIdUpdate, setAllowIdUpdate] = useState<boolean>(false); // Add state for enabling ID updates
   const [newProductId, setNewProductId] = useState<string>('');
   
   // Обновляем ID при изменении ключевых полей
   useEffect(() => {
-    if (product.id) {
+    if (product.id && allowIdUpdate) { // Only check for ID updates if allowed
       const newId = generateProductId(editedProduct);
       if (newId !== originalId && newId.length > 0) {
         setNewProductId(newId);
@@ -54,7 +55,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         setWillUpdateId(false);
       }
     }
-  }, [editedProduct.brand, editedProduct.model, editedProduct.modelNumber, editedProduct.memory, editedProduct.color]);
+  }, [editedProduct.brand, editedProduct.model, editedProduct.modelNumber, editedProduct.memory, editedProduct.color, allowIdUpdate]); // Add allowIdUpdate to dependencies
   
   // Listen for theme changes
   useEffect(() => {
@@ -125,7 +126,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     
     try {
       // Если ID изменился, обновляем его в товаре
-      if (willUpdateId && newProductId) {
+      if (allowIdUpdate && willUpdateId && newProductId) {
         editedProduct.id = newProductId;
       }
       
@@ -167,12 +168,41 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           Edit Product
         </h2>
         
-        {willUpdateId && (
-          <div className="mb-4 p-3 rounded-lg bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
+        {/* ID Update Controls */}
+        <div className="p-3 mb-4 text-blue-800 bg-blue-100 rounded-lg dark:bg-blue-800 dark:text-blue-100">
+          <div className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              id="allowIdUpdate"
+              checked={allowIdUpdate}
+              onChange={(e) => setAllowIdUpdate(e.target.checked)}
+              className={`mr-2 h-4 w-4 rounded ${
+                currentTheme === 'dark' 
+                  ? 'text-[#95c672] bg-gray-700 border-gray-600 focus:ring-[#95c672]' 
+                  : 'text-[#003D2D] focus:ring-[#003D2D]'
+              }`}
+            />
+            <label 
+              htmlFor="allowIdUpdate" 
+              className="font-medium"
+            >
+              Enable automatic Product ID updates
+            </label>
+          </div>
+          <p className="text-xs">When enabled, changing key product information will update the product ID. This affects all data related to this product including reviews and ratings.</p>
+          
+          <div className="pt-2 mt-3 border-t border-blue-200 dark:border-blue-700">
+            <p className="text-sm font-medium">Current ID: <span className="font-mono">{originalId}</span></p>
+            {allowIdUpdate && willUpdateId && (
+              <p className="text-sm font-medium">New ID: <span className="font-mono">{newProductId}</span></p>
+            )}
+          </div>
+        </div>
+        
+        {willUpdateId && allowIdUpdate && (
+          <div className="p-3 mb-4 text-yellow-800 bg-yellow-100 rounded-lg dark:bg-yellow-800 dark:text-yellow-100">
             <p className="font-medium">Product ID will be updated</p>
-            <p className="text-sm">Current ID: <span className="font-mono">{originalId}</span></p>
-            <p className="text-sm">New ID: <span className="font-mono">{newProductId}</span></p>
-            <p className="text-xs mt-1">Note: All related data (reviews, ratings) will be transferred to the new ID</p>
+            <p className="mt-1 text-xs">Note: All related data (reviews, ratings) will be transferred to the new ID</p>
           </div>
         )}
         
@@ -182,7 +212,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             <h3 className={`text-lg font-semibold mb-3 ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
               Basic Information
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label 
                   htmlFor="name" 
@@ -346,7 +376,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             <h3 className={`text-lg font-semibold mb-3 ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
               Pricing
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <label 
                   htmlFor="price" 
@@ -451,7 +481,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             </h3>
             
             {/* Dynamic specification fields based on category */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Mobile & Laptop Specs */}
               {(editedProduct.category === 'mobile' || editedProduct.category === 'laptops') && (
                 <>
@@ -750,7 +780,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             <h3 className={`text-lg font-semibold mb-3 ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
               Images
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className={`block mb-1 text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Main Image URL
@@ -771,7 +801,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     <img
                       src={editedProduct.image}
                       alt="Product preview"
-                      className="h-24 object-contain border rounded"
+                      className="object-contain h-24 border rounded"
                     />
                   </div>
                 )}
@@ -799,7 +829,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       <img
                         src={editedProduct[imageName]}
                         alt={`Product image ${index + 2}`}
-                        className="h-24 object-contain border rounded"
+                        className="object-contain h-24 border rounded"
                       />
                     </div>
                   )}
