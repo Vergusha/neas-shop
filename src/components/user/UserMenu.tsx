@@ -3,16 +3,16 @@ import { User, LogIn, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, signOut } from 'firebase/auth';
 import UserAvatar from './UserAvatar';
+import { useAuth } from '../../utils/AuthProvider';
+import { getTheme } from '../../utils/themeUtils';
+import { defaultAvatarSVG } from '../../utils/AvatarHelper';
 
-type UserMenuProps = {
-  user: any;
-  currentTheme: 'light' | 'dark' | 'synthwave';
-};
-
-const UserMenu: React.FC<UserMenuProps> = ({ user, currentTheme }) => {
+const UserMenu: React.FC = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navigate = useNavigate();
   const auth = getAuth();
+  const { user } = useAuth();
+  const currentTheme = getTheme();
 
   // Click outside effect
   useEffect(() => {
@@ -50,7 +50,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user, currentTheme }) => {
     if (!user) {
       return <User size={24} className="text-white" />;
     }
-    const avatarUrl = user.photoURL || localStorage.getItem('avatarURL') || null;
+    const avatarUrl = user.photoURL || localStorage.getItem('avatarURL') || defaultAvatarSVG;
     return (
       <div className="w-8 h-8">
         <UserAvatar photoURL={avatarUrl} />
@@ -74,20 +74,15 @@ const UserMenu: React.FC<UserMenuProps> = ({ user, currentTheme }) => {
             <>
               <div className={`px-6 pt-4 pb-3 bg-gradient-to-r ${currentTheme === 'dark' ? 'from-gray-700 to-[#95c672]' : 'from-[#003d2d] to-[#95c672]'}`}>
                 <div className="flex items-center gap-3">
-                  {user.photoURL ? (
-                    <img 
-                      src={user.photoURL} 
-                      alt={user.displayName || 'User'} 
-                      className="object-cover w-12 h-12 border-2 border-white rounded-full shadow-md"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/avatar-placeholder.png';
-                      }}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center w-12 h-12 text-xl font-semibold text-white uppercase bg-gray-500 border-2 border-white rounded-full shadow-md">
-                      {user.displayName ? user.displayName[0] : user.email?.[0] || '?'}
-                    </div>
-                  )}
+                  <img 
+                    src={user.photoURL || localStorage.getItem('avatarURL') || defaultAvatarSVG}
+                    alt={user.displayName || 'User'} 
+                    className="object-cover w-12 h-12 border-2 border-white rounded-full shadow-md"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = defaultAvatarSVG;
+                    }}
+                  />
                   <div className="overflow-hidden">
                     <p className="text-sm font-bold text-white truncate">
                       {user.displayName || 'User'}

@@ -204,6 +204,10 @@ const AdminPanel: React.FC = () => {
         }
       };
 
+      // Устанавливаем category строго как строку
+      productData.category = product.category;
+      productData.collection = product.category;
+
       // Добавляем память только если это нужная категория
       if (product.category === 'mobile' || product.category === 'laptops' || product.category === 'gaming') {
         productData.memory = product.memory || '';
@@ -1685,7 +1689,7 @@ const AdminPanel: React.FC = () => {
               }}></div>
               
               <div 
-                className="relative z-10 w-full max-w-md p-6 bg-white dark:bg-gray-800 rounded-lg shadow-xl"
+                className="relative z-10 w-full max-w-md p-6 bg-white rounded-lg shadow-xl dark:bg-gray-800"
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="mb-4 text-lg font-bold">Delete Product</h3>

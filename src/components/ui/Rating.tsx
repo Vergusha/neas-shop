@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getTheme } from '../../utils/themeUtils';
 
 interface RatingProps {
@@ -34,19 +34,21 @@ const Rating: React.FC<RatingProps> = ({
 
   // Update local rating when prop changes
   useEffect(() => {
-    setRating(Math.round(value));
+    if (Math.round(value) !== rating) {
+      setRating(Math.round(value));
+    }
   }, [value]);
 
-  const handleClick = (index: number) => {
+  const handleClick = useCallback((index: number) => {
     if (isReadOnly) return;
     setRating(index);
     if (onChange) {
       onChange(index);
     }
-  };
+  }, [isReadOnly, onChange]);
   
   // Apply different star sizes based on the size prop
-  const starSizeClass = () => {
+  const starSizeClass = useCallback(() => {
     switch (size) {
       case 'small':
       case 'sm':
@@ -59,7 +61,7 @@ const Rating: React.FC<RatingProps> = ({
       default:
         return 'w-5 h-5';
     }
-  };
+  }, [size]);
 
   // Different colors for filled stars based on theme
   const filledStarColor = currentTheme === 'dark' ? '#95c672' : '#003D2D';

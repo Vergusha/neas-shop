@@ -8,6 +8,20 @@
       ".read": true,
       ".write": "auth != null"
     },
+    "productReviews": {
+      ".read": true,
+      ".write": "auth != null",
+      "$productId": {
+        ".read": true,
+        ".write": "auth != null",
+        ".indexOn": ["userId", "createdAt"]
+      }
+    },
+    "popularProducts": {
+      ".read": true,
+      ".write": "auth != null",
+      ".indexOn": ["score"]
+    },
     ".read": "auth != null",
     ".write": "auth != null"
   }

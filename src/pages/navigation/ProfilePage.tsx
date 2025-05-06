@@ -432,11 +432,14 @@ const ProfilePage: React.FC = () => {
                   </div>
                 ) : (
                   <img
-                    src={previewAvatar}
+                    src={previewAvatar || defaultAvatarSVG}
                     alt="Avatar"
                     className="object-cover w-full h-full transition-all duration-200 cursor-pointer hover:opacity-80"
                     onClick={handleAvatarClick}
-                    onError={(e) => handleAvatarError(e)}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = defaultAvatarSVG;
+                    }}
                   />
                 )}
               </div>

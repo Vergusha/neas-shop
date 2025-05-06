@@ -7,6 +7,7 @@ import { useReviews, Review } from '../../contexts/ReviewContext';
 import { getUserDisplayName } from '../../utils/userProfileUtils';
 import Toast from '../ui/Toast';
 import { handleFirestoreError, ensureFirestoreAccess, forceReauthentication } from '../../firebaseConfig';
+import { defaultAvatarSVG } from '../../utils/AvatarHelper';
 
 interface ReviewsProps {
   productId: string;
@@ -84,6 +85,16 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
     return () => window.removeEventListener('userNameUpdated', handleUserNameUpdate);
   }, []);
 
+  // Обрабатываем событие обновления имени пользователя
+  useEffect(() => {
+    const handleUserNameUpdate = (e: Event) => {
+      // Принудительно обновить локальные отзывы, чтобы имя появилось сразу
+      setLocalReviews(current => [...current]);
+    };
+    window.addEventListener('userNameUpdated', handleUserNameUpdate);
+    return () => window.removeEventListener('userNameUpdated', handleUserNameUpdate);
+  }, []);
+
   // Verify auth on component mount and when auth state changes
   useEffect(() => {
     const verifyAuth = async () => {
@@ -131,12 +142,8 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
   // Загружаем отзывы при монтировании компонента
   useEffect(() => {
     getProductReviews(productId);
-    
-    if (userReview) {
-      setUserRating(userReview.rating);
-      setUserComment(userReview.comment);
-    }
-  }, [productId, userReview, getProductReviews]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productId]);
 
   const handleForceRefreshAuth = async () => {
     if (!auth.currentUser) {
@@ -196,39 +203,29 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
     setError(null);
 
     try {
-      // Always force refresh authentication before submitting
-      await forceReauthentication();
-      
       if (userReview && editing) {
         // Обновляем существующий отзыв
-        await updateReview(userReview.id, userRating, userComment);
+        await updateReview(productId, userReview.id, userRating, userComment);
         setEditing(false);
         setToastMessage('Your review was updated successfully!');
-        setToastType('success');
-        setShowToast(true);
       } else {
         // Добавляем новый отзыв
-        await addReview(productId, userRating, userComment, collectionName);
+        await addReview(productId, userRating, userComment);
         setUserComment('');
         setUserRating(0);
         setToastMessage('Your review was submitted successfully!');
-        setToastType('success');
-        setShowToast(true);
       }
+      setToastType('success');
+      setShowToast(true);
+      // Сбросить локальные значения после успешной отправки
+      setUserRating(0);
+      setUserComment('');
     } catch (error: any) {
       console.error('Error submitting review:', error);
-      
-      // Use our improved error handling
-      const errorMessage = handleFirestoreError(error);
-      setError(errorMessage);
-      setToastMessage(errorMessage);
+      setError(error.message || 'Failed to submit review');
+      setToastMessage(error.message || 'Failed to submit review');
       setToastType('error');
       setShowToast(true);
-      
-      // If it's a permission error, update the auth status
-      if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
-        setAuthStatus('failed');
-      }
     } finally {
       setSubmitting(false);
     }
@@ -243,6 +240,9 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
         setToastMessage('Review deleted successfully.');
         setToastType('success');
         setShowToast(true);
+        // Сбросить локальные значения после удаления
+        setUserRating(0);
+        setUserComment('');
       } catch (error) {
         console.error('Error deleting review:', error);
         setToastMessage('Failed to delete review. Please try again.');
@@ -282,6 +282,11 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
       setShowToast(true);
     }
   };
+
+  // Используем useCallback для обработчика изменения рейтинга
+  const handleRatingChange = useCallback((newRating: number) => {
+    setUserRating(newRating);
+  }, []);
 
   if (loadingReviews) {
     return (
@@ -362,7 +367,11 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
       {reviews.length > 0 ? (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
-            <Rating value={productRating} readonly size="lg" />
+            <Rating 
+              value={productRating} 
+              readonly={true} 
+              size="lg" 
+            />
             <span className={`text-lg font-medium ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
               {productRating.toFixed(1)} out of 5
             </span>
@@ -394,9 +403,10 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
               <div className="flex items-center">
                 <Rating
                   value={userRating}
-                  onChange={setUserRating}
+                  onChange={handleRatingChange}
+                  interactive={true}
+                  readonly={false}
                   size="lg"
-                  interactive
                 />
               </div>
             </div>
@@ -452,9 +462,10 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
               <div className="flex items-center">
                 <Rating
                   value={userRating}
-                  onChange={setUserRating}
+                  onChange={handleRatingChange}
+                  interactive={true}
+                  readonly={false}
                   size="lg"
-                  interactive
                 />
               </div>
             </div>
@@ -525,7 +536,15 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <UserAvatar userId={review.userId} photoURL={review.userAvatar} size={40} />
+                    <img
+                      src={review.userAvatar || defaultAvatarSVG}
+                      alt={`${review.userName}'s avatar`}
+                      className="object-cover w-10 h-10 rounded-full"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = defaultAvatarSVG;
+                      }}
+                    />
                     <div>
                       <h4 className={`font-medium ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                         {displayName}
@@ -540,7 +559,11 @@ const Reviews: React.FC<ReviewsProps> = ({ productId, productName = '', collecti
                         )}
                       </h4>
                       <div className="flex items-center mt-1">
-                        <Rating value={review.rating} readonly size="sm" />
+                        <Rating 
+                          value={review.rating} 
+                          readonly={true} 
+                          size="sm" 
+                        />
                       </div>
                     </div>
                   </div>

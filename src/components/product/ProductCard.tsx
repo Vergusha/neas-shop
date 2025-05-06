@@ -78,8 +78,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
       return product.formattedName;
     }
 
-    const collection = product.collection || '';
-    const category = product.category || '';
+    // Категория должна быть строго строкой
+    const collection = typeof product.collection === 'string' ? product.collection : '';
+    const category = typeof product.category === 'string' ? product.category : '';
     
     // Мобильные устройства
     if (collection === 'mobile' || category === 'mobile') {

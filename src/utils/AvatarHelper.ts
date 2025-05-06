@@ -2,8 +2,10 @@
  * Helper functions for handling user avatars across the application
  */
 
-// Default avatar SVG as a proper data URI with correct namespace
-export const defaultAvatarSVG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="#e0e0d0"/><circle cx="50" cy="35" r="15" fill="#fff"/><path d="M50 50c-15 0-30 15-30 30s15 30 30 30 30-15 30-30S65 50 50 50zm0 0" fill="#fff"/></svg>';
+import defaultAvatarImage from '../assets/defaultAvatar.svg';
+
+// Обновляем путь к дефолтной аватарке
+export const defaultAvatarSVG = defaultAvatarImage;
 
 // Constants for localStorage keys
 export const AVATAR_KEY = 'avatarURL';

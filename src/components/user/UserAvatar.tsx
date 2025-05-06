@@ -18,16 +18,13 @@ const UserAvatar: React.FC<UserAvatarProps> = React.memo(({
   className = '',
   isEditing = false
 }) => {
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(photoURL || null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(photoURL || defaultAvatarSVG);
 
-  // Получаем аватарку по userId, если photoURL не передан
   useEffect(() => {
     const fetchUserAvatar = async () => {
       if (!photoURL && userId) {
         try {
           const database = getDatabase();
-          
-          // Попытка получить аватар из базы данных
           const userRef = ref(database, `users/${userId}`);
           const snapshot = await get(userRef);
           
@@ -35,10 +32,15 @@ const UserAvatar: React.FC<UserAvatarProps> = React.memo(({
             const userData = snapshot.val();
             if (userData.avatarURL) {
               setAvatarUrl(userData.avatarURL);
+            } else {
+              setAvatarUrl(defaultAvatarSVG);
             }
+          } else {
+            setAvatarUrl(defaultAvatarSVG);
           }
         } catch (error) {
           console.error('Failed to fetch user avatar:', error);
+          setAvatarUrl(defaultAvatarSVG);
         }
       }
     };
@@ -48,9 +50,8 @@ const UserAvatar: React.FC<UserAvatarProps> = React.memo(({
 
   return (
     <div className="relative">
-      <div className={`flex items-center justify-center w-8 h-8 rounded-full overflow-hidden ${
-        !avatarUrl ? 'bg-[#003D2D] dark:bg-[#95c672] text-white dark:text-gray-900' : ''
-      }`}>
+      <div className={`flex items-center justify-center rounded-full overflow-hidden ${className}`} 
+           style={{ width: `${size}px`, height: `${size}px` }}>
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -59,7 +60,9 @@ const UserAvatar: React.FC<UserAvatarProps> = React.memo(({
             onError={handleAvatarError}
           />
         ) : (
-          <User size={24} />
+          <div className="flex items-center justify-center w-full h-full bg-[#003D2D] dark:bg-[#95c672] text-white dark:text-gray-900">
+            <User size={size * 0.6} />
+          </div>
         )}
       </div>
       {isEditing && (
