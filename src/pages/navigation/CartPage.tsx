@@ -186,10 +186,15 @@ const CartPage: React.FC = () => {
       // Get user's custom ID if logged in
       let customUserId = 'guest';
       if (currentUser) {
-        const userRef = ref(database, `users/${currentUser.uid}`);
-        const snapshot = await get(userRef);
-        if (snapshot.exists()) {
-          customUserId = snapshot.val().customUserId;
+        try {
+          const userRef = ref(database, `users/${currentUser.uid}`);
+          const snapshot = await get(userRef);
+          if (snapshot.exists() && snapshot.val().customUserId) {
+            customUserId = snapshot.val().customUserId;
+          }
+        } catch (error) {
+          console.error('Error fetching customUserId:', error);
+          // Если не удалось получить customUserId, используем значение по умолчанию
         }
       }
       
@@ -218,7 +223,7 @@ const CartPage: React.FC = () => {
         shippingAddress: 'Default Address',
         userId: currentUser ? currentUser.uid : 'anonymous',
         userEmail: currentUser ? currentUser.email : 'guest',
-        customUserId,
+        customUserId: customUserId || 'guest', // Убедимся, что customUserId всегда имеет значение
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim()
       };
