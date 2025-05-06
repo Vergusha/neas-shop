@@ -306,7 +306,7 @@ const Navbar: React.FC = () => {
             </svg>
           </label>
 
-          <Link to="/cart" className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-primary'} relative`}> {/* Заменен цвет #eebbca на #95c672 */}
+          <Link to="/cart" className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-primary'} relative`}>
             <FaShoppingCart />
             {cartCount > 0 && (
               <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 text-xs text-white bg-red-500 rounded-full">{cartCount}</span>
@@ -314,14 +314,14 @@ const Navbar: React.FC = () => {
           </Link>
           {user ? (
             <>
-              <Link to="/profile" className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-primary'}`}><FaUser /></Link> {/* Заменен цвет #eebbca на #95c672 */}
+              <Link to="/profile" className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-primary'}`}><FaUser /></Link>
               <Link 
                 to="/admin" 
                 className="btn btn-secondary btn-sm"
               >
                 Admin Panel
               </Link>
-              <button onClick={handleLogout} className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-primary'}`}>Logout</button> {/* Заменен цвет #eebbca на #95c672 */}
+              <button onClick={handleLogout} className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-primary'}`}>Logout</button>
             </>
           ) : (
             <Link to="/login">Login</Link>

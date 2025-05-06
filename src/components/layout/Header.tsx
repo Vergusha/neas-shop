@@ -10,7 +10,6 @@ import Toast from '../ui/Toast';
 // Импортируем наши новые компоненты
 import SearchBar from '../ui/SearchBar';
 import ThemeToggle from '../ui/ThemeToggle';
-import NotificationsButton from '../user/NotificationsButton';
 import FavoritesButton from '../user/FavoritesButton';
 import CartButton from '../user/CartButton';
 import UserMenu from '../user/UserMenu';
@@ -308,14 +307,6 @@ const Header: React.FC = () => {
           <div className="flex items-center order-2 gap-1 md:order-3 header-icons sm:gap-2 md:ml-2">
             {/* Theme toggle button - используем компонент ThemeToggle */}
             <ThemeToggle currentTheme={currentTheme} onToggle={handleThemeToggle} />
-            
-            {/* Notifications bell - используем компонент NotificationsButton */}
-            <NotificationsButton 
-              user={user} 
-              notifications={notifications} 
-              unreadCount={unreadNotifications} 
-              currentTheme={currentTheme} 
-            />
             
             {/* Favorites button - используем компонент FavoritesButton */}
             <FavoritesButton user={user} currentTheme={currentTheme} />

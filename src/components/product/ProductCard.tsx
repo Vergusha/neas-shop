@@ -129,11 +129,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
           e.stopPropagation();
           effectiveToggleFavorite(product);
         }}
-        className={`absolute top-2 right-2 z-10 p-2 rounded-full ${
-          currentTheme === 'dark'
-            ? effectiveIsFavorite ? 'bg-red-500' : 'bg-gray-700'
-            : effectiveIsFavorite ? 'bg-red-100' : 'bg-white'
-        } shadow-md`}
+        className="absolute top-2 right-2 z-10 bg-transparent border-none outline-none"
+        style={{ boxShadow: 'none', borderRadius: 0, padding: 0, background: 'none' }}
         aria-label={effectiveIsFavorite ? 'Remove from favorites' : 'Add to favorites'}
       >
         <Heart
