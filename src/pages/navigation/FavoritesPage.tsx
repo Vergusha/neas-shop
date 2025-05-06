@@ -6,8 +6,11 @@ import { getAuth } from 'firebase/auth';
 import { ref, get } from 'firebase/database';
 import { database } from '../../firebaseConfig';
 import { Product } from '../../types/product';
+import { useProductCard } from '../../contexts/ProductCardContext';
 
 const FavoritesPage: React.FC = () => {
+  // Получаем функции из ProductCardContext
+  const { handleToggleFavorite, handleAddToCart } = useProductCard();
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const auth = getAuth();
@@ -174,6 +177,9 @@ const FavoritesPage: React.FC = () => {
               key={product.id} 
               product={product} 
               isFavorite={true} 
+              // Используем ранее полученные функции из контекста
+              onToggleFavorite={handleToggleFavorite}
+              onAddToCart={handleAddToCart}
             />
           ))}
         </div>

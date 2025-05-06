@@ -3,6 +3,7 @@ import { Product } from '../types/product';
 import { getAuth } from 'firebase/auth';
 import { ref, get, onValue } from 'firebase/database';
 import { database } from '../firebaseConfig';
+import { updateFavoriteCache, getFavoriteStatus } from '../utils/favoritesService';
 
 // Определение типа контекста
 interface ProductCardContextType {
@@ -19,6 +20,7 @@ interface ProductCardContextType {
   
   // Состояния
   favorites: string[];
+  forceUpdate: () => void; // Добавляем функцию для принудительного обновления
 }
 
 // Создание контекста с начальными значениями
@@ -31,6 +33,7 @@ const ProductCardContext = createContext<ProductCardContextType>({
     showStock: true,
   },
   favorites: [],
+  forceUpdate: () => {}
 });
 
 // Хук для использования контекста в компонентах
@@ -39,23 +42,33 @@ export const useProductCard = () => useContext(ProductCardContext);
 // Провайдер контекста
 export const ProductCardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [favorites, setFavorites] = useState<string[]>([]);
+  // Добавляем счетчик обновлений для форсированного ререндеринга
+  const [updateCounter, setUpdateCounter] = useState(0);
   const auth = getAuth();
+
+  // Функция для принудительного обновления контекста
+  const forceUpdate = () => setUpdateCounter(prev => prev + 1);
 
   // Загружаем избранные товары из localStorage или Firebase при инициализации
   useEffect(() => {
-    const loadFavorites = async () => {
+    const loadFavoritesFromCache = async () => {
+      // Обновляем кэш избранного перед чтением
+      await updateFavoriteCache();
+      
       const user = auth.currentUser;
       
       if (user) {
         // Для авторизованных пользователей используем Firebase и слушаем изменения в реальном времени
         const favRef = ref(database, `users/${user.uid}/favorites`);
         
-        // Используем onValue вместо get для мониторинга изменений в реальном времени
         return onValue(favRef, (snapshot) => {
           if (snapshot.exists()) {
             const favoritesData = snapshot.val();
             const favoriteIds = Object.keys(favoritesData);
             setFavorites(favoriteIds);
+            
+            // Обновляем кэш при получении обновлений из Firebase
+            updateFavoriteCache();
           } else {
             setFavorites([]);
           }
@@ -88,13 +101,20 @@ export const ProductCardProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
     };
 
-    const unsubscribe = loadFavorites();
+    const unsubscribe = loadFavoritesFromCache();
     
-    // Слушаем события обновления избранного для неавторизованных пользователей
-    const handleFavoritesUpdated = () => {
+    // Слушаем события обновления избранного
+    const handleFavoritesUpdated = (e: Event) => {
+      // Вызываем forceUpdate для обновления UI
+      forceUpdate();
+      
+      // Если пользователь не авторизован, обновляем избранное из localStorage
       if (!auth.currentUser) {
-        loadFavorites();
+        loadFavoritesFromCache();
       }
+      
+      // Всегда обновляем кэш при получении события
+      updateFavoriteCache();
     };
     
     window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
@@ -108,9 +128,38 @@ export const ProductCardProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
   }, [auth.currentUser]);
 
-  // Проверка, находится ли товар в избранном
+  // Проверка, находится ли товар в избранном с использованием кэша
   const isFavorite = (productId: string): boolean => {
-    return favorites.includes(productId);
+    // Проверяем сначала локальный массив favorites
+    if (favorites.includes(productId)) {
+      return true;
+    }
+    
+    // Также проверяем кэш в favoritesService для синхронизации между компонентами
+    // Используем синхронную проверку для избежания задержек в UI
+    try {
+      // Проверяем напрямую из localStorage для неавторизованных пользователей
+      if (!auth.currentUser) {
+        const storedFavorites = localStorage.getItem('favorites');
+        if (storedFavorites) {
+          const parsedFavorites = JSON.parse(storedFavorites);
+          if (Array.isArray(parsedFavorites)) {
+            if (parsedFavorites.length > 0) {
+              if (typeof parsedFavorites[0] === 'string') {
+                return parsedFavorites.includes(productId);
+              } else if (typeof parsedFavorites[0] === 'object') {
+                return parsedFavorites.some((item: any) => item.id === productId);
+              }
+            }
+          }
+        }
+        return false;
+      }
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
+    }
+    
+    return false;
   };
 
   // Обработчик добавления/удаления из избранного
@@ -123,66 +172,25 @@ export const ProductCardProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       const user = auth.currentUser;
       
-      if (user) {
-        // Для авторизованных пользователей используем Firebase
-        const favRef = ref(database, `users/${user.uid}/favorites/${productId}`);
-        
-        if (productIsFavorite) {
-          // Удаляем из избранного в Firebase
-          await import('../utils/favoritesService').then(({ toggleFavorite }) => {
-            toggleFavorite(productId, null);
-          });
-        } else {
-          // Добавляем в избранное в Firebase
-          await import('../utils/favoritesService').then(({ toggleFavorite }) => {
-            toggleFavorite(productId, product);
-          });
-        }
+      // Немедленно обновляем UI - оптимистичное обновление
+      if (productIsFavorite) {
+        setFavorites(prev => prev.filter(id => id !== productId));
       } else {
-        // Для неавторизованных пользователей используем localStorage
-        let updatedFavorites: any[] = [];
-        const storedFavorites = localStorage.getItem('favorites') || '[]';
-        
-        try {
-          updatedFavorites = JSON.parse(storedFavorites);
-        } catch (e) {
-          console.error('Error parsing favorites:', e);
-        }
-        
-        // Обрабатываем случай, когда updatedFavorites может быть массивом ID или массивом объектов
-        if (productIsFavorite) {
-          // Удаляем из избранного
-          if (updatedFavorites.length > 0 && typeof updatedFavorites[0] === 'string') {
-            // Если массив ID
-            updatedFavorites = updatedFavorites.filter((id: string) => id !== productId);
-          } else {
-            // Если массив объектов
-            updatedFavorites = updatedFavorites.filter((item: any) => item.id !== productId);
-          }
-          
-          setFavorites(favorites.filter(id => id !== productId));
-        } else {
-          // Добавляем в избранное
-          if (updatedFavorites.length > 0 && typeof updatedFavorites[0] === 'string') {
-            // Если массив ID, сохраняем согласованный формат
-            updatedFavorites.push(productId);
-          } else {
-            // Если массив объектов или пустой массив, используем объекты
-            updatedFavorites.push(product);
-          }
-          
-          setFavorites([...favorites, productId]);
-        }
-        
-        localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-        
-        // Оповещаем другие компоненты
-        window.dispatchEvent(new CustomEvent('favoritesUpdated', { 
-          detail: { productId, isFavorite: !productIsFavorite } 
-        }));
+        setFavorites(prev => [...prev, productId]);
       }
+      
+      // Вызываем функцию toggleFavorite из favoritesService для обработки данных
+      const { toggleFavorite } = await import('../utils/favoritesService');
+      await toggleFavorite(productId, productIsFavorite ? null : product);
+      
     } catch (error) {
       console.error('Error toggling favorite:', error);
+      // Откатываем изменения при ошибке
+      if (productIsFavorite) {
+        setFavorites(prev => [...prev, productId]);
+      } else {
+        setFavorites(prev => prev.filter(id => id !== productId));
+      }
     }
   };
 
@@ -226,6 +234,7 @@ export const ProductCardProvider: React.FC<{ children: React.ReactNode }> = ({ c
     isFavorite,
     defaultProps,
     favorites,
+    forceUpdate
   };
 
   return (

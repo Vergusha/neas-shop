@@ -1,10 +1,13 @@
-import { ref, get, set, onValue } from 'firebase/database';
+import { ref, get, set, onValue, off } from 'firebase/database';
 import { database } from '../firebaseConfig';
 import { getAuth } from 'firebase/auth';
 import { Product } from '../types/product';
 
 // Добавляем кэш для быстрой проверки статуса избранного без обращений к Firebase
 const favoriteCache = new Map<string, boolean>();
+
+// Сохраняем ссылки на слушатели для правильной отписки
+let firebaseListener: any = null;
 
 // Обновляем кэш из Firebase или localStorage
 export const updateFavoriteCache = async (): Promise<void> => {
@@ -51,30 +54,44 @@ updateFavoriteCache();
 
 // Мониторим изменения избранного для авторизованных пользователей
 export const setupFavoritesListener = (): (() => void) => {
+  // Убираем предыдущий слушатель, если он существует
+  if (firebaseListener) {
+    firebaseListener();
+    firebaseListener = null;
+  }
+  
   const auth = getAuth();
   const user = auth.currentUser;
   
   if (!user) return () => {};
   
   const favRef = ref(database, `users/${user.uid}/favorites`);
-  return onValue(favRef, (snapshot) => {
+  const unsubscribe = onValue(favRef, (snapshot) => {
     if (snapshot.exists()) {
       const favorites = snapshot.val();
       favoriteCache.clear();
       Object.keys(favorites).forEach(id => {
         favoriteCache.set(id, true);
       });
+      
+      // Оповещаем компоненты об обновлении данных
+      window.dispatchEvent(new Event('favoritesUpdated'));
     } else {
       favoriteCache.clear();
     }
   });
+  
+  // Сохраняем для дальнейшего использования
+  firebaseListener = unsubscribe;
+  
+  return unsubscribe;
 };
 
 // Получение статуса избранного с использованием кэша для оптимизации
 export const getFavoriteStatus = async (productId: string): Promise<boolean> => {
   // Сначала проверяем кэш для мгновенного ответа
   if (favoriteCache.has(productId)) {
-    return favoriteCache.get(productId) || false;
+    return true;
   }
   
   const auth = getAuth();
@@ -84,7 +101,14 @@ export const getFavoriteStatus = async (productId: string): Promise<boolean> => 
     const favRef = ref(database, `users/${user.uid}/favorites/${productId}`);
     const snapshot = await get(favRef);
     const result = snapshot.exists();
-    favoriteCache.set(productId, result);
+    
+    // Обновляем кэш
+    if (result) {
+      favoriteCache.set(productId, true);
+    } else {
+      favoriteCache.delete(productId);
+    }
+    
     return result;
   } else {
     const storedFavorites = localStorage.getItem('favorites') || '[]';
@@ -104,13 +128,52 @@ export const getFavoriteStatus = async (productId: string): Promise<boolean> => 
         }
       }
       
-      favoriteCache.set(productId, result);
+      // Обновляем кэш
+      if (result) {
+        favoriteCache.set(productId, true);
+      } else {
+        favoriteCache.delete(productId);
+      }
+      
       return result;
     } catch (error) {
       console.error('Error checking favorite status:', error);
       return false;
     }
   }
+};
+
+// Синхронная версия проверки статуса избранного для использования в UI
+export const isFavoriteSynced = (productId: string): boolean => {
+  // Проверяем кэш
+  if (favoriteCache.has(productId)) {
+    return true;
+  }
+  
+  const auth = getAuth();
+  const user = auth.currentUser;
+  
+  if (!user) {
+    // Для неавторизованных пользователей проверяем localStorage
+    try {
+      const storedFavorites = localStorage.getItem('favorites') || '[]';
+      const parsedFavorites = JSON.parse(storedFavorites);
+      
+      if (Array.isArray(parsedFavorites)) {
+        if (parsedFavorites.length > 0) {
+          if (typeof parsedFavorites[0] === 'string') {
+            return parsedFavorites.includes(productId);
+          } else if (typeof parsedFavorites[0] === 'object') {
+            return parsedFavorites.some((item: any) => item.id === productId);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error in synced favorites check:', e);
+    }
+  }
+  
+  return false;
 };
 
 export const toggleFavorite = async (

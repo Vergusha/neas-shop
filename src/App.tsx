@@ -27,6 +27,7 @@ import { initializeTheme, getTheme } from './utils/themeUtils';
 import { ProductCardProvider } from './contexts/ProductCardContext';
 import { FilterProvider } from './contexts/FilterContext';
 import { ReviewProvider } from './contexts/ReviewContext';
+import { setupFavoritesListener, updateFavoriteCache } from './utils/favoritesService';
 
 // Оптимизированные настройки для маршрутизации
 const router_future = {
@@ -58,6 +59,22 @@ const App = () => {
     
     window.addEventListener('themeChanged', handleThemeChange);
     return () => window.removeEventListener('themeChanged', handleThemeChange);
+  }, []);
+  
+  // Инициализация слушателя избранного и кэш
+  useEffect(() => {
+    // Обновляем кэш избранного при загрузке приложения
+    updateFavoriteCache();
+    
+    // Настраиваем слушателя Firebase для избранных товаров
+    const unsubscribe = setupFavoritesListener();
+    
+    // Отписываемся при размонтировании компонента
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
   }, []);
 
   return (

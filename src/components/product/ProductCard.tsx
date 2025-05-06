@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { getTheme } from '../../utils/themeUtils';
@@ -25,21 +25,53 @@ const ProductCard: React.FC<ProductCardProps> = ({
   showStock,
 }) => {
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
+  // Добавляем внутреннее состояние для визуализации избранного
+  const [isCardFavorite, setIsCardFavorite] = useState<boolean>(false);
   
   // Получаем функции и настройки из контекста
   const {
     handleToggleFavorite: contextToggleFavorite,
     handleAddToCart: contextAddToCart,
     isFavorite: isProductFavorite,
-    defaultProps
+    defaultProps,
+    forceUpdate, // Получаем функцию принудительного обновления
   } = useProductCard();
 
-  // Используем пропсы, если они переданы, иначе используем значения из контекста
+  // Используем переданные пропсы или контекст для определения статуса избранного
+  const effectiveIsFavorite = useMemo(() => {
+    if (propIsFavorite !== undefined) {
+      return propIsFavorite;
+    }
+    return isProductFavorite(product.id || '');
+  }, [propIsFavorite, isProductFavorite, product.id]);
+  
+  // Обновляем внутреннее состояние при изменении внешнего
+  useEffect(() => {
+    setIsCardFavorite(effectiveIsFavorite);
+  }, [effectiveIsFavorite]);
+
+  // Используем другие пропсы или значения из контекста
   const effectiveShowRating = showRating !== undefined ? showRating : defaultProps.showRating;
   const effectiveShowStock = showStock !== undefined ? showStock : defaultProps.showStock;
-  const effectiveIsFavorite = propIsFavorite !== undefined ? propIsFavorite : isProductFavorite(product.id || '');
   const effectiveToggleFavorite = propToggleFavorite || contextToggleFavorite;
   const effectiveAddToCart = propAddToCart || contextAddToCart;
+
+  // Слушаем события обновления избранного для обновления UI
+  useEffect(() => {
+    const handleFavoritesUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail.productId === product.id) {
+        // Обновляем только наш продукт
+        setIsCardFavorite(customEvent.detail.isFavorite);
+      } else {
+        // При любом другом обновлении проверяем статус через контекст
+        setIsCardFavorite(isProductFavorite(product.id || ''));
+      }
+    };
+    
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
+    return () => window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
+  }, [product.id, isProductFavorite]);
 
   // Listen for theme changes
   useEffect(() => {
@@ -50,6 +82,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
     window.addEventListener('themeChanged', handleThemeChange);
     return () => window.removeEventListener('themeChanged', handleThemeChange);
   }, []);
+
+  // Улучшенная обработка клика для избранного с оптимистичным UI
+  const handleFavoriteClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Оптимистично обновляем UI
+    setIsCardFavorite(!isCardFavorite);
+    
+    // Вызываем функцию из контекста или из props
+    effectiveToggleFavorite(product);
+  }, [isCardFavorite, effectiveToggleFavorite, product]);
 
   // Format product description using the utility function
   const formatDescription = (description: string | undefined): JSX.Element | null => {
@@ -124,18 +168,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
     >
       {/* Favorite Button */}
       <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          effectiveToggleFavorite(product);
-        }}
+        onClick={handleFavoriteClick}
         className="absolute top-2 right-2 z-10 bg-transparent border-none outline-none"
         style={{ boxShadow: 'none', borderRadius: 0, padding: 0, background: 'none' }}
-        aria-label={effectiveIsFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        aria-label={isCardFavorite ? 'Remove from favorites' : 'Add to favorites'}
       >
         <Heart
           size={20}
-          className={effectiveIsFavorite ? 'fill-red-500 text-red-500' : currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-500'}
+          className={isCardFavorite ? 'fill-red-500 text-red-500' : currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-500'}
         />
       </button>
 

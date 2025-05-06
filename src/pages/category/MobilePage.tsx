@@ -9,14 +9,21 @@ import { getTheme } from '../../utils/themeUtils';
 import { Product } from '../../types/product';
 import { useFilters } from '../../contexts/FilterContext';
 import CategoryPageWrapper from '../../components/layout/CategoryPageWrapper';
+import { useProductCard } from '../../contexts/ProductCardContext';
+import { getAuth } from 'firebase/auth';
+import { ref, get, onValue } from 'firebase/database';
+import { database } from '../../firebaseConfig';
 
 const MobilePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
-  const [favorites, setFavorites] = useState<string[]>([]);
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
+  
+  // Используем ProductCardContext вместо локальной реализации избранного
+  const { handleToggleFavorite, handleAddToCart, isFavorite } = useProductCard();
+  const auth = getAuth();
 
   // Get filter context for showFilters state
   const { showFilters, setShowFilters } = useFilters();
@@ -29,27 +36,6 @@ const MobilePage: React.FC = () => {
     
     window.addEventListener('themeChanged', handleThemeChange);
     return () => window.removeEventListener('themeChanged', handleThemeChange);
-  }, []);
-
-  // Load favorites from localStorage
-  useEffect(() => {
-    const loadFavorites = () => {
-      const storedFavorites = localStorage.getItem('favorites');
-      if (storedFavorites) {
-        try {
-          const parsedFavorites = JSON.parse(storedFavorites);
-          setFavorites(parsedFavorites.map((fav: any) => fav.id));
-        } catch (error) {
-          console.error('Error parsing favorites:', error);
-        }
-      }
-    };
-
-    loadFavorites();
-    
-    // Listen for favorites updates
-    window.addEventListener('favoritesUpdated', loadFavorites);
-    return () => window.removeEventListener('favoritesUpdated', loadFavorites);
   }, []);
 
   // Fetch products data
@@ -84,59 +70,8 @@ const MobilePage: React.FC = () => {
     fetchProducts();
   }, []);
 
-  // Handle adding product to favorites
-  const handleToggleFavorite = (product: Product) => {
-    let updatedFavorites: any[] = [];
-    const storedFavorites = localStorage.getItem('favorites');
-    
-    if (storedFavorites) {
-      updatedFavorites = JSON.parse(storedFavorites);
-    }
-    
-    const isFavorite = favorites.includes(product.id || '');
-    
-    if (isFavorite) {
-      // Remove from favorites
-      updatedFavorites = updatedFavorites.filter((item: any) => item.id !== product.id);
-      setFavorites(favorites.filter(id => id !== product.id));
-    } else {
-      // Add to favorites
-      updatedFavorites.push(product);
-      setFavorites([...favorites, product.id || '']);
-    }
-    
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-    
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new Event('favoritesUpdated'));
-  };
-
-  // Handle adding product to cart
-  const handleAddToCart = (product: Product) => {
-    let cart: any[] = [];
-    const storedCart = localStorage.getItem('cart');
-    
-    if (storedCart) {
-      cart = JSON.parse(storedCart);
-    }
-    
-    // Check if product is already in cart
-    const existingProduct = cart.find((item: any) => item.id === product.id);
-    
-    if (existingProduct) {
-      existingProduct.quantity += 1;
-    } else {
-      cart.push({ ...product, quantity: 1 });
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
-    
-    // Dispatch custom event to notify other components
-    const event = new CustomEvent('cartUpdated', {
-      detail: { item: product.name || 'Product' }
-    });
-    window.dispatchEvent(event);
-  };
+  // Удаляем старые функции handleToggleFavorite и handleAddToCart,
+  // так как теперь используем их из контекста
 
   if (loading) {
     return (
@@ -191,7 +126,8 @@ const MobilePage: React.FC = () => {
                   <div key={product.id} className="w-full">
                     <ProductCard 
                       product={product} 
-                      isFavorite={favorites.includes(product.id || '')}
+                      // Используем функцию isFavorite из контекста
+                      isFavorite={product.id ? isFavorite(product.id) : false}
                       onToggleFavorite={handleToggleFavorite}
                       onAddToCart={handleAddToCart}
                       showRating={true}
