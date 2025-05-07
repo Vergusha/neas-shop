@@ -69,7 +69,9 @@ const UserMenu: React.FC = () => {
 
       {/* User menu dropdown */}
       {userMenuOpen && (
-        <div className="absolute right-0 z-20 w-64 mt-2 overflow-hidden transition-all duration-300 bg-white rounded-lg shadow-xl animate-fade-in-down">
+        <div className={`absolute right-0 z-20 w-64 mt-2 overflow-hidden transition-all duration-300 ${
+          currentTheme === 'dark' ? 'bg-gray-800' : 'bg-white'
+        } rounded-lg shadow-xl animate-fade-in-down`}>
           {user ? (
             <>
               <div className={`px-6 pt-4 pb-3 bg-gradient-to-r ${currentTheme === 'dark' ? 'from-gray-700 to-[#95c672]' : 'from-[#003d2d] to-[#95c672]'}`}>
@@ -101,16 +103,20 @@ const UserMenu: React.FC = () => {
                     setUserMenuOpen(false);
                     navigate('/profile');
                   }}
-                  className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
+                  className={`flex items-center px-6 py-3 text-sm transition-colors ${
+                    currentTheme === 'dark' ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'
+                  }`}
                 >
                   <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(149,198,114,0.15)]' : 'bg-[rgba(0,61,45,0.15)]'}`}>
                     <User size={16} className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003d2d]'}`} />
                   </div>
-                  <span className="font-medium text-gray-700">Profile</span>
+                  <span className={`font-medium ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Profile</span>
                 </a>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center w-full px-6 py-3 text-sm text-left transition-colors hover:bg-gray-50"
+                  className={`flex items-center w-full px-6 py-3 text-sm text-left transition-colors ${
+                    currentTheme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                  }`}
                 >
                   <div className="flex items-center justify-center w-8 h-8 mr-3 rounded-full bg-red-50">
                     <LogOut size={16} className="text-red-500" />
@@ -137,12 +143,14 @@ const UserMenu: React.FC = () => {
                     setUserMenuOpen(false);
                     navigate('/login');
                   }}
-                  className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
+                  className={`flex items-center px-6 py-3 text-sm transition-colors ${
+                    currentTheme === 'dark' ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'
+                  }`}
                 >
                   <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(149,198,114,0.15)]' : 'bg-[rgba(0,61,45,0.15)]'}`}>
                     <LogIn size={16} className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003d2d]'}`} />
                   </div>
-                  <span className="font-medium text-gray-700">Sign In</span>
+                  <span className={`font-medium ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Sign In</span>
                 </a>
                 <a
                   href="/register"
@@ -151,12 +159,14 @@ const UserMenu: React.FC = () => {
                     setUserMenuOpen(false);
                     navigate('/register');
                   }}
-                  className="flex items-center px-6 py-3 text-sm transition-colors hover:bg-gray-50"
+                  className={`flex items-center px-6 py-3 text-sm transition-colors ${
+                    currentTheme === 'dark' ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'
+                  }`}
                 >
                   <div className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${currentTheme === 'dark' ? 'bg-[rgba(149,198,114,0.15)]' : 'bg-[rgba(0,61,45,0.15)]'}`}>
                     <User size={16} className={`${currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003d2d]'}`} />
                   </div>
-                  <span className="font-medium text-gray-700">Register</span>
+                  <span className={`font-medium ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Register</span>
                 </a>
               </div>
             </>
