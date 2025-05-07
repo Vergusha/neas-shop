@@ -27,251 +27,133 @@ export const updateFavoriteCache = async (): Promise<void> => {
       favoriteCache.clear();
     }
   } else {
+    // Для неавторизованных пользователей используем localStorage
     try {
-      const storedFavorites = localStorage.getItem('favorites') || '[]';
-      const parsedFavorites = JSON.parse(storedFavorites);
-      favoriteCache.clear();
-      
-      if (Array.isArray(parsedFavorites)) {
-        if (parsedFavorites.length > 0) {
-          if (typeof parsedFavorites[0] === 'string') {
-            // Массив ID
-            parsedFavorites.forEach(id => favoriteCache.set(id, true));
-          } else if (typeof parsedFavorites[0] === 'object' && parsedFavorites[0].id) {
-            // Массив объектов
-            parsedFavorites.forEach(item => favoriteCache.set(item.id, true));
-          }
-        }
+      const storedFavorites = localStorage.getItem('favorites');
+      if (storedFavorites) {
+        const favorites = JSON.parse(storedFavorites);
+        favoriteCache.clear();
+        favorites.forEach((fav: any) => {
+          const id = typeof fav === 'string' ? fav : fav.id;
+          if (id) favoriteCache.set(id, true);
+        });
       }
     } catch (error) {
-      console.error('Error parsing favorites for cache:', error);
+      console.error('Error updating favorite cache:', error);
+      favoriteCache.clear();
     }
   }
 };
 
-// Инициализируем кэш при загрузке
-updateFavoriteCache();
-
-// Мониторим изменения избранного для авторизованных пользователей
-export const setupFavoritesListener = (): (() => void) => {
-  // Убираем предыдущий слушатель, если он существует
-  if (firebaseListener) {
-    firebaseListener();
-    firebaseListener = null;
-  }
-  
-  const auth = getAuth();
-  const user = auth.currentUser;
-  
-  if (!user) return () => {};
-  
-  const favRef = ref(database, `users/${user.uid}/favorites`);
-  const unsubscribe = onValue(favRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const favorites = snapshot.val();
-      favoriteCache.clear();
-      Object.keys(favorites).forEach(id => {
-        favoriteCache.set(id, true);
-      });
-      
-      // Оповещаем компоненты об обновлении данных
-      window.dispatchEvent(new Event('favoritesUpdated'));
-    } else {
-      favoriteCache.clear();
-    }
-  });
-  
-  // Сохраняем для дальнейшего использования
-  firebaseListener = unsubscribe;
-  
-  return unsubscribe;
-};
-
-// Получение статуса избранного с использованием кэша для оптимизации
-export const getFavoriteStatus = async (productId: string): Promise<boolean> => {
-  // Сначала проверяем кэш для мгновенного ответа
-  if (favoriteCache.has(productId)) {
-    return true;
-  }
-  
+// Настройка слушателя изменений в Firebase
+export const setupFavoritesListener = () => {
   const auth = getAuth();
   const user = auth.currentUser;
 
   if (user) {
-    const favRef = ref(database, `users/${user.uid}/favorites/${productId}`);
-    const snapshot = await get(favRef);
-    const result = snapshot.exists();
+    const favRef = ref(database, `users/${user.uid}/favorites`);
     
-    // Обновляем кэш
-    if (result) {
-      favoriteCache.set(productId, true);
-    } else {
-      favoriteCache.delete(productId);
+    // Отписываемся от предыдущего слушателя если он есть
+    if (firebaseListener) {
+      off(favRef, 'value', firebaseListener);
     }
-    
-    return result;
-  } else {
-    const storedFavorites = localStorage.getItem('favorites') || '[]';
-    try {
-      const parsedFavorites = JSON.parse(storedFavorites);
-      let result = false;
-      
-      if (Array.isArray(parsedFavorites)) {
-        if (parsedFavorites.length > 0) {
-          if (typeof parsedFavorites[0] === 'string') {
-            // Массив ID
-            result = parsedFavorites.includes(productId);
-          } else if (typeof parsedFavorites[0] === 'object') {
-            // Массив объектов
-            result = parsedFavorites.some((item: any) => item.id === productId);
-          }
-        }
-      }
-      
-      // Обновляем кэш
-      if (result) {
-        favoriteCache.set(productId, true);
-      } else {
-        favoriteCache.delete(productId);
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('Error checking favorite status:', error);
-      return false;
-    }
-  }
-};
 
-// Синхронная версия проверки статуса избранного для использования в UI
-export const isFavoriteSynced = (productId: string): boolean => {
-  // Проверяем кэш
-  if (favoriteCache.has(productId)) {
-    return true;
-  }
-  
-  const auth = getAuth();
-  const user = auth.currentUser;
-  
-  if (!user) {
-    // Для неавторизованных пользователей проверяем localStorage
-    try {
-      const storedFavorites = localStorage.getItem('favorites') || '[]';
-      const parsedFavorites = JSON.parse(storedFavorites);
-      
-      if (Array.isArray(parsedFavorites)) {
-        if (parsedFavorites.length > 0) {
-          if (typeof parsedFavorites[0] === 'string') {
-            return parsedFavorites.includes(productId);
-          } else if (typeof parsedFavorites[0] === 'object') {
-            return parsedFavorites.some((item: any) => item.id === productId);
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Error in synced favorites check:', e);
-    }
-  }
-  
-  return false;
-};
-
-export const toggleFavorite = async (
-  productId: string,
-  productData: Product | null
-): Promise<boolean> => {
-  const auth = getAuth();
-  const user = auth.currentUser;
-
-  try {
-    if (user) {
-      const favRef = ref(database, `users/${user.uid}/favorites/${productId}`);
-      const snapshot = await get(favRef);
-      
+    // Устанавливаем нового слушателя
+    firebaseListener = onValue(favRef, (snapshot) => {
       if (snapshot.exists()) {
-        // Сначала обновляем кэш и UI для мгновенного отклика
-        favoriteCache.delete(productId);
-        window.dispatchEvent(new CustomEvent('favoritesUpdated', { 
-          detail: { productId, isFavorite: false, immediate: true } 
-        }));
-        
-        // Затем выполняем операцию с Firebase (будет выполняться в фоне)
-        await set(favRef, null);
-        return false;
+        const favorites = snapshot.val();
+        favoriteCache.clear();
+        Object.keys(favorites).forEach(id => {
+          favoriteCache.set(id, true);
+        });
       } else {
-        // Сначала обновляем кэш и UI для мгновенного отклика
-        favoriteCache.set(productId, true);
-        window.dispatchEvent(new CustomEvent('favoritesUpdated', { 
-          detail: { productId, isFavorite: true, immediate: true } 
-        }));
-        
-        if (productData) {
-          // Затем сохраняем в Firebase
-          await set(favRef, {
-            addedAt: new Date().toISOString(),
-            id: productId, // Добавляем id как часть объекта для упрощения работы
-            ...productData
-          });
-        }
-        
-        return true;
+        favoriteCache.clear();
+      }
+      
+      window.dispatchEvent(new Event('favoritesUpdated'));
+    });
+
+    return () => {
+      if (firebaseListener) {
+        off(favRef, 'value', firebaseListener);
+        firebaseListener = null;
+      }
+    };
+  }
+  return undefined;
+};
+
+// Проверка статуса избранного
+export const getFavoriteStatus = (productId: string): boolean => {
+  return favoriteCache.has(productId);
+};
+
+// Функция для добавления/удаления из избранного
+export const toggleFavorite = async (productId: string, product: Product | null): Promise<void> => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (user) {
+    // Для авторизованных пользователей используем Firebase
+    const favRef = ref(database, `users/${user.uid}/favorites/${productId}`);
+    if (product) {
+      // Добавляем в избранное
+      await set(favRef, {
+        id: productId,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        brand: product.brand,
+        category: product.category,
+        collection: product.collection,
+        addedAt: new Date().toISOString()
+      });
+    } else {
+      // Удаляем из избранного
+      await set(favRef, null);
+    }
+  } else {
+    // Для неавторизованных пользователей используем localStorage
+    let favorites: any[] = [];
+    try {
+      const stored = localStorage.getItem('favorites');
+      if (stored) favorites = JSON.parse(stored);
+    } catch (error) {
+      console.error('Error parsing favorites:', error);
+    }
+
+    if (product) {
+      // Добавляем в избранное
+      if (!favorites.some(f => f.id === productId)) {
+        favorites.push({
+          id: productId,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          brand: product.brand,
+          category: product.category,
+          collection: product.collection,
+          addedAt: new Date().toISOString()
+        });
       }
     } else {
-      // Обработка локально для неавторизованных пользователей
-      let favoritesList: any[] = [];
-      const storedFavorites = localStorage.getItem('favorites') || '[]';
-      
-      try {
-        favoritesList = JSON.parse(storedFavorites);
-      } catch (e) {
-        console.error('Error parsing favorites:', e);
-        favoritesList = [];
-      }
-
-      // Определяем текущий тип хранения (массив ID или массив объектов)
-      let storageType: 'id' | 'object' = 'id';
-      
-      if (favoritesList.length > 0) {
-        if (typeof favoritesList[0] === 'object') {
-          storageType = 'object';
-        }
-      }
-
-      const isCurrentlyFavorite = storageType === 'id' 
-        ? favoritesList.includes(productId)
-        : favoritesList.some((item: any) => item.id === productId);
-
-      let updatedFavorites: any[];
-      
-      if (isCurrentlyFavorite) {
-        // Удаляем из избранного
-        updatedFavorites = storageType === 'id'
-          ? favoritesList.filter((id: string) => id !== productId)
-          : favoritesList.filter((item: any) => item.id !== productId);
-        
-        favoriteCache.delete(productId);
-      } else {
-        // Добавляем в избранное, сохраняя текущий формат
-        if (storageType === 'id') {
-          updatedFavorites = [...favoritesList, productId];
-        } else {
-          updatedFavorites = [...favoritesList, productData];
-        }
-        
-        favoriteCache.set(productId, true);
-      }
-      
-      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-      
-      // Оповещаем UI об изменении
-      window.dispatchEvent(new CustomEvent('favoritesUpdated', {
-        detail: { productId, isFavorite: !isCurrentlyFavorite, immediate: true }
-      }));
-      
-      return !isCurrentlyFavorite;
+      // Удаляем из избранного
+      favorites = favorites.filter(f => f.id !== productId);
     }
-  } catch (error) {
-    console.error('Error toggling favorite:', error);
-    return false;
+
+    localStorage.setItem('favorites', JSON.stringify(favorites));
   }
+
+  // Обновляем кэш после изменений
+  await updateFavoriteCache();
+
+  // Уведомляем об изменениях
+  const event = new CustomEvent('favoritesUpdated', { 
+    detail: { 
+      productId,
+      isFavorite: !!product,
+      immediate: true
+    } 
+  });
+  window.dispatchEvent(event);
 };

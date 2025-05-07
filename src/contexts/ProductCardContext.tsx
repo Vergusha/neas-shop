@@ -1,244 +1,118 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { Product } from '../types/product';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
-import { ref, get, onValue } from 'firebase/database';
 import { database } from '../firebaseConfig';
-import { updateFavoriteCache, getFavoriteStatus } from '../utils/favoritesService';
+import { ref, onValue } from 'firebase/database';
+import { Product } from '../types/product';
+import { getFavoriteStatus, toggleFavorite, updateFavoriteCache } from '../utils/favoritesService';
 
-// Определение типа контекста
 interface ProductCardContextType {
-  // Базовые функции
-  handleToggleFavorite: (product: Product) => void;
+  handleToggleFavorite: (product: Product) => Promise<void>;
   handleAddToCart: (product: Product) => void;
   isFavorite: (productId: string) => boolean;
-  
-  // Настройки карточки товара
   defaultProps: {
     showRating: boolean;
     showStock: boolean;
   };
-  
-  // Состояния
-  favorites: string[];
-  forceUpdate: () => void; // Добавляем функцию для принудительного обновления
 }
 
-// Создание контекста с начальными значениями
-const ProductCardContext = createContext<ProductCardContextType>({
-  handleToggleFavorite: () => {},
-  handleAddToCart: () => {},
-  isFavorite: () => false,
-  defaultProps: {
-    showRating: true,
-    showStock: true,
-  },
-  favorites: [],
-  forceUpdate: () => {}
-});
+const ProductCardContext = createContext<ProductCardContextType | undefined>(undefined);
 
-// Хук для использования контекста в компонентах
-export const useProductCard = () => useContext(ProductCardContext);
+export const useProductCard = () => {
+  const context = useContext(ProductCardContext);
+  if (!context) {
+    throw new Error('useProductCard must be used within a ProductCardProvider');
+  }
+  return context;
+};
 
-// Провайдер контекста
 export const ProductCardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [favorites, setFavorites] = useState<string[]>([]);
-  // Добавляем счетчик обновлений для форсированного ререндеринга
-  const [updateCounter, setUpdateCounter] = useState(0);
   const auth = getAuth();
+  const [updateCounter, setUpdateCounter] = useState(0);
 
-  // Функция для принудительного обновления контекста
-  const forceUpdate = () => setUpdateCounter(prev => prev + 1);
-
-  // Загружаем избранные товары из localStorage или Firebase при инициализации
+  // Инициализация кэша при загрузке
   useEffect(() => {
-    const loadFavoritesFromCache = async () => {
-      // Обновляем кэш избранного перед чтением
-      await updateFavoriteCache();
-      
-      const user = auth.currentUser;
-      
-      if (user) {
-        // Для авторизованных пользователей используем Firebase и слушаем изменения в реальном времени
-        const favRef = ref(database, `users/${user.uid}/favorites`);
-        
-        return onValue(favRef, (snapshot) => {
-          if (snapshot.exists()) {
-            const favoritesData = snapshot.val();
-            const favoriteIds = Object.keys(favoritesData);
-            setFavorites(favoriteIds);
-            
-            // Обновляем кэш при получении обновлений из Firebase
-            updateFavoriteCache();
-          } else {
-            setFavorites([]);
-          }
-        });
-      } else {
-        // Для неавторизованных пользователей используем localStorage
-        const storedFavorites = localStorage.getItem('favorites');
-        if (storedFavorites) {
-          try {
-            const parsedFavorites = JSON.parse(storedFavorites);
-            // Обрабатываем оба формата: массив ID или массив объектов
-            if (parsedFavorites.length > 0) {
-              if (typeof parsedFavorites[0] === 'string') {
-                // Если это просто массив ID
-                setFavorites(parsedFavorites);
-              } else if (typeof parsedFavorites[0] === 'object' && parsedFavorites[0].id) {
-                // Если это массив объектов с id
-                setFavorites(parsedFavorites.map((fav: any) => fav.id));
-              } else {
-                setFavorites([]);
-              }
-            } else {
-              setFavorites([]);
-            }
-          } catch (error) {
-            console.error('Error parsing favorites:', error);
-            setFavorites([]);
-          }
-        }
-      }
-    };
+    updateFavoriteCache();
+  }, []);
 
-    const unsubscribe = loadFavoritesFromCache();
-    
-    // Слушаем события обновления избранного
-    const handleFavoritesUpdated = (e: Event) => {
-      // Вызываем forceUpdate для обновления UI
-      forceUpdate();
-      
-      // Если пользователь не авторизован, обновляем избранное из localStorage
-      if (!auth.currentUser) {
-        loadFavoritesFromCache();
-      }
-      
-      // Всегда обновляем кэш при получении события
-      updateFavoriteCache();
-    };
-    
-    window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
-    
-    // Отписываемся от слушателей при размонтировании
+  // Подписка на изменения в Firebase для авторизованных пользователей
+  useEffect(() => {
+    const user = auth.currentUser;
+    let unsubscribe: () => void;
+
+    if (user) {
+      const favRef = ref(database, `users/${user.uid}/favorites`);
+      unsubscribe = onValue(favRef, async () => {
+        await updateFavoriteCache();
+        setUpdateCounter(prev => prev + 1);
+      });
+    }
+
     return () => {
-      window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
-      if (typeof unsubscribe === 'function') {
+      if (unsubscribe) {
         unsubscribe();
       }
     };
   }, [auth.currentUser]);
 
-  // Проверка, находится ли товар в избранном с использованием кэша
-  const isFavorite = (productId: string): boolean => {
-    // Проверяем сначала локальный массив favorites
-    if (favorites.includes(productId)) {
-      return true;
-    }
-    
-    // Также проверяем кэш в favoritesService для синхронизации между компонентами
-    // Используем синхронную проверку для избежания задержек в UI
-    try {
-      // Проверяем напрямую из localStorage для неавторизованных пользователей
-      if (!auth.currentUser) {
-        const storedFavorites = localStorage.getItem('favorites');
-        if (storedFavorites) {
-          const parsedFavorites = JSON.parse(storedFavorites);
-          if (Array.isArray(parsedFavorites)) {
-            if (parsedFavorites.length > 0) {
-              if (typeof parsedFavorites[0] === 'string') {
-                return parsedFavorites.includes(productId);
-              } else if (typeof parsedFavorites[0] === 'object') {
-                return parsedFavorites.some((item: any) => item.id === productId);
-              }
-            }
-          }
-        }
-        return false;
-      }
-    } catch (error) {
-      console.error('Error checking favorite status:', error);
-    }
-    
-    return false;
+  // Настраиваем значения по умолчанию
+  const defaultProps = {
+    showRating: true,
+    showStock: true
   };
 
-  // Обработчик добавления/удаления из избранного
   const handleToggleFavorite = async (product: Product) => {
     if (!product.id) return;
     
-    const productId = product.id;
-    const productIsFavorite = isFavorite(productId);
-    
     try {
-      const user = auth.currentUser;
+      const productId = product.id;
+      const currentlyFavorite = getFavoriteStatus(productId);
       
-      // Немедленно обновляем UI - оптимистичное обновление
-      if (productIsFavorite) {
-        setFavorites(prev => prev.filter(id => id !== productId));
-      } else {
-        setFavorites(prev => [...prev, productId]);
-      }
-      
-      // Вызываем функцию toggleFavorite из favoritesService для обработки данных
-      const { toggleFavorite } = await import('../utils/favoritesService');
-      await toggleFavorite(productId, productIsFavorite ? null : product);
+      await toggleFavorite(productId, currentlyFavorite ? null : product);
       
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      // Откатываем изменения при ошибке
-      if (productIsFavorite) {
-        setFavorites(prev => [...prev, productId]);
-      } else {
-        setFavorites(prev => prev.filter(id => id !== productId));
-      }
     }
   };
 
-  // Обработчик добавления товара в корзину
   const handleAddToCart = (product: Product) => {
     let cart: any[] = [];
-    const storedCart = localStorage.getItem('cart');
-    
-    if (storedCart) {
-      cart = JSON.parse(storedCart);
+    try {
+      const storedCart = localStorage.getItem('cart');
+      if (storedCart) {
+        cart = JSON.parse(storedCart);
+      }
+      
+      const existingProduct = cart.find(item => item.id === product.id);
+      
+      if (existingProduct) {
+        existingProduct.quantity += 1;
+      } else {
+        cart.push({ ...product, quantity: 1 });
+      }
+      
+      localStorage.setItem('cart', JSON.stringify(cart));
+      
+      const event = new CustomEvent('cartUpdated', {
+        detail: { item: product.name || 'Product' }
+      });
+      window.dispatchEvent(event);
+      
+    } catch (error) {
+      console.error('Error adding to cart:', error);
     }
-    
-    // Проверяем, есть ли товар уже в корзине
-    const existingProduct = cart.find((item: any) => item.id === product.id);
-    
-    if (existingProduct) {
-      existingProduct.quantity += 1;
-    } else {
-      cart.push({ ...product, quantity: 1 });
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
-    
-    // Оповещаем другие компоненты
-    const event = new CustomEvent('cartUpdated', {
-      detail: { item: product.name || 'Product' }
-    });
-    window.dispatchEvent(event);
   };
 
-  // Общие настройки карточки товара по умолчанию
-  const defaultProps = {
-    showRating: true,
-    showStock: true,
-  };
-
-  // Значения, предоставляемые контекстом
-  const contextValue: ProductCardContextType = {
-    handleToggleFavorite,
-    handleAddToCart,
-    isFavorite,
-    defaultProps,
-    favorites,
-    forceUpdate
+  const isFavorite = (productId: string): boolean => {
+    return getFavoriteStatus(productId);
   };
 
   return (
-    <ProductCardContext.Provider value={contextValue}>
+    <ProductCardContext.Provider value={{ 
+      handleToggleFavorite, 
+      handleAddToCart, 
+      isFavorite,
+      defaultProps
+    }}>
       {children}
     </ProductCardContext.Provider>
   );

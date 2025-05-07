@@ -1,157 +1,167 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, documentId } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+import { getDatabase, ref, get, onValue } from 'firebase/database';
+import { db, database } from '../../firebaseConfig';
 import ProductCard from '../../components/product/ProductCard';
 import { getAuth } from 'firebase/auth';
-import { ref, get } from 'firebase/database';
-import { database } from '../../firebaseConfig';
 import { Product } from '../../types/product';
 import { useProductCard } from '../../contexts/ProductCardContext';
+import { updateFavoriteCache } from '../../utils/favoritesService';
 
 const FavoritesPage: React.FC = () => {
-  // Получаем функции из ProductCardContext
-  const { handleToggleFavorite, handleAddToCart } = useProductCard();
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const { handleToggleFavorite, handleAddToCart, isFavorite } = useProductCard();
   const auth = getAuth();
   const user = auth.currentUser;
 
-  // Оптимизированная функция загрузки избранных товаров с кэшированием
-  const fetchFavorites = useCallback(async () => {
-    try {
-      setLoading(true);
-      let favoriteIds: string[] = [];
-      let directProducts: Product[] = [];
-
-      if (user) {
-        // Получаем избранные из Firebase Realtime Database
-        const favRef = ref(database, `users/${user.uid}/favorites`);
-        const snapshot = await get(favRef);
-        if (snapshot.exists()) {
-          const favoritesData = snapshot.val();
-          favoriteIds = Object.keys(favoritesData);
-          
-          // Проверяем, содержат ли значения полные данные о продуктах
-          for (const id of favoriteIds) {
-            const productData = favoritesData[id];
-            if (productData && typeof productData === 'object' && productData.id) {
-              // Если это полные данные о продукте, добавляем их
-              directProducts.push(productData as Product);
-            }
-          }
-        }
-      } else {
-        // Для неавторизованных пользователей используем localStorage
-        try {
-          const storedFavorites = localStorage.getItem('favorites') || '[]';
-          const parsedFavorites = JSON.parse(storedFavorites);
-          
-          // Проверяем формат данных
-          if (parsedFavorites.length > 0) {
-            if (typeof parsedFavorites[0] === 'string') {
-              // Если это просто массив ID
-              favoriteIds = parsedFavorites;
-            } else if (typeof parsedFavorites[0] === 'object' && parsedFavorites[0].id) {
-              // Если это массив объектов с полными данными
-              directProducts = parsedFavorites.map((fav: any) => ({
-                id: fav.id,
-                name: fav.name || 'Unnamed Product',
-                description: fav.description || 'No description',
-                price: Number(fav.price) || 0,
-                image: fav.image || '',
-                brand: fav.brand || '',
-                category: fav.category || ''
-              }));
-              
-              // Также извлекаем ID для загрузки дополнительных данных о продуктах
-              favoriteIds = parsedFavorites.map((fav: any) => fav.id);
-            }
-          }
-        } catch (error) {
-          console.error('Error parsing favorites from localStorage:', error);
-          favoriteIds = [];
-        }
-      }
-      
-      // Начинаем с любых напрямую доступных продуктов
-      const favoriteProducts: Product[] = [...directProducts];
-      const productIdMap = new Map(directProducts.map(product => [product.id, true]));
-      
-      // Определяем, какие ID нужно загрузить из Firestore
-      const idsToFetch = favoriteIds.filter(id => !productIdMap.has(id));
-      
-      if (idsToFetch.length > 0) {
-        // Получаем коллекции для загрузки
-        const collections = ['mobile', 'tv', 'gaming', 'laptops', 'smart-home', 'data', 'audio'];
-        
-        // Ограничиваем количество запросов, разбивая ID на группы по 10
-        const batchSize = 10;
-        for (let i = 0; i < idsToFetch.length; i += batchSize) {
-          const batchIds = idsToFetch.slice(i, i + batchSize);
-          
-          // Параллельно запрашиваем данные из всех коллекций
-          const collectionPromises = collections.map(async (collectionName) => {
-            const collectionRef = collection(db, collectionName);
-            // Используем where in для более эффективной фильтрации
-            const q = query(collectionRef, where(documentId(), 'in', batchIds));
-            const querySnapshot = await getDocs(q);
-            
-            return querySnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data(),
-              name: doc.data().name || 'Unnamed Product',
-              description: doc.data().description || 'No description',
-              price: Number(doc.data().price) || 0,
-              image: doc.data().image || '',
-              brand: doc.data().brand || '',
-              category: collectionName
-            } as Product));
-          });
-          
-          // Ждем все промисы
-          const collectionsResults = await Promise.all(collectionPromises);
-          
-          // Объединяем результаты
-          collectionsResults.forEach(products => {
-            products.forEach(product => {
-              if (!productIdMap.has(product.id)) {
-                favoriteProducts.push(product);
-                productIdMap.set(product.id, true);
-              }
-            });
-          });
-        }
-      }
-      
-      setFavorites(favoriteProducts);
-    } catch (error) {
-      console.error('Error fetching favorites:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
   useEffect(() => {
-    fetchFavorites();
-    
-    // Обработчик событий обновления избранного
-    const handleFavoritesUpdated = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      
-      if (customEvent.detail?.immediate && customEvent.detail?.productId && !customEvent.detail?.isFavorite) {
-        // Немедленно обновляем UI без повторной загрузки
-        setFavorites(prevFavorites => 
-          prevFavorites.filter(product => product.id !== customEvent.detail.productId)
-        );
-      } else {
-        // Для не срочных обновлений перезагружаем избранное
-        fetchFavorites();
+    const fetchFavorites = async () => {
+      try {
+        setLoading(true);
+        await updateFavoriteCache();
+
+        let favoriteProducts: Product[] = [];
+        
+        if (user) {
+          // Для авторизованных пользователей используем Firebase
+          const favRef = ref(database, `users/${user.uid}/favorites`);
+          const snapshot = await get(favRef);
+          
+          if (snapshot.exists()) {
+            const favorites = snapshot.val();
+            const collections = ['mobile', 'tv', 'gaming', 'laptops', 'audio'];
+            
+            // Группируем продукты по коллекциям для оптимизации запросов
+            const productsByCollection: { [key: string]: string[] } = {};
+            
+            Object.entries(favorites).forEach(([id, data]: [string, any]) => {
+              const collection = data.collection || 'products';
+              if (!productsByCollection[collection]) {
+                productsByCollection[collection] = [];
+              }
+              productsByCollection[collection].push(id);
+            });
+            
+            // Загружаем продукты из каждой коллекции
+            for (const [collectionName, ids] of Object.entries(productsByCollection)) {
+              const batchSize = 10;
+              for (let i = 0; i < ids.length; i += batchSize) {
+                const batchIds = ids.slice(i, i + batchSize);
+                const q = query(
+                  collection(db, collectionName),
+                  where(documentId(), 'in', batchIds)
+                );
+                const querySnapshot = await getDocs(q);
+                
+                querySnapshot.docs.forEach(doc => {
+                  const productData = doc.data();
+                  if (productData) {
+                    favoriteProducts.push({
+                      id: doc.id,
+                      ...productData,
+                      collection: collectionName
+                    } as Product);
+                  }
+                });
+              }
+            }
+
+            // Сортируем по времени добавления
+            favoriteProducts.sort((a, b) => {
+              const dateA = favorites[a.id]?.addedAt || '';
+              const dateB = favorites[b.id]?.addedAt || '';
+              return dateB.localeCompare(dateA);
+            });
+          }
+        } else {
+          // Для неавторизованных пользователей
+          const storedFavorites = localStorage.getItem('favorites');
+          if (storedFavorites) {
+            const parsedFavorites = JSON.parse(storedFavorites);
+            const allProductIds = parsedFavorites.map((fav: any) => fav.id);
+            const collections = ['mobile', 'tv', 'gaming', 'laptops', 'audio', 'products'];
+
+            for (const collectionName of collections) {
+              if (allProductIds.length === 0) break;
+
+              const batchSize = 10;
+              for (let i = 0; i < allProductIds.length; i += batchSize) {
+                const batchIds = allProductIds.slice(i, i + batchSize);
+                const q = query(
+                  collection(db, collectionName),
+                  where(documentId(), 'in', batchIds)
+                );
+                
+                try {
+                  const querySnapshot = await getDocs(q);
+                  querySnapshot.docs.forEach(doc => {
+                    const productData = doc.data();
+                    if (productData) {
+                      const parsedFavoriteData = parsedFavorites.find((f: any) => f.id === doc.id);
+                      favoriteProducts.push({
+                        id: doc.id,
+                        ...productData,
+                        collection: collectionName,
+                        addedAt: parsedFavoriteData?.addedAt
+                      } as Product);
+                      
+                      // Удаляем найденный ID из списка поиска
+                      const index = allProductIds.indexOf(doc.id);
+                      if (index > -1) {
+                        allProductIds.splice(index, 1);
+                      }
+                    }
+                  });
+                } catch (error) {
+                  console.error(`Error fetching products from ${collectionName}:`, error);
+                }
+              }
+            }
+
+            // Сортируем по времени добавления
+            favoriteProducts.sort((a, b) => {
+              const dateA = a.addedAt || '';
+              const dateB = b.addedAt || '';
+              return dateB.localeCompare(dateA);
+            });
+          }
+        }
+        
+        setFavorites(favoriteProducts);
+      } catch (error) {
+        console.error('Error fetching favorites:', error);
+      } finally {
+        setLoading(false);
       }
+    };
+
+    fetchFavorites();
+
+    // Подписываемся на изменения в Firebase
+    let unsubscribe: (() => void) | undefined;
+    
+    if (user) {
+      const favRef = ref(database, `users/${user.uid}/favorites`);
+      unsubscribe = onValue(favRef, () => {
+        fetchFavorites();
+      });
+    }
+
+    // Слушаем события обновления избранного
+    const handleFavoritesUpdated = () => {
+      fetchFavorites();
     };
     
     window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
-    return () => window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
-  }, [fetchFavorites]);
+    
+    return () => {
+      window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [user]);
 
   if (loading) {
     return (
@@ -176,10 +186,10 @@ const FavoritesPage: React.FC = () => {
             <ProductCard 
               key={product.id} 
               product={product} 
-              isFavorite={true} 
-              // Используем ранее полученные функции из контекста
+              isFavorite={true}
               onToggleFavorite={handleToggleFavorite}
               onAddToCart={handleAddToCart}
+              showRating={true}
             />
           ))}
         </div>

@@ -21,14 +21,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
   isFavorite: propIsFavorite,
   onToggleFavorite: propToggleFavorite,
   onAddToCart: propAddToCart,
-  showRating,
-  showStock,
+  showRating = undefined,
+  showStock = undefined,
 }) => {
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(getTheme());
-  // Добавляем внутреннее состояние для визуализации избранного
   const [isCardFavorite, setIsCardFavorite] = useState<boolean>(false);
   
-  // Получаем функции и настройки из контекста
   const {
     handleToggleFavorite: contextToggleFavorite,
     handleAddToCart: contextAddToCart,
@@ -50,9 +48,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
     setIsCardFavorite(effectiveIsFavorite);
   }, [effectiveIsFavorite]);
 
-  // Используем другие пропсы или значения из контекста
-  const effectiveShowRating = showRating !== undefined ? showRating : defaultProps.showRating;
-  const effectiveShowStock = showStock !== undefined ? showStock : defaultProps.showStock;
+  // Используем другие пропсы или значения из контекста, если они доступны
+  const effectiveShowRating = showRating ?? defaultProps?.showRating ?? true;
+  const effectiveShowStock = showStock ?? defaultProps?.showStock ?? false;
   const effectiveToggleFavorite = propToggleFavorite || contextToggleFavorite;
   const effectiveAddToCart = propAddToCart || contextAddToCart;
 
