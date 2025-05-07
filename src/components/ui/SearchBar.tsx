@@ -202,7 +202,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ currentTheme, isMobile = false })
         {showResults && searchResults.length > 0 && (
           <div 
             ref={searchResultsRef}
-            className={`absolute left-0 right-0 z-20 mt-2 rounded-lg shadow-lg search-results-dropdown ${
+            className={`absolute left-0 right-0 top-full z-20 mt-2 rounded-lg shadow-lg search-results-dropdown ${
               currentTheme === 'dark' ? 'bg-[#1f2937] border border-gray-600' : 'bg-white border border-gray-300'
             }`}
           >
