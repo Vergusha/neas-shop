@@ -202,9 +202,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ currentTheme, isMobile = false })
         {showResults && searchResults.length > 0 && (
           <div 
             ref={searchResultsRef}
-            className={`absolute left-0 right-0 top-full z-20 mt-2 rounded-lg shadow-lg search-results-dropdown ${
+            className={`absolute left-0 right-0 top-full z-50 mt-2 rounded-lg shadow-lg search-results-dropdown overflow-hidden ${
               currentTheme === 'dark' ? 'bg-[#1f2937] border border-gray-600' : 'bg-white border border-gray-300'
             }`}
+            style={{ maxHeight: '80vh', overflowY: 'auto' }}
           >
             {searchResults.map((result) => (
               <div 
@@ -218,9 +219,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ currentTheme, isMobile = false })
                   <div className="flex-shrink-0 p-1 bg-white rounded-sm w-14 h-14">
                     <img src={result.image} alt={result.name} className="object-contain w-full h-full" />
                   </div>
-                  <div className="flex-1 pl-4">
+                  <div className="flex-1 min-w-0 pl-4">
                     <div className="flex items-start justify-between">
-                      <div className={`font-medium pr-2 ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                      <div className={`font-medium pr-2 truncate ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                         {`${result.brand} ${result.model || ''}`}
                         {result.memory ? ` ${result.memory}` : ''}
                         {result.modelNumber ? ` ${result.modelNumber}` : ''}
@@ -229,7 +230,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ currentTheme, isMobile = false })
                         {result.storageType ? ` ${result.storageType}` : ''}
                         {result.color ? ` ${result.color}` : ''}
                       </div>
-                      <div className={`font-semibold whitespace-nowrap ${
+                      <div className={`font-semibold whitespace-nowrap flex-shrink-0 ${
                         currentTheme === 'dark' ? 'text-[#95c672]' : 'text-[#003d2d]'
                       }`}>{result.price} NOK</div>
                     </div>

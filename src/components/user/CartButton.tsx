@@ -77,34 +77,64 @@ const CartButton: React.FC<CartButtonProps> = ({ user, cartItemCount, currentThe
       
       {/* Cart preview dropdown */}
       {user && cartOpen && cartItemCount > 0 && (
-        <div ref={cartDropdownRef} className="absolute right-0 z-20 mt-2 bg-white rounded-md shadow-xl cart-dropdown w-80">
-          <div className="p-4 border-b">
-            <h3 className="font-semibold">Your Cart ({cartItemCount} items)</h3>
+        <div 
+          ref={cartDropdownRef} 
+          className={`absolute right-0 z-20 mt-2 rounded-md shadow-xl cart-dropdown w-80 ${
+            currentTheme === 'dark' 
+              ? 'bg-gray-800 border border-gray-700' 
+              : 'bg-white border border-gray-200'
+          }`}
+        >
+          <div className={`p-4 border-b ${
+            currentTheme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+          }`}>
+            <h3 className={`font-semibold ${
+              currentTheme === 'dark' ? 'text-white' : 'text-gray-800'
+            }`}>Your Cart ({cartItemCount} items)</h3>
           </div>
           <div className="p-2 overflow-y-auto max-h-60">
             {getCartItems().map((item: CartItem, index: number) => (
-              <div key={index} className="flex items-center p-2 border-b hover:bg-gray-100">
-                <img src={item.image} alt={item.name} className="object-contain w-12 h-12" />
+              <div 
+                key={index} 
+                className={`flex items-center p-2 border-b ${
+                  currentTheme === 'dark' 
+                    ? 'border-gray-700 hover:bg-gray-700' 
+                    : 'border-gray-200 hover:bg-gray-100'
+                }`}
+              >
+                <div className="flex-shrink-0 p-1 bg-white rounded-sm w-12 h-12">
+                  <img src={item.image} alt={item.name} className="object-contain w-full h-full" />
+                </div>
                 <div className="flex-1 ml-2">
-                  <p className="text-sm font-medium truncate">{item.name}</p>
-                  <p className="text-xs text-gray-500">{item.quantity} × {item.price} NOK</p>
+                  <p className={`text-sm font-medium truncate ${
+                    currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                  }`}>{item.name}</p>
+                  <p className={`text-xs ${
+                    currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  }`}>{item.quantity} × {item.price} NOK</p>
                 </div>
               </div>
             ))}
             
             {cartItemCount > 3 && (
-              <p className="mt-2 text-xs text-center text-gray-500">
+              <p className={`mt-2 text-xs text-center ${
+                currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 and {cartItemCount - 3} more items...
               </p>
             )}
           </div>
-          <div className="p-3 bg-gray-50">
+          <div className={`p-3 ${
+            currentTheme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+          }`}>
             <button 
               onClick={() => {
                 setCartOpen(false);
                 handleCartClick();
               }}
-              className="w-full btn btn-neas-green btn-sm"
+              className={`w-full btn btn-sm ${
+                currentTheme === 'dark' ? 'btn-[#95c672]' : 'btn-neas-green'
+              }`}
             >
               View Cart
             </button>
